@@ -229,6 +229,7 @@ class MemorizationPlayMain:
         Args:
             interaction (discord.Interaction): The interaction object for Discord.
         """
+        self.lists = self.lists["questions"]
         if self.counts == len(self.lists):
             dicts = await self.ms.get_user_status(str(interaction.user.id), self.title)
             if not dicts:
