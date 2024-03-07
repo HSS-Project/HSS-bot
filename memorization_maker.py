@@ -1,7 +1,7 @@
-from typing import TypedDict, NotRequired, Literal
+from typing import TypedDict, Optional, Literal
+
 import json
 import random
-from typing import Literal, List
 import openpyxl
 
 class ProblemData(TypedDict):
@@ -9,7 +9,7 @@ class ProblemData(TypedDict):
     sharecode: int
     mode: int
     answer: str
-    select: NotRequired[list[str]]
+    select: Optional[list[str]]
 
 
 class StatusData(TypedDict):
