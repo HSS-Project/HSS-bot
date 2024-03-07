@@ -419,8 +419,8 @@ class MemorizationTitleDeleteSelect(discord.ui.Select):
         placeholder = "問題を選択してください"
         min_values = 1
         max_values = 1
-        self.lists = list["questions"]
-        options=[discord.SelectOption(label=item["question"], value=str(index)) for index, item in enumerate(lists)]
+        self.lists = list
+        options = [discord.SelectOption(label=i) for i in self.lists[:25]]
         super().__init__(placeholder=placeholder, min_values=min_values, max_values=max_values, options=options)
         for i in range(25, len(self.lists), 25):
             for item in self.lists[i:i+25]:
