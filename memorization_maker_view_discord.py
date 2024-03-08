@@ -1,6 +1,6 @@
 import discord
 from discord import ui
-from memorization_maker import MemorizationSystem as MS, ProblemData
+from memorization_maker import MemorizationSystem as MS, CardData
 from discord import app_commands
 from discord.ext import commands
 
@@ -216,9 +216,9 @@ class MemorizationPlayMain:
         main_start(interaction: discord.Interaction): Starts the main process of the game.
     """
 
-    def __init__(self, title: str, lists: list[ProblemData], counts: int, ms: MS):
+    def __init__(self, title: str, lists: CardData, counts: int, ms: MS):
         self.title = title
-        self.lists = lists
+        self.lists = lists["questions"]
         self.counts = counts
         self.ms = ms
 
@@ -229,7 +229,6 @@ class MemorizationPlayMain:
         Args:
             interaction (discord.Interaction): The interaction object for Discord.
         """
-        self.lists = self.lists["questions"]
         if self.counts == len(self.lists):
             dicts = await self.ms.get_user_status(str(interaction.user.id), self.title)
             if not dicts:

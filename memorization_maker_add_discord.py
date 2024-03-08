@@ -4,8 +4,8 @@ import memorization_maker
 from discord import app_commands
 from discord.ext import commands
 import openpyxl
-import os
 import io
+
 
 class TitleAddModal(ui.Modal, title="タイトル追加"):
     """
@@ -29,6 +29,8 @@ class TitleAddModal(ui.Modal, title="タイトル追加"):
         """
         memmorization = memorization_maker.MemorizationSystem()
         titles = await memmorization.get_mission_title(str(interaction.user.id))
+        assert titles is not False
+        content = ""
         if str(self.title_input.value) in titles:
             content = "編集モード"
         
@@ -322,7 +324,7 @@ class QuestionEditSelect(discord.ui.Select):
         for i in range(25, len(self.lists), 25):
             for item in self.lists[i:i+25]:
                 option = discord.SelectOption(label=item)
-                super().add_option(option)
+                self.add_option(option)
 
     async def callback(self, interaction: discord.Interaction):
         """
@@ -715,8 +717,8 @@ class MemorizationControlView(discord.ui.View):
         memorization = memorization_maker.MemorizationSystem()
         sharecode = await memorization.get_sharecode(str(interaction.user.id),self.title)
         await interaction.response.edit_message(content=f"終了\nこの問題の共有コード:{sharecode}",embed=None,view=None)
-        
-        
+
+
 class MemorizationCog(commands.Cog):
     def __init__(self, bot):
         """
@@ -747,7 +749,6 @@ class MemorizationCog(commands.Cog):
         view = discord.ui.View()
         view.add_item(QuestionEditSelect(lists))
         await interaction.response.send_message("編集する問題を選択してください", view=view, ephemeral=True)
-
 
     @app_commands.command()
     async def sharecode_copy(self, interaction: discord.Interaction,code:int):

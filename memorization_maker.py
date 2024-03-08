@@ -1,15 +1,21 @@
-from typing import TypedDict, Optional, Literal
+from typing import TypedDict, Literal
+from typing_extensions import NotRequired
 
 import json
 import random
 import openpyxl
 
-class ProblemData(TypedDict):
+
+class QuestionData(TypedDict):
     question: str
-    sharecode: int
     mode: int
     answer: str
-    select: Optional[list[str]]
+    select: NotRequired[list[str]]
+
+
+class CardData(TypedDict):
+    questions: list[QuestionData]
+    sharecode: int
 
 
 class StatusData(TypedDict):
@@ -18,7 +24,7 @@ class StatusData(TypedDict):
 
 
 class MemorizationData(TypedDict):
-    memorization: dict[str, int ,dict[list[ProblemData],str]]
+    memorization: dict[str, dict[str, CardData]]
     user_status: dict[str, dict[str, StatusData]]
 
 
@@ -101,7 +107,7 @@ class MemorizationSystem:
             self.data["memorization"][id][title]["questions"][-1]["select"] = select
         await self.save_data()
         return True
-    
+
     async def add_mission_into_Excel(self, id: str, title: str, number: int, workbook: openpyxl.Workbook):
         """
         Adds a mission into the Excel workbook.
@@ -118,6 +124,7 @@ class MemorizationSystem:
         id = str(id)
         await self.load_data()
         sheet = workbook.active
+        assert sheet is not None
         self.data["memorization"].setdefault(id, {})
         self.data["memorization"][id].setdefault(title, {"questions": [], "sharecode": number})
         for row in sheet.iter_rows(min_row=1, values_only=True):
@@ -187,7 +194,7 @@ class MemorizationSystem:
             return True
         return False
 
-    async def get_mission(self, id: str, title: str) -> Literal[False] | list[ProblemData]:
+    async def get_mission(self, id: str, title: str) -> Literal[False] | CardData:
         """
         Get the content of a mission based on its ID and title.
 
@@ -233,7 +240,7 @@ class MemorizationSystem:
             return self.data["memorization"][id][title]["sharecode"]
         return False
 
-    async def get_mission_sharecode(self, code) -> Literal[False] | list[ProblemData]:
+    async def get_mission_sharecode(self, code) -> Literal[False] | list[QuestionData]:
         """
         Get the content of a mission based on its sharecode.
 
@@ -250,24 +257,23 @@ class MemorizationSystem:
                     return self.data["memorization"][id][title]["questions"]
         return False 
     
-    async def sharecode_question_copy(self, id, sharecode):
+    async def sharecode_question_copy(self, id: str, sharecode: int):
         await self.load_data()
         id = str(id)
         self.data["memorization"].setdefault(id, {})
         await self.save_data()#消したらなぜか動かないww
         await self.load_data()
-        tmp = {}
         for bef_id in self.data["memorization"]:
             for title in self.data["memorization"][bef_id]:
                 if self.data["memorization"][bef_id][title].get("sharecode") == sharecode:
-                    tmp["questions"] = self.data["memorization"][bef_id][title]["questions"]
-                    number = await self.make_sharecode()
-                    tmp["sharecode"] = number
-                    self.data["memorization"][id][title] = tmp
+                    self.data["memorization"][id][title] = CardData(
+                        questions=self.data["memorization"][bef_id][title]["questions"],
+                        sharecode=await self.make_sharecode()
+                    )
                     await self.save_data()
                     return True
         return False
-    
+
     async def sharecode_true(self, id: str, title: str) -> bool:
         """
         Check if the mission has a sharecode.
@@ -283,12 +289,8 @@ class MemorizationSystem:
                 code = self.data["memorization"][id][title]["sharecode"]
             except:
                 return False
-            if code:
-                return code
-            else:
-                return False
+            return bool(code)
         return False
-    
 
     async def get_mission_title(self, id: str):
         """
