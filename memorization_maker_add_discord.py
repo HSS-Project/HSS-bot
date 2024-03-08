@@ -204,16 +204,13 @@ class AnswerAddSelect(discord.ui.Select):
 
     def __init__(self, title, base_count, question, select):
         """
-        コンストラクタメソッドです。
-
-        :param title: タイトル
-        :type title: str
-        :param base_count: ベースの数
-        :type base_count: int
-        :param question: 質問
-        :type question: str
-        :param select: 選択肢
-        :type select: str
+        Initializes the AnswerAddSelect object.
+        
+        Args:
+            title (str): The title of the question.
+            base_count (int): The base count for generating options.
+            question (str): The question to be displayed.
+            select (list): The list of answer choices.
         """
         options = []
         for i in range(base_count):
@@ -342,6 +339,7 @@ class MemorizationDeleteSelect(discord.ui.Select):
     Attributes:
     - lists (list): The list of options for the select menu.
     - title (str): The title of the mission to be deleted.
+    - count (int): The count of the mission to be deleted.
 
     Methods:
     - callback(interaction): The callback method called when an option is selected.
@@ -354,6 +352,7 @@ class MemorizationDeleteSelect(discord.ui.Select):
         Parameters:
         - lists (list): The list of options for the select menu.
         - title (str): The title of the mission to be deleted.
+        - count (int): The count of the mission to be deleted.
         """
         self.title = title
         placeholder = "問題を選択してください"
@@ -455,6 +454,7 @@ class MemorizationEditSelect(discord.ui.Select):
     Attributes:
     - lists (list): The list of questions to be displayed in the select menu.
     - title (str): The title of the select menu.
+    - count (int): The count of the select menu.
 
     Methods:
     - __init__(self, lists, title): Initializes the MemorizationEditDiscordSelect object.
@@ -468,6 +468,7 @@ class MemorizationEditSelect(discord.ui.Select):
         Parameters:
         - lists (list): The list of questions to be displayed in the select menu.
         - title (str): The title of the select menu.
+        - count (int): The count of the select menu.
         """
         self.title = title
         self.lists = lists
@@ -512,11 +513,13 @@ class EditModeSelect(discord.ui.Select):
         selected_index (int): The index of the selected option.
         lists (list): The list of options for the select menu.
         mode (int): The mode of the select menu.
+        count (int): The count of the select menu.
 
     Attributes:
         title (str): The title of the select menu.
         selected_index (int): The index of the selected option.
         lists (list): The list of options for the select menu.
+        count (int): The count of the select menu.
 
     Methods:
         callback(interaction: discord.Interaction): The callback method for handling user interaction.
@@ -562,6 +565,7 @@ class ChoiceEditSelect(discord.ui.Select):
         title (str): The title of the select menu.
         selected_index (int): The index of the selected question.
         lists (list): The list of questions to choose from.
+        count (int): The count of the select menu.
 
     Methods:
         callback(interaction: discord.Interaction): The callback method called when the select menu is interacted with.
@@ -575,6 +579,7 @@ class ChoiceEditSelect(discord.ui.Select):
             title (str): The title of the select menu.
             selected_index (int): The index of the selected question.
             lists (list): The list of questions to choose from.
+            count (int): The count of the select menu.
         """
         self.title = title
         self.selected_index = selected_index
@@ -615,6 +620,7 @@ class MemorizationEditModal(ui.Modal, title="問題編集"):
         selected_index (int): The index of the selected task.
         lists (list): The list of tasks.
         mode (int): The mode of the modal.
+        count (int): The count of the modal.
         selected_number (int, optional): The selected number. Defaults to None.
     """
 
@@ -650,6 +656,7 @@ class MemorizationEditModal(ui.Modal, title="問題編集"):
             await memorization.edit_misson(str(interaction.user.id), self.title, self.selected_index, self.mode, value, self.selected_number)
         embed = discord.Embed(title="問題追加", description=f"現在の選択問題設定個数:{self.count}", color=0x00ff00)
         await interaction.response.edit_message(embed=embed, view=MemorizationControlView(self.title,self.count))
+
 
 class MemorizationControlView(discord.ui.View):
     """
@@ -709,6 +716,7 @@ class MemorizationControlView(discord.ui.View):
         sharecode = await memorization.get_sharecode(str(interaction.user.id),self.title)
         await interaction.response.edit_message(content=f"終了\nこの問題の共有コード:{sharecode}",embed=None,view=None)
         
+        
 class MemorizationCog(commands.Cog):
     def __init__(self, bot):
         """
@@ -746,11 +754,12 @@ class MemorizationCog(commands.Cog):
         """
         共有コードから問題をコピーするコマンドです。
         """
+        await interaction.response.defer(thinking=True)
         ch = await self.memorization.sharecode_question_copy(str(interaction.user.id),code)
         if ch:
-            await interaction.response.send_message("コピー完了", ephemeral=True)
+            await interaction.followup.send("コピー完了", ephemeral=True)
         else:
-            await interaction.response.send_message("コピー失敗", ephemeral=True)
+            await interaction.followup.send("コピー失敗", ephemeral=True)
 
     @app_commands.command()
     async def memorization_add_excel(self, interaction: discord.Interaction,file: discord.Attachment,title:str):
@@ -796,4 +805,3 @@ class MemorizationCog(commands.Cog):
 async def setup(bot):
     await bot.add_cog(MemorizationCog(bot))
     print("[SystemLog] memorization_maker_add_discord loaded")
-    
