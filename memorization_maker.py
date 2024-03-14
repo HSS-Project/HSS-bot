@@ -135,7 +135,43 @@ class MemorizationSystem:
             self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 0, "answer": answer})
         await self.save_data()
         return True
+    
 
+    async def add_mission_into_Excel_select(self, id: str, title: str, number: int, workbook: openpyxl.Workbook):
+        """
+        Adds a mission select into the Excel workbook.
+        
+        Args:
+            id (str): The ID of the mission.
+            title (str): The title of the mission.
+            number (int): The share code number.
+            workbook (openpyxl.Workbook): The workbook to add the mission into.
+        
+        Returns:
+            bool: True if the mission was successfully added, False otherwise.
+        """
+        id = str(id)
+        await self.load_data()
+        sheet = workbook.active
+        assert sheet is not None
+        self.data["memorization"].setdefault(id, {})
+        self.data["memorization"][id].setdefault(title, {"questions": [], "sharecode": number})
+        select = []
+        for row in sheet.iter_rows(min_row=1, values_only=True):
+            if not all(row):
+                continue
+            question = row[0]
+            anser = row[1]
+            randam_answer = random.randint(0, 3)
+            for _ in range(4):
+                randam_select = random.randint(0, 3)
+                cell = sheet.cell(row=randam_select, column=1)
+                select.append(cell.value)
+            select[randam_answer] = anser
+            self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 1, "answer": randam_answer, "select": select})
+        await self.save_data()
+        return True
+            
     async def del_mission(self, id: str, title: str, question: str):
         """
         Delete a mission from the memorization data.
