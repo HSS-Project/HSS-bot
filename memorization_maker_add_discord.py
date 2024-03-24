@@ -758,51 +758,26 @@ class MemorizationCog(commands.Cog):
         await interaction.response.defer(thinking=True)
         ch = await self.memorization.sharecode_question_copy(str(interaction.user.id),code)
         if ch:
-            await interaction.followup.send("コピー完了", ephemeral=True)
+            await interaction.followup.send("コピー完了")
         else:
-            await interaction.followup.send("コピー失敗", ephemeral=True)
+            await interaction.followup.send("コピー失敗")
 
     @app_commands.command()
     async def memorization_add_excel(self, interaction: discord.Interaction,file: discord.Attachment,title:str):
         """
         Exselファイルから問題を追加するコマンドです。
         """
-        if not file:
-            await interaction.response.send_message("ファイルがありません", ephemeral=True)
-            return
+        await interaction.response.defer(thinking=True)
         file_bytes = await file.read()
         file_like_object = io.BytesIO(file_bytes)
         workbook = openpyxl.load_workbook(file_like_object)
         id = str(interaction.user.id)
         number = await self.memorization.make_sharecode()
-        await interaction.response.defer(thinking=True)
-        ch = await self.memorization.add_mission_into_Excel(id,title,number,workbook)
-        workbook.close()
+        ch = await self.memorization.add_mission_Excel(id,title,number,workbook)
         if ch:
-            await interaction.followup.send("追加完了", ephemeral=True)
+            await interaction.followup.send("追加完了")
         else:
-            await interaction.followup.send("追加失敗", ephemeral=True)
-
-    @app_commands.command()
-    async def memorization_add_select_excel(self, interaction: discord.Interaction,file: discord.Attachment,title:str):
-        """
-        Exselファイルから問題を追加するコマンドです。
-        """
-        if not file:
-            await interaction.response.send_message("ファイルがありません", ephemeral=True)
-            return
-        file_bytes = await file.read()
-        file_like_object = io.BytesIO(file_bytes)
-        workbook = openpyxl.load_workbook(file_like_object)
-        id = str(interaction.user.id)
-        number = await self.memorization.make_sharecode()
-        await interaction.response.defer(thinking=True)
-        ch = await self.memorization.add_mission_into_Excel_select(id,title,number,workbook)
-        workbook.close()
-        if ch:
-            await interaction.followup.send("追加完了", ephemeral=True)
-        else:
-            await interaction.followup.send("追加失敗", ephemeral=True)
+            await interaction.followup.send("追加失敗")
 
     @app_commands.command()
     async def memorization_sharecode(self, interaction:discord.Interaction):
