@@ -139,7 +139,7 @@ class MemorizationSystem:
 
     async def add_mission_into_Excel_select(self, id: str, title: str, number: int, workbook: openpyxl.Workbook):
         """
-        Adds a mission select into the Excel workbook.
+        Adds a mission into the Excel workbook.
         
         Args:
             id (str): The ID of the mission.
@@ -156,19 +156,23 @@ class MemorizationSystem:
         assert sheet is not None
         self.data["memorization"].setdefault(id, {})
         self.data["memorization"][id].setdefault(title, {"questions": [], "sharecode": number})
-        select = []
+        
         for row in sheet.iter_rows(min_row=1, values_only=True):
+            select = []
             if not all(row):
                 continue
             question = row[0]
-            anser = row[1]
-            randam_answer = random.randint(0, 3)
-            for _ in range(4):
-                randam_select = random.randint(0, 3)
-                cell = sheet.cell(row=randam_select, column=1)
+            answer = row[1]
+            random_selects = random.sample(range(1, 5), 4)
+
+            for random_select in random_selects:
+                cell = sheet.cell(row=random_select, column=2)
                 select.append(cell.value)
-            select[randam_answer] = anser
-            self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 1, "answer": randam_answer, "select": select})
+            
+            random_answer = select.index(answer) + 1 if answer in select else random.randint(1, 4)
+            select[random_answer - 1] = answer
+
+            self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 1, "answer": random_answer, "select": select})
         await self.save_data()
         return True
             

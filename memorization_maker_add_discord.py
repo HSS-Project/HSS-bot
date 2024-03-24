@@ -784,6 +784,27 @@ class MemorizationCog(commands.Cog):
             await interaction.followup.send("追加失敗", ephemeral=True)
 
     @app_commands.command()
+    async def memorization_add_select_excel(self, interaction: discord.Interaction,file: discord.Attachment,title:str):
+        """
+        Exselファイルから問題を追加するコマンドです。
+        """
+        if not file:
+            await interaction.response.send_message("ファイルがありません", ephemeral=True)
+            return
+        file_bytes = await file.read()
+        file_like_object = io.BytesIO(file_bytes)
+        workbook = openpyxl.load_workbook(file_like_object)
+        id = str(interaction.user.id)
+        number = await self.memorization.make_sharecode()
+        await interaction.response.defer(thinking=True)
+        ch = await self.memorization.add_mission_into_Excel_select(id,title,number,workbook)
+        workbook.close()
+        if ch:
+            await interaction.followup.send("追加完了", ephemeral=True)
+        else:
+            await interaction.followup.send("追加失敗", ephemeral=True)
+
+    @app_commands.command()
     async def memorization_sharecode(self, interaction:discord.Interaction):
         """
         共有コードを取得するコマンドです。
