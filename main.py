@@ -4,6 +4,7 @@ import discord
 import datetime
 import os
 import json
+import traceback
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -21,8 +22,14 @@ class MyBot(commands.Bot):
     
     async def on_ready(self):
         await self.change_presence(activity=discord.Game(name="/help"))
-        for cog in COGS:
-            await bot.load_extension(cog)
+        for file in os.listdir("./cogs"):
+            if file.endswith('.py'):
+                try:
+                    await self.load_extension(f'cogs.{file[:-3]}')
+                    print(f"Loaded cogs: cogs.{file[:-3]}")
+                except Exception as e:
+                    print(f"cogs.{file[:-3]} failed to load", e)
+                    traceback.print_exc()
         await self.tree.sync()
         dt_now = datetime.datetime.now()
         print("-----------------------")
