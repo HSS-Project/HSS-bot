@@ -127,13 +127,15 @@ class MemorizationSystem:
         assert sheet is not None
         self.data["memorization"].setdefault(id, {})
         self.data["memorization"][id].setdefault(title, {"questions": [], "sharecode": number})
-        row_count = sum(1 for _ in sheet.iter_rows(min_row=1, values_only=True))  # ジェネレータの要素数をカウント
+        row_count = sum(1 for _ in sheet.iter_rows(min_row=1, values_only=True))
+        ch = 0
         if row_count < 4:
-            return False
+            ch = 1
 
         for row in sheet.iter_rows(min_row=1, values_only=True):
-            if not all(row):
+            if not row[0] or not row[1] or not row[2]:
                 continue
+
             question = row[0]
             answer = row[1]
             mode:int = row[2]
@@ -141,12 +143,18 @@ class MemorizationSystem:
                 self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 0, "answer": answer})
             elif mode == 2:
                 select = []
-                random_selects = random.sample(range(1, 5), 4)
-                for random_select in random_selects:
-                    cell = sheet.cell(row=random_select, column=2)
-                    select.append(cell.value)
-                random_answer = select.index(answer) + 1 if answer in select else random.randint(1, 4)
-                select[random_answer - 1] = answer
+                if row[3] is not None and row[4] is not None and row[5] is not None and row[6] is not None:
+                    select = [row[3], row[4], row[5], row[6]]
+                    random_answer = select.index(answer) + 1
+                else:
+                    if ch == 1:
+                        return False
+                    random_selects = random.sample(range(1, 5), 4)
+                    for random_select in random_selects:
+                        cell = sheet.cell(row=random_select, column=2)
+                        select.append(cell.value)
+                        random_answer = select.index(answer) + 1 if answer in select else random.randint(1, 4)
+                    select[random_answer - 1] = answer
 
                 self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 1, "answer": random_answer, "select": select})
         await self.save_data()
