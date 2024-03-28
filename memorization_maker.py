@@ -282,6 +282,16 @@ class MemorizationSystem:
         return False 
     
     async def sharecode_question_copy(self, id: str, sharecode: int):
+        """
+        Copy a mission from a sharecode.
+
+        Args:
+            id (str): The ID of the mission.
+            sharecode (int): The sharecode of the mission.
+        
+        Returns:
+            bool: True if the mission was copied successfully, False otherwise.
+        """
         await self.load_data()
         id = str(id)
         self.data["memorization"].setdefault(id, {})
