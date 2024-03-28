@@ -187,6 +187,23 @@ class QuestionAddModal(ui.Modal, title="選択問題追加"):
 
 
 class AnserEditSelect(discord.ui.Select):
+    """
+    A custom select menu for editing the answer in the Memorization Add Discord UI.
+
+    Args:
+        title (str): The title of the select menu.
+        lists (list): The list of questions.
+        selected_index (int): The index of the selected question.
+    
+    Attributes:
+        title (str): The title of the select menu.
+        lists (list): The list of questions.
+        selected_index (int): The index of the selected question.
+    
+    Methods:
+        callback(interaction: discord.Interaction) -> None: The callback method that is called when the select menu is interacted with.
+
+    """
     def __init__(self,title,lists,selected_index):
         self.title = title
         self.lists = lists
