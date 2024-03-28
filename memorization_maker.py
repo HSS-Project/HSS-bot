@@ -1,15 +1,21 @@
-from typing import TypedDict, Optional, Literal
+from typing import TypedDict, Literal
+from typing_extensions import NotRequired
 
 import json
 import random
 import openpyxl
 
-class ProblemData(TypedDict):
+
+class QuestionData(TypedDict):
     question: str
-    sharecode: int
     mode: int
     answer: str
-    select: Optional[list[str]]
+    select: NotRequired[list[str]]
+
+
+class CardData(TypedDict):
+    questions: list[QuestionData]
+    sharecode: int
 
 
 class StatusData(TypedDict):
@@ -18,7 +24,7 @@ class StatusData(TypedDict):
 
 
 class MemorizationData(TypedDict):
-    memorization: dict[str, int ,dict[list[ProblemData],str]]
+    memorization: dict[str, dict[str, CardData]]
     user_status: dict[str, dict[str, StatusData]]
 
 
@@ -101,34 +107,59 @@ class MemorizationSystem:
             self.data["memorization"][id][title]["questions"][-1]["select"] = select
         await self.save_data()
         return True
-    
-    async def add_mission_into_Excel(self, id: str, title: str, number: int, workbook: openpyxl.Workbook):
+
+    async def add_mission_Excel(self,id: str, title: str, number: int, workbook: openpyxl.Workbook):
         """
-        Adds a mission into the Excel workbook.
+        Add a mission to the memorization data from an Excel file.
 
         Args:
-            id (str): The ID of the mission.
+            id (str): The User ID.
             title (str): The title of the mission.
-            number (int): The share code number.
-            workbook (openpyxl.Workbook): The workbook to add the mission into.
-
+            number (int): The share code of the mission.
+            workbook (openpyxl.Workbook): The workbook of the mission.
+        
         Returns:
-            bool: True if the mission was successfully added, False otherwise.
+            bool: True if the mission is added successfully, False otherwise.
         """
         id = str(id)
         await self.load_data()
         sheet = workbook.active
+        assert sheet is not None
         self.data["memorization"].setdefault(id, {})
         self.data["memorization"][id].setdefault(title, {"questions": [], "sharecode": number})
+        row_count = sum(1 for _ in sheet.iter_rows(min_row=1, values_only=True))
+        ch = 0
+        if row_count < 4:
+            ch = 1
+
         for row in sheet.iter_rows(min_row=1, values_only=True):
-            if not all(row):
+            if not row[0] or not row[1] or not row[2]:
                 continue
+
             question = row[0]
             answer = row[1]
-            self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 0, "answer": answer})
+            mode:int = row[2]
+            if mode == 1:
+                self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 0, "answer": answer})
+            elif mode == 2:
+                select = []
+                if row[3] is not None and row[4] is not None and row[5] is not None and row[6] is not None:
+                    select = [row[3], row[4], row[5], row[6]]
+                    random_answer = select.index(answer) + 1
+                else:
+                    if ch == 1:
+                        return False
+                    random_selects = random.sample(range(1, 5), 4)
+                    for random_select in random_selects:
+                        cell = sheet.cell(row=random_select, column=2)
+                        select.append(cell.value)
+                        random_answer = select.index(answer) + 1 if answer in select else random.randint(1, 4)
+                    select[random_answer - 1] = answer
+
+                self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 1, "answer": random_answer, "select": select})
         await self.save_data()
         return True
-
+                
     async def del_mission(self, id: str, title: str, question: str):
         """
         Delete a mission from the memorization data.
@@ -187,7 +218,7 @@ class MemorizationSystem:
             return True
         return False
 
-    async def get_mission(self, id: str, title: str) -> Literal[False] | list[ProblemData]:
+    async def get_mission(self, id: str, title: str) -> Literal[False] | CardData:
         """
         Get the content of a mission based on its ID and title.
 
@@ -233,7 +264,7 @@ class MemorizationSystem:
             return self.data["memorization"][id][title]["sharecode"]
         return False
 
-    async def get_mission_sharecode(self, code) -> Literal[False] | list[ProblemData]:
+    async def get_mission_sharecode(self, code) -> Literal[False] | list[QuestionData]:
         """
         Get the content of a mission based on its sharecode.
 
@@ -250,24 +281,23 @@ class MemorizationSystem:
                     return self.data["memorization"][id][title]["questions"]
         return False 
     
-    async def sharecode_question_copy(self, id, sharecode):
+    async def sharecode_question_copy(self, id: str, sharecode: int):
         await self.load_data()
         id = str(id)
         self.data["memorization"].setdefault(id, {})
         await self.save_data()#消したらなぜか動かないww
         await self.load_data()
-        tmp = {}
         for bef_id in self.data["memorization"]:
             for title in self.data["memorization"][bef_id]:
                 if self.data["memorization"][bef_id][title].get("sharecode") == sharecode:
-                    tmp["questions"] = self.data["memorization"][bef_id][title]["questions"]
-                    number = await self.make_sharecode()
-                    tmp["sharecode"] = number
-                    self.data["memorization"][id][title] = tmp
+                    self.data["memorization"][id][title] = CardData(
+                        questions=self.data["memorization"][bef_id][title]["questions"],
+                        sharecode=await self.make_sharecode()
+                    )
                     await self.save_data()
                     return True
         return False
-    
+
     async def sharecode_true(self, id: str, title: str) -> bool:
         """
         Check if the mission has a sharecode.
@@ -283,12 +313,8 @@ class MemorizationSystem:
                 code = self.data["memorization"][id][title]["sharecode"]
             except:
                 return False
-            if code:
-                return code
-            else:
-                return False
+            return bool(code)
         return False
-    
 
     async def get_mission_title(self, id: str):
         """

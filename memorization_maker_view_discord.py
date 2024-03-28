@@ -1,6 +1,6 @@
 import discord
 from discord import ui
-from memorization_maker import MemorizationSystem as MS, ProblemData
+from memorization_maker import MemorizationSystem as MS, CardData
 from discord import app_commands
 from discord.ext import commands
 
@@ -169,7 +169,7 @@ class MemorizationQuestionSelect(discord.ui.Select):
     A custom select menu for selecting a memorization mission in the Memorization Discord UI.
     """
 
-    def __init__(self, lists: list[str], ms: MS):
+    def __init__(self, lists: list[str], ms: MS,mode:int):
         """
         Initializes the Memorization_question_Discord_Select object.
 
@@ -182,6 +182,7 @@ class MemorizationQuestionSelect(discord.ui.Select):
         """
         self.lists = lists
         self.ms = ms
+        self.mode = mode
         super().__init__(placeholder="タイトルを選択してください", min_values=1, max_values=1, options=[discord.SelectOption(label=i) for i in lists])
 
     async def callback(self, interaction: discord.Interaction):
@@ -194,12 +195,23 @@ class MemorizationQuestionSelect(discord.ui.Select):
         Returns:
             None
         """
-        title = self.values[0]
-        lists = await self.ms.get_mission(str(interaction.user.id), title)
-        if not lists:
-            return await interaction.response.send_message("エラー: データが見つかりませんでした。", ephemeral=True)
-        memorizationPlayMain = MemorizationPlayMain(title, lists, 0, self.ms)
-        await memorizationPlayMain.main_start(interaction)
+        if self.mode == 0:
+            title = self.values[0]
+            lists = await self.ms.get_mission(str(interaction.user.id), title)
+            if not lists:
+                return await interaction.response.send_message("エラー: データが見つかりませんでした。", ephemeral=True)
+            memorizationPlayMain = MemorizationPlayMain(title, lists, 0, self.ms)
+            await memorizationPlayMain.main_start(interaction)
+        elif self.mode == 1:
+            title = self.values[0]
+            dicts = await self.ms.get_user_status(str(interaction.user.id), title)
+            if not dicts:
+                return await interaction.response.send_message("エラー: データが見つかりませんでした。", ephemeral=True)
+            score = dicts["score"]
+            count = dicts["count"]
+            embed = discord.Embed(title=f"{count}回挑戦", color=0x00ff00)
+            embed.add_field(name="結果", value=f"問題: [{title}]のスコアは{score}点です")
+            await interaction.response.edit_message(embed=embed)
 
 
 class MemorizationPlayMain:
@@ -216,9 +228,9 @@ class MemorizationPlayMain:
         main_start(interaction: discord.Interaction): Starts the main process of the game.
     """
 
-    def __init__(self, title: str, lists: list[ProblemData], counts: int, ms: MS):
+    def __init__(self, title: str, lists: CardData, counts: int, ms: MS):
         self.title = title
-        self.lists = lists
+        self.lists = lists["questions"]
         self.counts = counts
         self.ms = ms
 
@@ -229,7 +241,6 @@ class MemorizationPlayMain:
         Args:
             interaction (discord.Interaction): The interaction object for Discord.
         """
-        self.lists = self.lists["questions"]
         if self.counts == len(self.lists):
             dicts = await self.ms.get_user_status(str(interaction.user.id), self.title)
             if not dicts:
@@ -271,21 +282,51 @@ class MakerComanndsCog(commands.Cog):
             return await interaction.response.send_message("ユーザーデータが見つかりませんでした。", ephemeral=True)
         embed = discord.Embed(title="問題を選択してください",color=0x00ff00)
         view = discord.ui.View()
-        view.add_item(MemorizationQuestionSelect(title, self.ms))
+        view.add_item(MemorizationQuestionSelect(title, self.ms,0))
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
+    @app_commands.command()
+    async def get_score(self, interaction:discord.Interaction):
+        """スコアを取得するコマンド"""
+        title = await self.ms.get_mission_title(str(interaction.user.id))
+        if not title:
+            return await interaction.response.send_message("ユーザーデータが見つかりませんでした。", ephemeral=True)
+        embed = discord.Embed(title="問題を選択してください",color=0x00ff00)
+        view = discord.ui.View()
+        view.add_item(MemorizationQuestionSelect(title, self.ms,1))
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
     @app_commands.command()
     async def anki_help(self, interaction:discord.Interaction):
         """ヘルプコマンド"""
-        embed = discord.Embed(title="暗記機能help ver0.0.1 Beta",color=0x00ff00)
+        embed = discord.Embed(title="暗記機能help ver0.1.0",color=0x00ff00)
         embed.add_field(name="memorization_maker_view",value="問題回答スタート",inline=False)
         embed.add_field(name="memorization_add",value="問題追加",inline=False)
-        embed.add_field(name="memorization_edit",value="問題編集",inline=False)
+        embed.add_field(name="memorization_edit",value="問題編集 非推奨",inline=False)
         embed.add_field(name="delete_title",value="問題削除",inline=False)
-        embed.add_field(name="memorization_add_excel",value="エクセルから問題を追加 (Aに問題 Bに答え)",inline=False)
+        embed.add_field(name="memorization_add_excel",value=
+"""
+エクセルから問題を追加
+```
+| A | B | C | D | E | F | G |
+|---|---|---|---|---|---|---|
+| 問題 | 答え | モード | 選択肢1 | 選択肢2 | 選択肢3 | 選択肢4 |
+問題: 問題文
+答え: 答え
+モード:
+    0 ・・・ 記述問題 
+    1 ・・・ 選択問題
+選択肢生成:  なにも入力されていない↓
+            自動ランダム生成 (選択肢1～4)
+
+任意選択肢: 選択肢1～4
+```
+要注意: 誤った入力はエラーを発生させます。
+"""
+        ,inline=False)
         embed.add_field(name="memorization_sharecode",value="問題を共有するための共有コードを取得します。",inline=False)
         embed.add_field(name="sharecode_copy",value="共有コードから問題を取得し、保存します。",inline=False)
+        embed.add_field(name="get_score",value="スコアを取得します。",inline=False)
         await interaction.response.send_message(embed=embed,ephemeral=True)
 async def setup(bot):
     await bot.add_cog(MakerComanndsCog(bot))
