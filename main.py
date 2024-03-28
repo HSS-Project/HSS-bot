@@ -11,8 +11,8 @@ COGS = [
     "jishaku",
     "memorization_maker_view_discord",
     "memorization_maker_add_discord",
-    "school",
-    "user"
+    # "school",
+    # "user"
 ]
 
 class MyBot(commands.Bot):
