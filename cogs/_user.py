@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-from HSS import User
+from HSS.HSS import User
 
 
 class user(commands.Cog):
@@ -15,6 +15,7 @@ class user(commands.Cog):
         
     @user.command(name="get", description="User/get")
     async def user_get(self, interaction:discord.Interaction):
+        """ユーザー情報を取得します。"""
         user = User(token="token")
         data = user.get_me()
         embed = discord.Embed(title=f"{data['username']}の情報")
