@@ -302,7 +302,7 @@ class MakerComanndsCog(commands.Cog):
         embed = discord.Embed(title="暗記機能help ver0.1.0",color=0x00ff00)
         embed.add_field(name="memorization_maker_view",value="問題回答スタート",inline=False)
         embed.add_field(name="memorization_add",value="問題追加",inline=False)
-        embed.add_field(name="memorization_edit",value="問題編集 非推奨",inline=False)
+        embed.add_field(name="memorization_edit",value="問題編集",inline=False)
         embed.add_field(name="delete_title",value="問題削除",inline=False)
         embed.add_field(name="memorization_add_excel",value=
 """
