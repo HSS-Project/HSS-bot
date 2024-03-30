@@ -23,7 +23,7 @@ class MyBot(commands.Bot):
     async def on_ready(self):
         await self.change_presence(activity=discord.Game(name="/help"))
         for file in os.listdir("./cogs"):
-            if file.endswith('.py'):
+            if file.endswith('.py') and not file.startswith('_'):#_で始まるファイルは読み込まない
                 try:
                     await self.load_extension(f'cogs.{file[:-3]}')
                     print(f"Loaded cogs: cogs.{file[:-3]}")

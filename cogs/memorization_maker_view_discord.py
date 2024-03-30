@@ -296,38 +296,6 @@ class MakerComanndsCog(commands.Cog):
         view.add_item(MemorizationQuestionSelect(title, self.ms,1))
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
-    @app_commands.command()
-    async def anki_help(self, interaction:discord.Interaction):
-        """ヘルプコマンド"""
-        embed = discord.Embed(title="暗記機能help ver0.1.0",color=0x00ff00)
-        embed.add_field(name="memorization_maker_view",value="問題回答スタート",inline=False)
-        embed.add_field(name="memorization_add",value="問題追加",inline=False)
-        embed.add_field(name="memorization_edit",value="問題編集",inline=False)
-        embed.add_field(name="delete_title",value="問題削除",inline=False)
-        embed.add_field(name="memorization_add_excel",value=
-"""
-エクセルから問題を追加
-```
-| A | B | C | D | E | F | G |
-|---|---|---|---|---|---|---|
-| 問題 | 答え | モード | 選択肢1 | 選択肢2 | 選択肢3 | 選択肢4 |
-問題: 問題文
-答え: 答え
-モード:
-    0 ・・・ 記述問題 
-    1 ・・・ 選択問題
-選択肢生成:  なにも入力されていない↓
-            自動ランダム生成 (選択肢1～4)
-
-任意選択肢: 選択肢1～4
-```
-要注意: 誤った入力はエラーを発生させます。
-"""
-        ,inline=False)
-        embed.add_field(name="memorization_sharecode",value="問題を共有するための共有コードを取得します。",inline=False)
-        embed.add_field(name="sharecode_copy",value="共有コードから問題を取得し、保存します。",inline=False)
-        embed.add_field(name="get_score",value="スコアを取得します。",inline=False)
-        await interaction.response.send_message(embed=embed,ephemeral=True)
 async def setup(bot):
     await bot.add_cog(MakerComanndsCog(bot))
     print("[SystemLog] memorization_maker_view loaded")
