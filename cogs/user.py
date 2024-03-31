@@ -23,7 +23,7 @@ class user(commands.Cog):
         # embed.add_field(name="メールアドレス", value="プライバシー保護のため非表示")
         embed.add_field(name="Discordと連携済か", value = "はい" if data["discordAccount"] else "いいえ")
         embed.add_field(name="HSSID", value=data["hid"])
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(user(bot))

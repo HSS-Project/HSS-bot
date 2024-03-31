@@ -7,15 +7,6 @@ import json
 import traceback
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-
-COGS = [
-    "jishaku",
-    "memorization_maker_view_discord",
-    "memorization_maker_add_discord",
-    # "school",
-    # "user"
-]
-
 class MyBot(commands.Bot):
     def __init__(self, prefix: str, intents: discord.Intents):
         super().__init__(command_prefix=prefix, intents=intents)
@@ -30,6 +21,7 @@ class MyBot(commands.Bot):
                 except Exception as e:
                     print(f"cogs.{file[:-3]} failed to load", e)
                     traceback.print_exc()
+        await self.load_extension("jishaku")
         await self.tree.sync()
         dt_now = datetime.datetime.now()
         print("-----------------------")
