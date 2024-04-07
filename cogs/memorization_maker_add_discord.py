@@ -840,4 +840,3 @@ class MemorizationCog(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(MemorizationCog(bot))
-    print("[SystemLog] memorization_maker_add_discord loaded")
