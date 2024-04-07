@@ -359,14 +359,14 @@ class Timed_Notifications(commands.Cog):
         self.send.start()
     
     @app_commands.command()
-    async def Time_Notifications_add(self, interaction: discord.Interaction):
+    async def time_notifications_add(self, interaction: discord.Interaction):
         """指定した時間にwebhookを使用して明日の日程を送信する機能の設定です"""
         view = discord.ui.View()
         view.add_item(SchoolSelect(interaction.user.id, 0))
         await interaction.response.send_message("学校を選択してください", view=view,ephemeral=True)
 
     @app_commands.command()
-    async def Time_Notifications_remove(self,interection:discord.Interaction):
+    async def time_notifications_remove(self,interection:discord.Interaction):
         """指定した時間にwebhookを使用して明日の日程を送信する機能の削除です"""
         view = discord.ui.View()
         view.add_item(SchoolSelect(interection.user.id, 1))
