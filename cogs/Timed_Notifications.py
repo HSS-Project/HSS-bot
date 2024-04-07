@@ -175,7 +175,7 @@ class TimeModal(discord.ui.Modal,title="送信時間指定"):
         except:
             await interaction.response.send_message("時間の形式が間違っています")
             return
-        webhook = await interaction.channel.create_webhook(name="Timed Notification Webhook")
+        webhook = await interaction.channel.create_webhook(name="HSS スケジュール通知")
         webhook_url = webhook.url
         await timed_notifications_add.add(self.lists[1], self.lists[2], self.lists[3], webhook_url, time)
         await interaction.response.send_message("通知を登録しました")
