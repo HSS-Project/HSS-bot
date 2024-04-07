@@ -6,6 +6,9 @@ import discord
 from discord.ext import commands, tasks
 from discord import app_commands
 
+import datetime
+import aiohttp
+
 with open("token.json", "r", encoding="utf-8") as f:
     token = json.load(f)
     token = token["HSSAPI_TOKEN"]
@@ -18,6 +21,7 @@ class SchoolSelect(discord.ui.Select):
         schools:list = user.get_permission_discordUserID(id)
         names = []
         options = []
+        print(schools)
         for school_id in schools:
             school = School(token=token, schoolid=school_id)
             data = school.get_data()            
@@ -66,44 +70,38 @@ class ClassSelect(discord.ui.Select):
         super().__init__(placeholder="クラスを選択してください", options=options)
     
     async def callback(self, interaction:discord.Interaction):
-        self.class_ = self.values[0]
+        lists:list = [self.mode,self.schoolid, self.grade, self.values[0]]
+        await interaction.response.send_modal(TimeModal(lists))
 
-
-class HourTimeSelect(discord.ui.Select):
-    def __init__(self):
-        options = []
-        for i in range(24):
-            options.append(discord.SelectOption(label=f"{i}時", value=i))
-        super().__init__(placeholder="時間を選択してください", options=options)
+class TimeModal(discord.ui.Modal):
+    def __init__(self,lists:list):
+        super().__init__(timeout=None)
+        self.lists = lists
+        self.input = discord.ui.TextInput(placeholder="時間を入力してください(HH:MM)", min_length=5, max_length=5)
+        self.add_item(self.input)
     
-    async def callback(self, interaction:discord.Interaction):
-        view = discord.ui.View()
-        view.add_item(MinuteTimeSelect(self.values[0]))
-        await interaction.response.edit_message(content="分を選択してください", view=view)
-
-class MinuteTimeSelect(discord.ui.Select):
-    def __init__(self,hour:int):
-        options = []
-        for i in range(15):
-            options.append(discord.SelectOption(label=f"{i}分", value=i))
-        super().__init__(placeholder="分を選択してください", options=options)
-        for i in range(15,30,15):
-            options = discord.SelectOption(label=f"{i}分", value=i)
-            self.add_option(options)
-
-        for i in range(15,45,30):
-            options = discord.SelectOption(label=f"{i}分", value=i)
-            self.add_option(options)
-
-        for i in range(15,60,45):
-            options = discord.SelectOption(label=f"{i}分", value=i)
-            self.add_option(options)
-
-
-    async def callback(self, interaction:discord.Interaction):
-        await interaction.response.edit_message(content="時間を設定しました", view=None)
-    
-            
+    async def on_submit(self, interaction:discord.Interaction):
+        time = self.input.value
+        try:
+            time = datetime.datetime.strptime(time, "%H:%M")
+        except:
+            await interaction.response.send_message("時間の形式が間違っています")
+            return
+        
+        if self.lists[0] == 0:
+            webhook = await interaction.channel.create_webhook(name="Timed Notification Webhook")
+            webhook_url = webhook.url
+            await Timed_NotificationsAdd.add(self.lists[1], self.lists[2], self.lists[3], webhook_url, time)
+            await interaction.response.send_message("通知を登録しました")
+        elif self.lists[0] == 1:
+            webhooks = await interaction.channel.webhooks()
+            webhook_url = webhooks[0].url if webhooks else None
+            if webhook_url:
+                index = await Timed_NotificationsAdd.get_index(self.lists[1], self.lists[2], self.lists[3], webhook_url)
+                await Timed_NotificationsAdd.remove(index)
+                await interaction.response.send_message("通知を削除しました")
+            else:
+                await interaction.response.send_message("Webhookが見つかりません")
 
 class Timed_NotificationsAdd:
     def __init__(self):
@@ -126,12 +124,12 @@ class Timed_NotificationsAdd:
         with open("send_data.json", "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=4)
 
-    async def add(self,school_id,grade,class_,channel_id,time):
+    async def add(self,school_id,grade,class_,webhook_url,time):
         self.data["send_data"].append({
             "school_id":school_id,
             "grade":grade,
             "class":class_,
-            "webhook_url":channel_id,
+            "webhook_url":webhook_url,
             "time":time
         })
         self.save()
@@ -145,9 +143,9 @@ class Timed_NotificationsAdd:
     async def get(self):
         return self.data["send_data"]
     
-    async def get_index(self,school_id:int,grade:int,class_:int):
+    async def get_index(self,school_id:int,grade:int,class_:int,webhook_url:int):
         for i in range(len(self.data["send_data"])):
-            if self.data["send_data"][i]["school_id"] == school_id and self.data["send_data"][i]["grade"] == grade and self.data["send_data"][i]["class"] == class_:
+            if self.data["send_data"][i]["school_id"] == school_id and self.data["send_data"][i]["grade"] == grade and self.data["send_data"][i]["class"] == class_ and self.data["send_data"][i]["webhook_url"] == webhook_url:
                 return i
             
         return None
@@ -163,8 +161,9 @@ class Timed_NotificationsAdd:
 class Timed_Notifications(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.add = Timed_NotificationsAdd()
-        self.add.load()
+        self.Timed_NotificationsAdd = Timed_NotificationsAdd()
+        self.Timed_NotificationsAdd.load()
+        self.send.start()
     
     @app_commands.command()
     async def add(self, interaction: discord.Interaction):
@@ -177,3 +176,30 @@ class Timed_Notifications(commands.Cog):
         view = discord.ui.View()
         view.add_item(SchoolSelect(interection.user.id, 1))
         await interection.response.send_message("学校を選択してください", view=view)
+        
+        
+    @tasks.loop(seconds=60)
+    async def send(self):
+        now = datetime.datetime.now()
+        listsweekdays = ["mon","tue","wed","thu","fri","sat","sun"]
+        for data in await self.Timed_NotificationsAdd.get():
+            time = datetime.datetime.strptime(data["time"], "%H:%M")
+            if time.hour == now.hour and time.minute == now.minute:
+                school = School(token=token, schoolid=data["school_id"])
+                index = await school.search_class(school, data["grade"], data["class"])
+                weekday = listsweekdays[now.weekday()]
+                timeline = school.get_timeline(index, weekday)
+                default_timeline = school.get_default_timeline(index, weekday)
+                homework = school.get_homework(index, weekday)
+                event = school.get_event(index, weekday)
+                if timeline == []:
+                    timeline = default_timeline
+                async with aiohttp.ClientSession() as session:
+                    webhook = discord.Webhook.from_url(data["webhook_url"], adapter=session)
+                embed = discord.Embed(title=f"{school.get_data()['details']['name']} {data['grade']}年{data['class']}組", description=f"{weekday} {now.hour}:{now.minute}の通知です", color=0x00ff00)
+                for i in range(len(timeline)):
+                    embed.add_field(name=f"{i+1}時間目:{timeline[i]['name']}",value=f"場所:{timeline[i]['place']}",inline=False) 
+                await webhook.send(embed=embed)    
+                
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Timed_Notifications(bot))
