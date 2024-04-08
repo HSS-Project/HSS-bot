@@ -28,7 +28,10 @@ class TitleAddModal(ui.Modal, title="タイトル追加"):
         - None
         """
         memmorization = memorization_maker.MemorizationSystem()
-        titles = await memmorization.get_mission_title(str(interaction.user.id))
+        try:
+            titles = await memmorization.get_mission_title(str(interaction.user.id))
+        except:
+            titles = []
         content = ""
         if not False:
             if str(self.title_input.value) in titles:
