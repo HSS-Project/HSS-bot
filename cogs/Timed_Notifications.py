@@ -46,6 +46,9 @@ class SchoolSelect(discord.ui.Select):
         super().__init__(placeholder="学校を選択してください", options=options)
     
     async def callback(self, interaction:discord.Interaction):
+        if self.values[0] == "取得失敗":
+            await interaction.response.send_message("取得失敗しました", ephemeral=True)
+            return
         view = discord.ui.View()
         view.add_item(GradeSelect(self.values[0], self.mode))
         await interaction.response.edit_message(content="学年を選択してください", view=view)
@@ -64,9 +67,15 @@ class GradeSelect(discord.ui.Select):
     def __init__(self,schoolid:int,modes:int):
         self.schoolid = schoolid
         school = School(token=token,schoolid=schoolid)
-        get_classes:list = school.get_classes()
-        self.mode = modes
         options = []
+        try:
+            get_classes:list = school.get_classes()
+        except Exception as e:
+            print(e)
+            options.append(discord.SelectOption(label="取得失敗", value="取得失敗"))
+            super().__init__(placeholder="学年を選択してください", options=options)
+            return
+        self.mode = modes
         for grade in get_classes:
             for key in grade.keys():
                 options.append(discord.SelectOption(label=f"{key}年", value=key))
@@ -74,6 +83,9 @@ class GradeSelect(discord.ui.Select):
         super().__init__(placeholder="学年を選択してください", options=options)
                     
     async def callback(self, interaction:discord.Interaction):
+        if self.values[0] == "取得失敗":
+            await interaction.response.send_message("取得失敗しました", ephemeral=True)
+            return
         view = discord.ui.View()
         view.add_item(ClassSelect(self.schoolid, self.values[0], self.mode))
         await interaction.response.edit_message(content="クラスを選択してください", view=view)
@@ -95,8 +107,14 @@ class ClassSelect(discord.ui.Select):
         self.mode = mode
         self.schoolid = schoolid
         self.grade = grade
-        get_classes:list = school.get_classes()
         options = []
+        try:
+            get_classes:list = school.get_classes()
+        except Exception as e:
+            print(e)
+            options.append(discord.SelectOption(label="取得失敗", value="取得失敗"))
+            super().__init__(placeholder="クラスを選択してください", options=options)
+            return
         for grade_ in get_classes:
             for key in grade_.keys():
                 if key == grade:
@@ -132,13 +150,22 @@ class RemoveSelect(discord.ui.Select):
         self.timed_notifications_add = Timed_NotificationsAdd()
         options = []
         self.lists = lists
-        selectlists = self.timed_notifications_add.get_lists(lists[1],lists[2],lists[3])
+        try:
+            selectlists = self.timed_notifications_add.get_lists(lists[1],lists[2],lists[3])
+        except Exception as e:
+            print(e)
+            options.append(discord.SelectOption(label="取得失敗", value="取得失敗"))
+            super().__init__(placeholder="削除する通知を選択してください", options=options)
+            return
         for data in selectlists:
             options.append(discord.SelectOption(label=f"{data['time']}", value=f"{data['time']}"))
             
         super().__init__(placeholder="削除する通知を選択してください", options=options, min_values=1, max_values=1)
         
     async def callback(self, interaction:discord.Interaction):
+        if self.values[0] == "取得失敗":
+            await interaction.response.send_message("取得失敗しました", ephemeral=True)
+            return
         time = self.values[0]
         index = self.timed_notifications_add.get_index_2(self.lists[1], self.lists[2], self.lists[3],time)
         data = await self.timed_notifications_add.get_data(index)
@@ -175,9 +202,20 @@ class TimeModal(discord.ui.Modal,title="送信時間指定"):
         except:
             await interaction.response.send_message("時間の形式が間違っています")
             return
-        webhook = await interaction.channel.create_webhook(name="HSS スケジュール通知")
-        webhook_url = webhook.url
-        await timed_notifications_add.add(self.lists[1], self.lists[2], self.lists[3], webhook_url, time)
+        try:
+            webhook = await interaction.channel.create_webhook(name="HSS スケジュール通知")
+            webhook_url = webhook.url
+        except Exception as e:
+            print(e)
+            await interaction.response.send_message("Webhookの作成に失敗しました")
+            return
+        
+        try:
+            await timed_notifications_add.add(self.lists[1], self.lists[2], self.lists[3], webhook_url, time)
+        except Exception as e:
+            print(e)
+            await interaction.response.send_message("通知の登録に失敗しました")
+            return
         await interaction.response.send_message("通知を登録しました")
 
 class Timed_NotificationsAdd:
@@ -375,41 +413,44 @@ class Timed_Notifications(commands.Cog):
         
     @tasks.loop(seconds=60)
     async def send(self):
-        now = datetime.datetime.now()
-        listsweekdays = ["mon","tue","wed","thu","fri","sat","sun"]
-        for data in await self.Timed_NotificationsAdd.get():
-            time = datetime.datetime.strptime(data["time"], "%H:%M")
-            if time.hour == now.hour and time.minute == now.minute:
-                school = School(token=token, schoolid=data["school_id"])
-                print(data)
-                print(data["grade"], data["class"])
-                grade:int = int(data["grade"])
-                class_:int = int(data["class"])
-                index = school.search_class(grade=grade, classname=class_)
-                print(index)
-                if now.weekday() == 6:
-                    weekday = listsweekdays[0]
-                else:
-                    weekday = listsweekdays[now.weekday()+1]
-                timeline = school.get_timeline(index, weekday)
-                default_timeline = school.get_default_timeline(index, weekday)
-                # homework = school.get_homework(index, weekday)
-                # event = school.get_event(index, weekday)
-                if timeline == []:
-                    timeline = default_timeline
-                embed = discord.Embed(title=f"{school.get_data()['details']['name']} {data['grade']}年{data['class']}組", description=f"{weekday} 明日の日程です", color=0x00ff00)
-                for i in range(len(timeline)):
-                    if timeline[i]['place'] == "初期値":
-                        place = "未設定"
+        try:
+            now = datetime.datetime.now()
+            listsweekdays = ["mon","tue","wed","thu","fri","sat","sun"]
+            for data in await self.Timed_NotificationsAdd.get():
+                time = datetime.datetime.strptime(data["time"], "%H:%M")
+                if time.hour == now.hour and time.minute == now.minute:
+                    school = School(token=token, schoolid=data["school_id"])
+                    print(data)
+                    print(data["grade"], data["class"])
+                    grade:int = int(data["grade"])
+                    class_:int = int(data["class"])
+                    index = school.search_class(grade=grade, classname=class_)
+                    print(index)
+                    if now.weekday() == 6:
+                        weekday = listsweekdays[0]
                     else:
-                        place = timeline[i]['place']
-                    embed.add_field(name=f"{i+1}時間目:{timeline[i]['name']}",value=place,inline=False) 
-                try:
-                    async with aiohttp.ClientSession() as session:
-                        webhook = discord.Webhook.from_url(data["webhook_url"], session=session)
-                        await webhook.send(embed=embed)    
-                except Exception as e:
-                    print("送信失敗",data,e)
+                        weekday = listsweekdays[now.weekday()+1]
+                    timeline = school.get_timeline(index, weekday)
+                    default_timeline = school.get_default_timeline(index, weekday)
+                    # homework = school.get_homework(index, weekday)
+                    # event = school.get_event(index, weekday)
+                    if timeline == []:
+                        timeline = default_timeline
+                    embed = discord.Embed(title=f"{school.get_data()['details']['name']} {data['grade']}年{data['class']}組", description=f"{weekday} 明日の日程です", color=0x00ff00)
+                    for i in range(len(timeline)):
+                        if timeline[i]['place'] == "初期値":
+                            place = "未設定"
+                        else:
+                            place = timeline[i]['place']
+                        embed.add_field(name=f"{i+1}時間目:{timeline[i]['name']}",value=place,inline=False) 
+                    try:
+                        async with aiohttp.ClientSession() as session:
+                            webhook = discord.Webhook.from_url(data["webhook_url"], session=session)
+                            await webhook.send(embed=embed)    
+                    except Exception as e:
+                        print("送信失敗",data,e)
+        except Exception as e:
+            print(e)
                 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Timed_Notifications(bot))

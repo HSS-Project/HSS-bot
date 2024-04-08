@@ -28,10 +28,13 @@ class TitleAddModal(ui.Modal, title="タイトル追加"):
         - None
         """
         memmorization = memorization_maker.MemorizationSystem()
-        titles = await memmorization.get_mission_title(str(interaction.user.id))
+        try:
+            titles = await memmorization.get_mission_title(str(interaction.user.id))
+        except:
+            titles = []
         content = ""
         if not False:
-            if str(self.title_input.value) in titles:
+            if isinstance(titles, list) and str(self.title_input.value) in titles:
                 content = "編集モード"
         title = str(self.title_input.value)        
         embed = discord.Embed(title="問題追加", description=f"現在の選択問題設定個数:4", color=0x00ff00)
