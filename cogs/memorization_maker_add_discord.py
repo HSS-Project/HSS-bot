@@ -34,7 +34,7 @@ class TitleAddModal(ui.Modal, title="タイトル追加"):
             titles = []
         content = ""
         if not False:
-            if str(self.title_input.value) in titles:
+            if isinstance(titles, list) and str(self.title_input.value) in titles:
                 content = "編集モード"
         title = str(self.title_input.value)        
         embed = discord.Embed(title="問題追加", description=f"現在の選択問題設定個数:4", color=0x00ff00)
