@@ -22,11 +22,21 @@ class gettimelineselect(discord.ui.View):
         self._class:int = int(_class)
         self.date = date
         self.school = School(token=token, schoolid=self.school_id)
-        self.class_index = self.school.search_class(int(grade), int(_class))
+        try:
+            self.class_index = self.school.search_class(int(grade), int(_class))
+        except Exception as e:
+            print(e)
+            self.add_item(discord.ui.Button(style=discord.ButtonStyle.red, label="エラーが発生しました"))
+            return
 
     @discord.ui.button(style=discord.ButtonStyle.green, label="標準時間割")
     async def default_timeline(self, interaction:discord.Interaction, button:discord.ui.Button):
-        res = self.school.get_default_timeline(self.class_index, self.date)
+        try:
+            res = self.school.get_default_timeline(self.class_index, self.date)
+        except Exception as e:
+            embed = discord.Embed(title="hss - エラー", description="エラーが発生しました。", color=discord.Color.red()).add_field(name="エラー内容", value=e)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
         embed = discord.Embed(title=f"{self.grade}-{self._class}の{self.date}の標準時間割", description="")
         for n in range(len(res)):
             embed.add_field(name=f"{n+1}時間目", value=f'教科:{res[n]["name"]}\n 場所:{"指定なし" if res[n]["place"] == "初期値" else res[n]["place"]}\n イベントか:{"はい" if res[n]["IsEvent"] else "いいえ"}', inline=False)
@@ -34,7 +44,12 @@ class gettimelineselect(discord.ui.View):
     
     @discord.ui.button(style=discord.ButtonStyle.green, label="今週の時間割")
     async def timeline(self, interaction:discord.Interaction, button:discord.ui.Button):
-        res = self.school.get_timeline(self.class_index, self.date)
+        try:
+            res = self.school.get_timeline(self.class_index, self.date)
+        except Exception as e:
+            embed = discord.Embed(title="hss - エラー", description="エラーが発生しました。", color=discord.Color.red()).add_field(name="エラー内容", value=e)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
         embed = discord.Embed(title=f"{self.grade}-{self._class}の{self.date}の時間割", description="")
         for n in range(len(res)):
             embed.add_field(name=f"{n+1}時間目", value=f'教科:{res[n]["name"]}\n 場所:{"指定なし" if res[n]["place"] == "初期値" else res[n]["place"]}\n イベントか:{"はい" if res[n]["IsEvent"] else "いいえ"}', inline=False)
@@ -46,7 +61,14 @@ class SchoolSelect(discord.ui.Select):
         self.mode = mode
         options = []
         user = User(token=token)
-        schools:list = user.get_permission_discordUserID(id)
+        try:
+            schools:list = user.get_permission_discordUserID(id)
+        except Exception as e:
+            print(e)
+            options.append(discord.SelectOption(label="エラーが発生しました", value="error"))
+            super().__init__(placeholder="エラー", options=options)
+            return
+        
         names = []
         options = []
         for school_id in schools:
@@ -66,10 +88,16 @@ class SchoolSelect(discord.ui.Select):
 class GradeSelect(discord.ui.Select):
     def __init__(self,schoolid:int,mode:int):
         self.schoolid = schoolid
+        options = []
         self.mode = mode
         school = School(token=token,schoolid=schoolid)
-        get_classes:list = school.get_classes()
-        options = []
+        try:
+            get_classes:list = school.get_classes()
+        except Exception as e:
+            print(e)
+            options.append(discord.SelectOption(label="エラーが発生しました", value="error"))
+            super().__init__(placeholder="エラー", options=options)
+            return
         for grade in get_classes:
             for key in grade.keys():
                 options.append(discord.SelectOption(label=f"{key}年", value=key))
@@ -77,6 +105,9 @@ class GradeSelect(discord.ui.Select):
         super().__init__(placeholder="学年を選択してください", options=options)
                     
     async def callback(self, interaction:discord.Interaction):
+        if self.values[0] == "error":
+            await interaction.response.edit_message(content="エラーが発生しました", view=None)
+            return
         view = discord.ui.View()
         view.add_item(ClassSelect(self.schoolid, self.values[0], self.mode))
         await interaction.response.edit_message(content="クラスを選択してください", view=view)
@@ -88,8 +119,13 @@ class ClassSelect(discord.ui.Select):
         self.mode = mode
         self.schoolid = schoolid
         self.grade = grade
-        get_classes:list = school.get_classes()
         options = []
+        try:
+            get_classes:list = school.get_classes()
+        except Exception as e:
+            print(e)
+            options.append(discord.SelectOption(label="エラーが発生しました", value="error"))
+            return 
         for grade_ in get_classes:
             for key in grade_.keys():
                 if key == grade:
@@ -122,8 +158,6 @@ class DayOfWeekSelect(discord.ui.Select):
     
     async def callback(self, interaction:discord.Interaction):
         if self.mode == 0:            
-            print("gettimelineselect")
-            print(self.schoolid, self.grade, self._class, self.values[0])
             await interaction.response.edit_message(content="どちらの時間割を取得しますか", view=gettimelineselect(self.schoolid, self.grade, self._class, self.values[0]))
         elif self.mode == 1:
             await interaction.response.send_modal(send(self.schoolid, self.grade, self._class, self.values[0], self.mode))
@@ -138,13 +172,19 @@ class DayOfWeekSelect(discord.ui.Select):
                 ).add_field(name="開始時間/終了時間(終日続くか)", 
                             value=f"{event['timeData']['startTime']}～{event['timeData']['end']}（{'終日' if event['timeData']['isEndofDay'] else '時間内のみ'}）"))
             except TypeError as e:
-                await interaction.response.edit_message(content="内容はないようです")
+                await interaction.response.edit_message(content="エラー\n内容はないようです")
         elif self.mode == 3:
-            _class = self.school.search_class(int(self.grade),int(self._class))
-            homework = self.school.get_homework(_class, self.values[0])
+            try:
+                _class = self.school.search_class(int(self.grade),int(self._class))
+                homework = self.school.get_homework(_class, self.values[0])
+            except Exception as e:
+                await interaction.response.edit_message(content="エラー\n内容はないようです")
+                return
             lens = len(homework)
             embed = discord.Embed(title=f"{self.values[0]}の宿題")
-            await interaction.response.edit_message(content=homework)
+            for n in range(lens):
+                embed.add_field(name=f"{n+1}番目の宿題", value=f"教科:{homework[n]['name']}\nとっても大きくてやるのに時間がかかるものか:{homework[n]['istooBig']}\nページ情報:\nはじまり{homework[n]['start']}\nおわり{homework[n]['end']}\n補足:{homework[n]['comment']}")
+            await interaction.response.edit_message(embed=embed)
 
 
 class send(discord.ui.Modal):
@@ -186,8 +226,6 @@ class send(discord.ui.Modal):
         
     async def on_submit(self, interaction:discord.Interaction):
         self.stop()
-        print(self.isevent.value)
-        print(type(self.isevent.value))
         if (self.isevent.value not in ["True", "False"]):
             embed = discord.Embed(
                 title="hss - エラー", description="エラーが発生しました。", color=discord.Color.orange()
@@ -197,20 +235,15 @@ class send(discord.ui.Modal):
 
         school = School(token=token, schoolid=self.schoolid)
         if self.mode == 1:
-            #try:
-            req = school.patch_timeline(grade=self.grade, _class=self._class, date=self.date, name=self.name.value, isEvent=self.isevent.value, place=self.place.value)
-            embed = discord.Embed(title="hss - 設定完了" , description="設定が正常に完了しました。", color=discord.Color.green()
-            ).add_field(name="教科名", value=self.name.value).add_field(name="イベントか", value=f"{'はい' if bool(self.isevent.value) else 'いいえ'}").add_field(name="場所", value=self.place.value)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            #except Exception as e:
-                # embed = discord.Embed(title="hss - エラー", description="エラーが発生しました。", color=discord.Color.red()).add_field(name="エラー内容", value=e)
-                # await interaction.response.send_message(embed=embed, ephemeral=True)
+            try:
+                req = school.patch_timeline(grade=self.grade, _class=self._class, date=self.date, name=self.name.value, isEvent=self.isevent.value, place=self.place.value)
+                embed = discord.Embed(title="hss - 設定完了" , description="設定が正常に完了しました。", color=discord.Color.green()
+                ).add_field(name="教科名", value=self.name.value).add_field(name="イベントか", value=f"{'はい' if bool(self.isevent.value) else 'いいえ'}").add_field(name="場所", value=self.place.value)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            except Exception as e:
+                embed = discord.Embed(title="hss - エラー", description="エラーが発生しました。", color=discord.Color.red()).add_field(name="エラー内容", value=e)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
 
-#学校選択→学年選択→クラス選択できた。　「技術的には可能だけど僕知らない　○-○だったら25クラスまでしかできないからマンモス学校死ぬ」
-#学年とクラスいっしょは無理だった？　まあいっか(　これどんな感じで渡されるんですk
-# get_data()でbody.data.details.nameやね ※get_dataのreturnがbody.dataらしいので、details.nameだけでいいっぽい
-#tokenってアプリケーションはどうなるん　token設定どうやる？ token.jsonにぶちこむ？　そう。　School(token=token)毎回するのだるいからなんかglobalで良い説　... だな！　とりま　かくぞおお
-#基本的にはユーザーと変わらないはず？　とくにせっていしてない！ アプリケーションのトークン一個だけおいとくって感じか　たぶんいいとおも school id指定...:)) まあ後にやるってことでとりあえずこれで行くか！
 class patch(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

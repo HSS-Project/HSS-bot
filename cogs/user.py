@@ -17,7 +17,10 @@ class user(commands.Cog):
     async def user_get(self, interaction:discord.Interaction):
         """ユーザー情報を取得します。"""
         user = User(token="token")
-        data = user.get_me()
+        try:
+            data = user.get_me()
+        except Exception as e:
+            return await interaction.response.send_message(content=f"エラーが発生しました: {e}", ephemeral=True)
         embed = discord.Embed(title=f"{data['username']}の情報")
         embed.add_field(name="デベロッパーか", value="はい" if data['developer'] else "いいえ")
         # embed.add_field(name="メールアドレス", value="プライバシー保護のため非表示")
