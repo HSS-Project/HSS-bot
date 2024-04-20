@@ -4,6 +4,9 @@ from typing_extensions import NotRequired
 import json
 import random
 import openpyxl
+from HSS import User
+
+from typing import TypedDict
 
 
 class QuestionData(TypedDict):
@@ -22,18 +25,36 @@ class StatusData(TypedDict):
     count: int
     score: int
 
+class answerTypedDict(TypedDict):
+    answer: str
 
-class MemorizationData(TypedDict):
+class MemorizationData(answerTypedDict):
     memorization: dict[str, dict[str, CardData]]
     user_status: dict[str, dict[str, StatusData]]
 
 
 class MemorizationSystem:
     data: MemorizationData
+    
 
     def __init__(self, filename: str = 'memorization.json'):
         self.filename = filename
         self.data = {"memorization": {}, "user_status": {}}
+
+    async def checkuser_in_HSS(self, id: int) -> bool:
+        """
+        Check if the user is in the HSS.
+        """
+        with open("token.json", "r", encoding="utf-8") as f:
+            token = json.load(f)
+            token = token["HSSAPI_TOKEN"]
+        user = User(token=token)
+        id = int(id)
+        try:
+            schools = user.get_permission_discordUserID(id)
+        except Exception as e:
+            return False
+        return True
 
     async def save_data(self):
         """
@@ -365,6 +386,97 @@ class MemorizationSystem:
                         assert "select" in item
                         return answer == item["select"][int(item["answer"])-1]
         return False
+    
+    async def get_answer(self, id: str, title: str, question: str):
+        """
+        Get the answer to a mission.
+
+        Args:
+            id (str): The ID of the mission.
+            title (str): The title of the mission.
+            question (str): The question of the mission.
+
+        Returns:
+            str: The answer to the mission if it exists, False otherwise.
+        """
+        await self.load_data()
+        if id in self.data["memorization"] and title in self.data["memorization"][id]:
+            for item in self.data["memorization"][id][title]["questions"]:
+                if item["question"] == question:
+                    if item["mode"] == 0:
+                        return item["answer"]
+                    elif item["mode"] == 1:
+                        return item["select"][int(item["answer"])-1]
+                                            
+        return False
+    
+    async def randam_mission_select(self,id:str,title:str):
+        """
+        Randomly select a mission.
+        
+        Args:
+            id (str): The ID of the mission.
+            title (str): The title of the mission.
+        
+        Returns:
+            bool: True if the mission was successfully selected, False otherwise.
+        """
+        await self.load_data()
+        id = str(id)
+        if id in self.data["memorization"] and title in self.data["memorization"][id]:
+            random.shuffle(self.data["memorization"][id][title]["questions"])
+            
+            await self.save_data()
+            return True
+        return False
+
+    async def get_mission_selectmode_list(self,id:str,title:str):
+        """
+        Get the mode of the mission.
+        
+        Args:
+            id (str): The ID of the mission.
+            title (str): The title of the mission.
+            question_number (int): The number of the question.
+            
+        Returns:
+            list: The mode of the mission.
+        """
+        await self.load_data()
+        id = str(id)
+        selects = []
+        if id in self.data["memorization"] and title in self.data["memorization"][id]:
+            for item in self.data["memorization"][id][title]["questions"]:
+                if item["mode"] == 1:
+                    selects.append(item["mode"])
+                    
+            await self.save_data()
+            return selects
+
+    async def select_question_randam(self,id,title,question_number):
+        """
+        Randomly select a question.
+        
+        Args:
+            id (str): The ID of the mission.
+            title (str): The title of the mission.
+            question_number (int): The number of the question.
+            
+        Returns:
+            bool: True if the question was successfully selected, False otherwise.
+        """
+        await self.load_data()
+        id = str(id)
+        anwer_num = int(self.data["memorization"][id][title]["questions"][question_number]["answer"])-1
+        selects:list = self.data["memorization"][id][title]["questions"][question_number]["select"]
+        answer = selects[anwer_num]
+        
+        random.shuffle(selects)
+        answer_number = selects.index(answer)+1
+        self.data["memorization"][id][title]["questions"][question_number]["select"] = selects
+        self.data["memorization"][id][title]["questions"][question_number]["answer"] = answer_number
+        await self.save_data()
+        return True
 
     """
     user_status System ↓
