@@ -170,7 +170,7 @@ class MemorizationSystem:
                 try:
                     if row[3] is not None and row[4] is not None and row[5] is not None and row[6] is not None:
                         select = [row[3], row[4], row[5], row[6]]
-                        random_answer = select.index(answer) + 1
+                        answer_num = select.index(answer) + 1
                         mode_change = 0
                     else:
                         mode_change = 1
