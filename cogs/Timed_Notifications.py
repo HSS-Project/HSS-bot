@@ -432,7 +432,7 @@ class Timed_Notifications(commands.Cog):
                         weekday = listsweekdays[now.weekday()+1]
                     timeline = school.get_timeline(index, weekday)
                     default_timeline = school.get_default_timeline(index, weekday)
-                    # homework = school.get_homework(index, weekday)
+                    homework = school.get_homework(index)
                     # event = school.get_event(index, weekday)
                     if timeline == []:
                         timeline = default_timeline
@@ -443,6 +443,12 @@ class Timed_Notifications(commands.Cog):
                         else:
                             place = timeline[i]['place']
                         embed.add_field(name=f"{i+1}時間目:{timeline[i]['name']}",value=place,inline=False) 
+                    embed.add_field(name="〜〜宿題〜〜",value="",inline=False)
+                    for i in range(len(homework)):
+                        embed.add_field(name=f"ーーー{homework[i]['name']}ーーーー",value="",inline=False)
+                        embed.add_field(name="時間かかるか",value="はい" if homework[i]['istooBig'] == True else "いいえ",inline=False)
+                        embed.add_field(name="ページ",value=f"{homework[i]['page']['start']}〜{homework[i]['page']['end']}",inline=False)
+                        embed.add_field(name="コメント",value=homework[i]['page']['comment'],inline=False)
                     try:
                         async with aiohttp.ClientSession() as session:
                             webhook = discord.Webhook.from_url(data["webhook_url"], session=session)

@@ -44,7 +44,8 @@ class MakerSelect(discord.ui.Select):
             ch = "不正解"
         embed = discord.Embed(title="回答結果",color=0x00ff00)
         embed.add_field(name="あなたの回答",value=f"{answer}",inline=False)
-        embed.add_field(name="正誤",value=f"あなたの回答は{ch}です",inline=False)
+        embed.add_field(name="正誤",value=f"あなたの回答は「{ch}」です",inline=False)
+        embed.add_field(name="解答",value=f"正解は「{await self.ms.get_answer(str(interaction.user.id),self.title,self.question)}」です",inline=False)
         await interaction.response.edit_message(embed=embed,view=MakerAmwerButtonContenu(self.title,self.question,self.count, self.ms))
 
 
@@ -95,7 +96,8 @@ class MakerAnswer(ui.Modal,title="回答"):
             ch = "不正解"
         embed = discord.Embed(title="回答結果", color=0x00ff00)
         embed.add_field(name="あなたの回答", value=f"{answer}", inline=False)
-        embed.add_field(name="正誤", value=f"あなたの回答は{ch}です", inline=False)
+        embed.add_field(name="正誤", value=f"あなたの回答は「{ch}」です", inline=False)
+        embed.add_field(name="解答", value=f"正解は「{await self.ms.get_answer(str(interaction.user.id), self.title, self.question)}」です", inline=False)
         await interaction.response.edit_message(embed=embed, view=MakerAmwerButtonContenu(self.title, self.question, self.counts, self.ms))
 
 class MakerAmwerButtonContenu(discord.ui.View):
@@ -213,7 +215,6 @@ class MemorizationQuestionSelect(discord.ui.Select):
             embed.add_field(name="結果", value=f"問題: [{title}]のスコアは{score}点です")
             await interaction.response.edit_message(embed=embed)
 
-
 class MemorizationPlayMain:
     """
     Represents a class for playing the memorization game.
@@ -249,7 +250,12 @@ class MemorizationPlayMain:
             count = dicts["count"]
             embed = discord.Embed(title=f"{count}回目の挑戦終了",color=0x00ff00)
             embed.add_field(name="結果",value=f"問題: [{self.title}]のスコアは{score}点です")
-            return await interaction.response.send_message(embed=embed,ephemeral=True)
+            await interaction.response.send_message(embed=embed,ephemeral=True)
+            await self.ms.randam_mission_select(str(interaction.user.id), self.title)
+            mission_lists = await self.ms.get_mission_selectmode_list(str(interaction.user.id), self.title)
+            for i in mission_lists:
+                await self.ms.select_question_randam(str(interaction.user.id), self.title, i)
+            return
         if self.counts == 0:
             await self.ms.add_user_status(str(interaction.user.id), self.title)
             await self.ms.edit_user_status(str(interaction.user.id), self.title, 1, 0)

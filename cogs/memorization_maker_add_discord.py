@@ -780,6 +780,9 @@ class MemorizationCog(commands.Cog):
         """
         メモリゼーションを追加するコマンドです。
         """
+        if await self.memorization.checkuser_in_HSS(interaction.user.id) == False:
+            await interaction.response.send_message("HSSにユーザー登録がされていません。\nこの機能はHSSに登録してないユーザーはご利用いただけません。", ephemeral=True)
+            return
         await interaction.response.send_modal(TitleAddModal())
 
     @app_commands.command()
@@ -787,7 +790,11 @@ class MemorizationCog(commands.Cog):
         """
         メモリゼーションの問題を編集するコマンドです。
         """
+        if await self.memorization.checkuser_in_HSS(interaction.user.id) == False:
+            await interaction.response.send_message("HSSにユーザー登録がされていません。\nこの機能はHSSに登録してないユーザーはご利用いただけません。", ephemeral=True)
+            return
         lists = await self.memorization.get_mission_title(str(interaction.user.id))
+        print(lists)
         view = discord.ui.View()
         view.add_item(QuestionEditSelect(lists))
         await interaction.response.send_message("編集する問題を選択してください", view=view, ephemeral=True)
@@ -797,6 +804,9 @@ class MemorizationCog(commands.Cog):
         """
         共有コードから問題をコピーするコマンドです。
         """
+        if await self.memorization.checkuser_in_HSS(interaction.user.id) == False:
+            await interaction.response.send_message("HSSにユーザー登録がされていません。\nこの機能はHSSに登録してないユーザーはご利用いただけません。", ephemeral=True)
+            return
         await interaction.response.defer(thinking=True)
         ch = await self.memorization.sharecode_question_copy(str(interaction.user.id),code)
         if ch:
@@ -809,6 +819,9 @@ class MemorizationCog(commands.Cog):
         """
         Exselファイルから問題を追加するコマンドです。
         """
+        if await self.memorization.checkuser_in_HSS(interaction.user.id) == False:
+            await interaction.response.send_message("HSSにユーザー登録がされていません。\nこの機能はHSSに登録してないユーザーはご利用いただけません。", ephemeral=True)
+            return
         await interaction.response.defer(thinking=True)
         file_bytes = await file.read()
         file_like_object = io.BytesIO(file_bytes)
@@ -826,6 +839,9 @@ class MemorizationCog(commands.Cog):
         """
         共有コードを取得するコマンドです。
         """
+        if await self.memorization.checkuser_in_HSS(interaction.user.id) == False:
+            await interaction.response.send_message("HSSにユーザー登録がされていません。\nこの機能はHSSに登録してないユーザーはご利用いただけません。", ephemeral=True)
+            return
         lists = await self.memorization.get_mission_title(str(interaction.user.id))
         view = discord.ui.View()
         view.add_item(MemorizationShareSelect(lists))
@@ -836,6 +852,9 @@ class MemorizationCog(commands.Cog):
         """
         タイトルを削除するコマンドです。
         """
+        if await self.memorization.checkuser_in_HSS(intearction.user.id) == False:
+            await intearction.response.send_message("HSSにユーザー登録がされていません。\nこの機能はHSSに登録してないユーザーはご利用いただけません。", ephemeral=True)
+            return
         lists = await self.memorization.get_mission_title(str(intearction.user.id))
         view = discord.ui.View()
         view.add_item(MemorizationTitleDeleteSelect(lists))
