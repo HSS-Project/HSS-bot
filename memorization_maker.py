@@ -159,17 +159,26 @@ class MemorizationSystem:
 
             question = row[0]
             answer = row[1]
-            mode:int = row[2]
+            mode = row[2]
+            mode = int(mode)
+            if type(mode) != int:
+                return False
             if mode == 1:
                 self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 0, "answer": answer})
             elif mode == 2:
                 select = []
-                if row[3] is not None and row[4] is not None and row[5] is not None and row[6] is not None:
-                    select = [row[3], row[4], row[5], row[6]]
-                    random_answer = select.index(answer) + 1
-                else:
-                    if ch == 1:
-                        return False
+                try:
+                    if row[3] is not None and row[4] is not None and row[5] is not None and row[6] is not None:
+                        select = [row[3], row[4], row[5], row[6]]
+                        random_answer = select.index(answer) + 1
+                        mode_change = 0
+                    else:
+                        mode_change = 1
+                except:
+                    mode_change = 1
+                if ch == 1:
+                    return False
+                if mode_change == 1:
                     random_selects = random.sample(range(1, 5), 4)
                     for random_select in random_selects:
                         cell = sheet.cell(row=random_select, column=2)

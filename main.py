@@ -22,7 +22,6 @@ class MyBot(commands.Bot):
                     print(f"cogs.{file[:-3]} failed to load", e)
                     traceback.print_exc()
         await self.load_extension("jishaku")
-        await self.tree.sync()
         dt_now = datetime.datetime.now()
         print("-----------------------")
         print(f"{self.user.display_name}が起動しました ")
@@ -36,6 +35,7 @@ class MyBot(commands.Bot):
 
         print(f"導入数 {(len(self.guilds))}")
         print("-----------------------")
+        await self.tree.sync()
 
 bot = MyBot(intents=discord.Intents.all(), prefix='k!')
 
