@@ -182,9 +182,15 @@ class MemorizationSystem:
                     num_rows = sheet.max_row 
                     random_selects = random.sample(range(1, num_rows + 1), 4) 
                     random_answer_index = random.randint(0, 3)
-                    for index, random_select in enumerate(random_selects):
-                        cell = sheet.cell(row=random_select, column=2)  
-                        select.append(cell.value)
+                    select = []
+                    for index in range(4):
+                        while True:
+                            random_select = random.randint(1, num_rows + 1) 
+                            cell = sheet.cell(row=random_select, column=2)
+                            if cell.value not in select and cell.value is not None:
+                                if not cell.value  == answer:
+                                    select.append(cell.value)
+                                    break
                     select[random_answer_index] = answer
                     answer_num =  select.index(answer)+1
                     
@@ -243,8 +249,10 @@ class MemorizationSystem:
                     edit_before["answer"] = value
                 elif modes == 2:
                     assert select_number is not None and "select" in edit_before
-                    edit_before["select"][select_number] = value
-
+                    if not value in edit_before["select"]:
+                        edit_before["select"][select_number] = value
+                    else:
+                        return False
             self.data["memorization"][id][title]["questions"][number] = edit_before
             await self.save_data()
             return True
