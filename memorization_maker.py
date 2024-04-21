@@ -179,14 +179,16 @@ class MemorizationSystem:
                 if ch == 1:
                     return False
                 if mode_change == 1:
-                    random_selects = random.sample(range(1, 5), 4)
-                    for random_select in random_selects:
-                        cell = sheet.cell(row=random_select, column=2)
+                    num_rows = sheet.max_row 
+                    random_selects = random.sample(range(1, num_rows + 1), 4) 
+                    random_answer_index = random.randint(0, 3)
+                    for index, random_select in enumerate(random_selects):
+                        cell = sheet.cell(row=random_select, column=2)  
                         select.append(cell.value)
-                        random_answer = select.index(answer) + 1 if answer in select else random.randint(1, 4)
-                    select[random_answer - 1] = answer
-
-                self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 1, "answer": random_answer, "select": select})
+                    select[random_answer_index] = answer
+                    answer_num =  select.index(answer)+1
+                    
+                self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 1, "answer": answer_num, "select": select})
         await self.save_data()
         return True
                 
