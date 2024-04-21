@@ -524,9 +524,11 @@ class MemorizationEditSelect(discord.ui.Select):
         options=[discord.SelectOption(label=item["question"], value=str(index)) for index, item in enumerate(lists)]
         super().__init__(placeholder=placeholder, min_values=min_values, max_values=max_values, options=options)
         for i in range(25, len(self.lists), 25):
+            index = 0
             for item in self.lists[i:i+25]:
-                option = discord.SelectOption(label=item)
+                option = discord.SelectOption(label=item, value=str(index))
                 super().add_option(option)
+                index+=1
 
     async def callback(self, interaction: discord.Interaction):
         """
@@ -639,7 +641,10 @@ class ChoiceEditSelect(discord.ui.Select):
         placeholder = "選択してください"
         min_values = 1
         max_values = 1
-        options = [discord.SelectOption(label=i) for i in lists[:25]]
+        options = []
+        for i in range(len(lists)):
+            i = str(i)
+            options.append(discord.SelectOption(label=lists[int(i)], value=i))
         super().__init__(placeholder=placeholder, min_values=min_values, max_values=max_values, options=options)
         for i in range(25, len(lists), 25):
             for item in lists[i:i+25]:
