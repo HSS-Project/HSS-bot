@@ -8,7 +8,6 @@ from HSS import User
 import requests
 import json
 import os
-import json
 
 with open("token.json", 'r', encoding='utf-8') as file:
     t = json.load(file)
