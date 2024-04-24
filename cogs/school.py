@@ -140,8 +140,7 @@ class ClassSelect(discord.ui.Select):
             await interaction.response.edit_message(content="曜日を選択してください", view=view)
             return
         elif self.mode == 4:
-            view.add_item(HomeworkView(self.schoolid, self.grade, self.values[0]))
-            await interaction.response.edit_message(content="宿題を選択してください", view=view)
+            await interaction.response.edit_message(content="宿題を選択してください", view=HomeworkView(self.schoolid, self.grade, self.values[0]))
             return
 
 class DayOfWeekSelect(discord.ui.Select):
@@ -191,7 +190,7 @@ class DayOfWeekSelect(discord.ui.Select):
         elif self.mode == 3:
             try:
                 _class = self.school.search_class(int(self.grade),int(self._class))
-                homework = self.school.get_homework(_class, self.values[0])
+                homework = self.school.get_homework(_class)
             except Exception as e:
                 await interaction.response.edit_message(content="エラー\n内容はないようです")
                 return
@@ -313,12 +312,12 @@ class HomeworkView(discord.ui.View):
         await interaction.response.edit_message(content="編集する宿題を選択してください", view=view)
     
 class HomeworkAddModal(discord.ui.Modal):
-    def __init__(self, schoolid:int,grade:int,_class:int,modechange:int,homworkindex:int=None):
+    def __init__(self, schoolid:int,grade:int,_class:int,modechange:int,homwork=None):
         self.school = School(token=token, schoolid=schoolid)
         self.grade = grade
-        self.clss = _class
+        self._class = _class
         self.modechange = modechange
-        self.homworkindex = homworkindex
+        self.homework = homwork
         super().__init__(title="宿題追加", timeout=None)
         if modechange == 0:
             self.name = discord.ui.TextInput(label="名前", placeholder="レポート名", required=True)
@@ -326,13 +325,11 @@ class HomeworkAddModal(discord.ui.Modal):
             self.page_end = discord.ui.TextInput(label="終了ページ", placeholder="1", required=True)
             self.istooBig = discord.ui.TextInput(label="大きいか", placeholder="True / False", required=True)
             self.comment = discord.ui.TextInput(label="補足", placeholder="補足", required=False)
-        elif modechange == 1:
-            homeworks = self.school.get_homework(self.grade, self.clss)
-            homework = homeworks[homworkindex]
-            self.name = discord.ui.TextInput(label="名前", placeholder=f"{homework['name']}", required=False)
-            self.page_start = discord.ui.TextInput(label="開始ページ", placeholder=f"{homework['page']['start']}", required=False)
-            self.page_end = discord.ui.TextInput(label="終了ページ", placeholder=f"{homework['page']['end']}", required=False)
-            self.istooBig = discord.ui.TextInput(label="大きいか", placeholder="はい" if homework['istooBig'] == True else "いいえ", required=False)
+        elif modechange == 1:            
+            self.name = discord.ui.TextInput(label="名前", placeholder=f"{self.homework['name']}", required=False)
+            self.page_start = discord.ui.TextInput(label="開始ページ", placeholder=f"{self.homework['page']['start']}", required=False)
+            self.page_end = discord.ui.TextInput(label="終了ページ", placeholder=f"{self.homework['page']['end']}", required=False)
+            self.istooBig = discord.ui.TextInput(label="大きいか", placeholder=self.homework['istooBig'], required=False)
             self.comment = discord.ui.TextInput(label="補足", placeholder="補足", required=False)
         self.add_item(self.name)
         self.add_item(self.comment)
@@ -344,21 +341,23 @@ class HomeworkAddModal(discord.ui.Modal):
         if self.istooBig.value not in ["True", "False"]:
             await interaction.response.send_message("エラーが発生しました", ephemeral=True)
             return
-        if self.modechange == 0:
-            self.school.patch_homework(grade=self.grade,_class=self.clss,name=self.name.value,comment=self.comment.value,start=self.page_start.value,end=self.page_end.value,istooBig=self.istooBig.value)
+        if self.modechange == 0:            
+            self.school.patch_homework(grade=int(self.grade),_class=int(self._class),date="mon",name=str(self.name.value),comment=self.comment.value,start=self.page_start.value,end=self.page_end.value,istooBig=bool(self.istooBig.value))
         elif self.modechange == 1:
-            self.school.patch_homework(grade=self.grade,_class=self.clss,name=self.name.value,comment=self.comment.value,start=self.page_start.value,end=self.page_end.value,istooBig=self.istooBig.value,state="update",index=self.homworkindex)
+            homeworkindex = self.school.get_homework(self.school.search_class(self.grade, self._class)).index(self.homework)
+            self.school.patch_homework(grade=self.grade,_class=self._class,date="mon",name=self.name.value,comment=self.comment.value,start=self.page_start.value,end=self.page_end.value,istooBig=bool(self.istooBig.value),state="update",index=homeworkindex)
         await interaction.response.send_message("宿題を追加しました", ephemeral=True)
 
 class SelectHomeWork(discord.ui.Select):
     def __init__(self,schoolid:int,grade:int,_class:int,modes:int):
         self.school = School(token=token, schoolid=schoolid)
         self.schoolid = schoolid
-        self.grade = grade
-        self._class = _class
+        self.grade = int(grade)
+        self._class = int(_class)
         self.modes = modes
-        self.homework = self.school.get_homework(self.grade, self._class)
-        options = [discord.SelectOption(label=f"{self.homework[n]}", value=n) for n in range(len(self.homework))]
+        self.number = self.school.search_class(int(self.grade), int(self._class))
+        self.homework = self.school.get_homework(self.number)
+        options = [discord.SelectOption(label=f"{self.homework[n]['name']}", value=n) for n in range(len(self.homework))]
         super().__init__(placeholder="宿題を選択してください", options=options)
         
     async def callback(self, interaction:discord.Interaction):
@@ -367,9 +366,7 @@ class SelectHomeWork(discord.ui.Select):
         if self.modes == 0:
             await interaction.response.send_modal(HomeworkAddModal(self.schoolid, self.grade, self._class, 1, homework))
         elif self.modes == 1:
-            homeworks = self.school.get_homework(self.grade, self._class)
-            homework = homeworks[self.values[0]]
-            self.school.patch_homework(self.grade, self._class, homework['name'], homework['page']['start'], homework['page']['end'], homework['istooBig'], homework['comment'], state="delete", index=self.values[0])
+            self.school.patch_homework(grade=self.grade,_class=self._class,date="mon",name="aa",comment="aa",start=1,end=1,istooBig=False,state="remove",index=self.values[0])
             await interaction.response.edit_message(content="削除しました")
 
 class CommandsCog(commands.Cog):
