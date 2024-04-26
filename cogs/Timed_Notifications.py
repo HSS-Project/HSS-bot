@@ -1,5 +1,5 @@
 from HSS import NewSchool as School
-from HSS import User
+from school import CheckSchools
 import json
 
 import discord
@@ -14,80 +14,50 @@ with open("token.json", "r", encoding="utf-8") as f:
     token = token["HSSAPI_TOKEN"]
 
 class SchoolSelect(discord.ui.Select):
-    """
-    Select School 
-    
-    Args:
-        id (int): Discord User ID
-        modes (int): 0: Add, 1: Remove
-    
-    Returns:
-        None
-    """
-    def __init__(self,id:int,modes:int):
+    def __init__(self,mode:int,id:int,schools:list):
+        self.mode = mode
         options = []
-        self.mode = modes
-        user = User(token=token)
-        schools:list = user.get_permission_discordUserID(id)
         names = []
         options = []
         for school_id in schools:
-            try:
-                school = School(token=token, schoolid=school_id)
-                data = school.get_data()            
-                name = data["details"]["name"]
-                names.append(name)
-            except Exception as e:
-                print(e)
-                name = "取得失敗"
-                names.append(name)
+            school = School(token=token, schoolid=school_id)
+            data = school.get_data()            
+            name = data["details"]["name"]
+            names.append(name)
         for name,id in zip(names, schools):
             options.append(discord.SelectOption(label=name, value=id))
         super().__init__(placeholder="学校を選択してください", options=options)
     
     async def callback(self, interaction:discord.Interaction):
-        if self.values[0] == "取得失敗":
-            await interaction.response.send_message("取得失敗しました", ephemeral=True)
-            return
         view = discord.ui.View()
         view.add_item(GradeSelect(self.values[0], self.mode))
         await interaction.response.edit_message(content="学年を選択してください", view=view)
-
-class GradeSelect(discord.ui.Select):
-    """
-    Select Grade
-    
-    Args:
-        schoolid (int): School ID
-        modes (int): 0: Add, 1: Remove
         
-    Returns:
-        None
-    """
-    def __init__(self,schoolid:int,modes:int):
+class GradeSelect(discord.ui.Select):
+    def __init__(self,schoolid:int,mode:int):
         self.schoolid = schoolid
-        school = School(token=token,schoolid=schoolid)
         options = []
+        self.mode = mode
+        school = School(token=token,schoolid=schoolid)
         try:
-            get_classes:list = school.get_classes()
+            self.get_classes:list = school.get_classes()
         except Exception as e:
             print(e)
-            options.append(discord.SelectOption(label="取得失敗", value="取得失敗"))
-            super().__init__(placeholder="学年を選択してください", options=options)
+            options.append(discord.SelectOption(label="エラーが発生しました", value="error"))
+            super().__init__(placeholder="エラー", options=options)
             return
-        self.mode = modes
-        for grade in get_classes:
+        for grade in self.get_classes:
             for key in grade.keys():
                 options.append(discord.SelectOption(label=f"{key}年", value=key))
                 
         super().__init__(placeholder="学年を選択してください", options=options)
                     
     async def callback(self, interaction:discord.Interaction):
-        if self.values[0] == "取得失敗":
-            await interaction.response.send_message("取得失敗しました", ephemeral=True)
+        if self.values[0] == "error":
+            await interaction.response.edit_message(content="エラーが発生しました", view=None)
             return
         view = discord.ui.View()
-        view.add_item(ClassSelect(self.schoolid, self.values[0], self.mode))
+        view.add_item(ClassSelect(self.schoolid, self.values[0], self.get_classes,self.mode))
         await interaction.response.edit_message(content="クラスを選択してください", view=view)
 
 class ClassSelect(discord.ui.Select):
@@ -395,20 +365,35 @@ class Timed_Notifications(commands.Cog):
         self.Timed_NotificationsAdd = Timed_NotificationsAdd()
         self.Timed_NotificationsAdd.load()
         self.send.start()
+        self.chschool = CheckSchools()
     
     @app_commands.command()
     async def time_notifications_add(self, interaction: discord.Interaction):
         """指定した時間にwebhookを使用して明日の日程を送信する機能の設定です"""
         view = discord.ui.View()
-        view.add_item(SchoolSelect(interaction.user.id, 0))
+        ch,schoolslist = self.chschool.check_schools(interaction.user.id)
+        if ch == 0:
+            await interaction.response.send_message("学校が登録されていません。")
+            return
+        elif ch == 1:
+            view.add_item(GradeSelect(schoolid=schoolslist[0],mode=0))
+        else:
+            view.add_item(SchoolSelect(interaction.user.id, 0))
         await interaction.response.send_message("学校を選択してください", view=view,ephemeral=True)
 
     @app_commands.command()
-    async def time_notifications_remove(self,interection:discord.Interaction):
+    async def time_notifications_remove(self,interaction:discord.Interaction):
         """指定した時間にwebhookを使用して明日の日程を送信する機能の削除です"""
         view = discord.ui.View()
-        view.add_item(SchoolSelect(interection.user.id, 1))
-        await interection.response.send_message("学校を選択してください", view=view,ephemeral=True)
+        ch,schoolslist = self.chschool.check_schools(interaction.user.id)
+        if ch == 0:
+            await interaction.response.send_message("学校が選択されていません。")
+            return
+        elif ch == 1:
+            view.add_item(GradeSelect(schoolid=schoolslist[0],mode=1))
+        else:
+            view.add_item(SchoolSelect(interaction.user.id, 1))
+        await interaction.response.send_message("学校を選択してください", view=view,ephemeral=True)
         
         
     @tasks.loop(seconds=60)
@@ -420,12 +405,9 @@ class Timed_Notifications(commands.Cog):
                 time = datetime.datetime.strptime(data["time"], "%H:%M")
                 if time.hour == now.hour and time.minute == now.minute:
                     school = School(token=token, schoolid=data["school_id"])
-                    print(data)
-                    print(data["grade"], data["class"])
                     grade:int = int(data["grade"])
                     class_:int = int(data["class"])
                     index = school.search_class(grade=grade, classname=class_)
-                    print(index)
                     if now.weekday() == 6:
                         weekday = listsweekdays[0]
                     else:
