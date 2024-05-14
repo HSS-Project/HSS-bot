@@ -54,72 +54,45 @@ class SchoolSelect(discord.ui.Select):
         await interaction.response.edit_message(content="学年を選択してください", view=view)
 
 class GradeSelect(discord.ui.Select):
-    """
-    Select Grade
-    
-    Args:
-        schoolid (int): School ID
-        modes (int): 0: Add, 1: Remove
-        
-    Returns:
-        None
-    """
-    def __init__(self,schoolid:int,modes:int):
+    def __init__(self,schoolid:int,mode:int):
         self.schoolid = schoolid
-        school = School(token=token,schoolid=schoolid)
         options = []
+        self.mode = mode
+        school = School(token=token,schoolid=schoolid)
         try:
-            get_classes:list = school.get_classes()
+            self.get_list:list = school.get_classes()
         except Exception as e:
             print(e)
-            options.append(discord.SelectOption(label="取得失敗", value="取得失敗"))
-            super().__init__(placeholder="学年を選択してください", options=options)
+            options.append(discord.SelectOption(label="エラーが発生しました", value="error"))
+            super().__init__(placeholder="エラー", options=options)
             return
-        self.mode = modes
-        for grade in get_classes:
-            for key in grade.keys():
-                options.append(discord.SelectOption(label=f"{key}年", value=key))
+        
+        for grade in self.get_list.keys():
+            options.append(discord.SelectOption(label=f"{grade}年生", value=grade))
                 
         super().__init__(placeholder="学年を選択してください", options=options)
                     
     async def callback(self, interaction:discord.Interaction):
-        if self.values[0] == "取得失敗":
-            await interaction.response.send_message("取得失敗しました", ephemeral=True)
+        self.values[0] = str(self.values[0])
+        class_list = self.get_list[self.values[0]]
+        if self.values[0] == "error":
+            await interaction.response.edit_message(content="エラーが発生しました", view=None)
             return
         view = discord.ui.View()
-        view.add_item(ClassSelect(self.schoolid, self.values[0], self.mode))
+        view.add_item(ClassSelect(self.schoolid, self.values[0], self.mode,class_list))
         await interaction.response.edit_message(content="クラスを選択してください", view=view)
-
-class ClassSelect(discord.ui.Select):
-    """
-    Select Class
-    
-    Args:
-        schoolid (int): School ID
-        grade (int): Grade
-        mode (int): 0: Add, 1: Remove
         
-    Returns:
-        None
-    """
-    def __init__(self, schoolid:int, grade:int,mode:int):
+    
+class ClassSelect(discord.ui.Select):
+    def __init__(self, schoolid:int, grade:int,mode:int,class_list:list):
         school = School(token=token,schoolid=schoolid)
         self.mode = mode
         self.schoolid = schoolid
         self.grade = grade
         options = []
-        try:
-            get_classes:list = school.get_classes()
-        except Exception as e:
-            print(e)
-            options.append(discord.SelectOption(label="取得失敗", value="取得失敗"))
-            super().__init__(placeholder="クラスを選択してください", options=options)
-            return
-        for grade_ in get_classes:
-            for key in grade_.keys():
-                if key == grade:
-                    for class_ in grade_[key]:
-                        options.append(discord.SelectOption(label=f"{class_}組", value=class_))
+        class_list = class_list
+        for _class in class_list:
+            options.append(discord.SelectOption(label=f"{_class}組", value=_class))
         super().__init__(placeholder="クラスを選択してください", options=options)
     
     async def callback(self, interaction:discord.Interaction):
