@@ -497,6 +497,33 @@ class MemorizationSystem:
         await self.save_data()
         return True
 
+    async def memorization_sheet(self,id, title):
+        """
+        Get the memorization sheet.
+        
+        Args:
+            id (str): The ID of the mission.
+            title (str): The title of the mission.
+            
+        Returns:
+            str:sheet_text 
+        """
+        await self.load_data()
+        id = str(id)
+        if not id in self.data["memorization"] and not title in self.data["memorization"][id]:return False
+        make_sheet = ""
+        for item in self.data["memorization"][id][title]["questions"]:
+            question_text = item["question"]
+            if item["mode"] == 0:
+                answer_text = item["answer"]
+            elif item["mode"] == 1:
+                answer_text = item["select"][item["answer"]-1]
+            make_sheet += f"{question_text} : ||{answer_text}||\n"
+            if len(make_sheet) > 1900:
+                make_sheet += "......\n"
+                return make_sheet
+        return make_sheet                            
+            
     """
     user_status System ↓
     """
