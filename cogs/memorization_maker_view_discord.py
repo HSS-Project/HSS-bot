@@ -223,7 +223,15 @@ class MemorizationQuestionSelect(discord.ui.Select):
             embed = discord.Embed(title=f"{count}回挑戦", color=0x00ff00)
             embed.add_field(name="結果", value=f"問題: [{title}]のスコアは{score}点です")
             await interaction.response.edit_message(embed=embed)
-
+        elif self.mode == 2:
+            title = self.values[0]
+            lists = await self.ms.get_mission(str(interaction.user.id), title)
+            if not lists:
+                return await interaction.response.send_message("エラー: データが見つかりませんでした。", ephemeral=True)
+            await interaction.response.defer(thinking=True)
+            sheet = await self.ms.memorization_sheet(str(interaction.user.id), title)
+            await interaction.followup.send(content=sheet)
+            
 class MemorizationPlayMain:
     """
     Represents a class for playing the memorization game.
@@ -318,6 +326,17 @@ class MakerComanndsCog(commands.Cog):
         view.add_item(MemorizationQuestionSelect(title, self.ms,1))
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
+    @app_commands.command()
+    async def memorization_make_sheet(self,interaction:discord.Interaction):
+        """暗記シート"""
+        title = await self.ms.get_mission_title(str(interaction.user.id))
+        if not title:
+            return await interaction.response.send_message("ユーザーデータが見つかりませんでした。", ephemeral=True)
+        embed = discord.Embed(title="問題を選択してください",color=0x00ff00)
+        view = discord.ui.View()
+        view.add_item(MemorizationQuestionSelect(title, self.ms,2))
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        
 async def setup(bot):
     await bot.add_cog(MakerComanndsCog(bot))
     print("[SystemLog] memorization_maker_view loaded")
