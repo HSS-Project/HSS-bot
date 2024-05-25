@@ -180,7 +180,6 @@ class MemorizationSystem:
                     return False
                 if mode_change == 1:
                     num_rows = sheet.max_row 
-                    random_selects = random.sample(range(1, num_rows + 1), 4) 
                     random_answer_index = random.randint(0, 3)
                     select = []
                     for index in range(4):
@@ -377,8 +376,7 @@ class MemorizationSystem:
             list or bool: A list of mission titles if the ID exists in the data, False otherwise.
         """
         await self.load_data()
-        if id in self.data["memorization"]:
-            return list(self.data["memorization"][id].keys())
+        if id in self.data["memorization"]:return list(self.data["memorization"][id].keys())
         return False
 
     async def check_answer(self, id: str, title: str, question: str, answer: str, mode: int) -> bool:

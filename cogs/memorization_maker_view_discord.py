@@ -27,15 +27,6 @@ class MakerSelect(discord.ui.Select):
         super().__init__(placeholder="選択してください。", min_values=1, max_values=1, options=[discord.SelectOption(label=selectlist[i]) for i in range(len(selectlist))])
 
     async def callback(self, interaction: discord.Interaction):
-        """
-        Callback function for the select dropdown.
-
-        Args:
-        - interaction (discord.Interaction): The interaction object.
-
-        Returns:
-        - None
-        """
         answer = self.values[0]
         result = await self.ms.check_answer(str(interaction.user.id), self.title,self.question,answer,1)
         if result:
@@ -70,7 +61,6 @@ class MakerAnswer(ui.Modal,title="回答"):
     Methods:
     - on_submit(interaction: discord.Interaction): Handles the submission of the answer.
     """
-
     def __init__(self, title: str, question: str, counts: int, ms: MS, miss_anwer_indexs: list[int]):
         super().__init__()
         self.title = title
@@ -82,15 +72,6 @@ class MakerAnswer(ui.Modal,title="回答"):
         self.add_item(self.input)
     
     async def on_submit(self, interaction: discord.Interaction):
-        """
-        Handles the submission of the answer.
-
-        Args:
-        - interaction (discord.Interaction): The interaction object representing the user's interaction.
-
-        Returns:
-        - None
-        """
         answer = str(self.input.value)
         result = await self.ms.check_answer(str(interaction.user.id), self.title, self.question, answer, 0)
         if result:
@@ -109,11 +90,14 @@ class MakerAnswer(ui.Modal,title="回答"):
 class MakerAmwerButtonContenu(discord.ui.View):
     def __init__(self, title: str, question: str, count: int, ms: MS, miss_anwer_indexs: list[int]):
         """
-        コンストラクタ
-
-        :param title: タイトル
-        :param question: 質問
-        :param count: カウント
+        A class is contenu
+        
+        Attributes:
+        - title (str): The title of the modal.
+        - question (str): The question to be answered.
+        - count (int): The number of counts.
+        - ms (int) ms: MS
+        - miss_anwer_indexs (list[int]): miss misson
         """
         self.title = title
         self.question = question
@@ -124,12 +108,6 @@ class MakerAmwerButtonContenu(discord.ui.View):
 
     @discord.ui.button(label="次に進む", style=discord.ButtonStyle.primary)
     async def callback(self, interaction: discord.Interaction, _: discord.ui.Button):
-        """
-        ボタンのコールバック関数
-
-        :param interaction: インタラクション
-        :param button: ボタン
-        """
         self.count += 1
         lists = await self.ms.get_mission(str(interaction.user.id), self.title)
         if not lists:
@@ -177,19 +155,13 @@ class MakerAnwerButton(discord.ui.View):
 class MemorizationQuestionSelect(discord.ui.Select):
     """
     A custom select menu for selecting a memorization mission in the Memorization Discord UI.
+    
+    Args:
+        lists (list): The list of options to be displayed in the select menu.
+        mode (str): The mode of the memorization mission.
     """
 
     def __init__(self, lists: list[str], ms: MS,mode:int):
-        """
-        Initializes the Memorization_question_Discord_Select object.
-
-        Args:
-            lists (list): The list of options to be displayed in the select menu.
-            mode (str): The mode of the memorization mission.
-
-        Returns:
-            None
-        """
         self.lists = lists
         self.ms = ms
         self.mode = mode
@@ -245,7 +217,6 @@ class MemorizationPlayMain:
     Methods:
         main_start(interaction: discord.Interaction): Starts the main process of the game.
     """
-
     def __init__(self, title: str, lists: CardData, counts: int, ms: MS, miss_anwer_indexs: list[int]):
         self.title = title
         self.lists = lists["questions"]
@@ -299,7 +270,6 @@ class MemorizationPlayMain:
 
 
 class MakerComanndsCog(commands.Cog):
-    """コグクラス: メモリゼーションメーカーのコマンドを管理するクラス"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.ms = MS()
