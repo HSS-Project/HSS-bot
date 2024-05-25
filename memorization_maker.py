@@ -5,6 +5,7 @@ import json
 import random
 import openpyxl
 from HSS import User
+import discord
 
 from typing import TypedDict
 
@@ -41,18 +42,19 @@ class MemorizationSystem:
         self.filename = filename
         self.data = {"memorization": {}, "user_status": {}}
 
-    async def checkuser_in_HSS(self, id: int) -> bool:
+    async def checkuser_in_HSS(self, interaction:discord.Interaction) -> bool:
         """
         Check if the user is in the HSS.
         """
+        id = str(interaction.user.id)
         with open("token.json", "r", encoding="utf-8") as f:
             token = json.load(f)
             token = token["HSSAPI_TOKEN"]
         user = User(token=token)
-        id = int(id)
         try:
             schools = user.get_permission_discordUserID(id)
         except Exception as e:
+            await interaction.response.send_message("この機能はHSSにログインしてないユーザーはご利用いただけません。\n[HSSにloginする](https://hss.aknet.tech/login)", ephemeral=True)
             return False
         return True
 
@@ -376,7 +378,8 @@ class MemorizationSystem:
             list or bool: A list of mission titles if the ID exists in the data, False otherwise.
         """
         await self.load_data()
-        if id in self.data["memorization"]:return list(self.data["memorization"][id].keys())
+        if id in self.data["memorization"]:
+            return list(self.data["memorization"][id].keys())
         return False
 
     async def check_answer(self, id: str, title: str, question: str, answer: str, mode: int) -> bool:
