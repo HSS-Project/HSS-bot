@@ -457,15 +457,15 @@ class EditModeSelect(discord.ui.Select):
         if mode == 0:
             super().__init__(placeholder="選択してください",
                              min_values=1,
-                             max_values=1, 
+                             max_values=1,
                              options=[
                                     discord.SelectOption(label="問題", value="0"),
                                     discord.SelectOption(label="答え", value="1")
                                 ]
                             )
         elif mode == 1:
-            super().__init__(placeholder="選択してください", 
-                             min_values=1, 
+            super().__init__(placeholder="選択してください",
+                             min_values=1,
                              max_values=1, 
                              options=[
                                     discord.SelectOption(label="問題", value="0"),
