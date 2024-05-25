@@ -66,11 +66,9 @@ class GradeSelect(discord.ui.Select):
             options.append(discord.SelectOption(label="エラーが発生しました", value="error"))
             super().__init__(placeholder="エラー", options=options)
             return
-        
         for grade in self.get_list.keys():
             options.append(discord.SelectOption(label=f"{grade}年生", value=grade))
         super().__init__(placeholder="学年を選択してください", options=options)
-             
     async def callback(self, interaction:discord.Interaction):
         self.values[0] = str(self.values[0])
         class_list = self.get_list[self.values[0]]
@@ -311,12 +309,10 @@ class Timed_NotificationsAdd:
         """
         self.load()
         for i in range(len(self.data["send_data"])):
-            if (
-                    self.data["send_data"][i]["school_id"] == school_id and 
-                    self.data["send_data"][i]["grade"] == grade and 
-                    self.data["send_data"][i]["class"] == class_ and 
-                    self.data["send_data"][i]["time"] == time
-                ):
+            if (self.data["send_data"][i]["school_id"] == school_id and
+                self.data["send_data"][i]["grade"] == grade and
+                self.data["send_data"][i]["class"] == class_ and
+                self.data["send_data"][i]["time"] == time):
                 return i
 
     

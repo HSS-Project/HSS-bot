@@ -67,11 +67,10 @@ class MemorizationAddModal(ui.Modal,title="問題追加"):
 class EditCountSelect(discord.ui.Select):
     def __init__(self, title):
         self.title = title
-        super().__init__(placeholder="選択数を選択してください", 
-                         min_values=1, 
-                         max_values=1, 
+        super().__init__(placeholder="選択数を選択してください",
+                         min_values=1,
+                         max_values=1,
                          options=[discord.SelectOption(label=str(i), value=str(i)) for i in range(1, 6)])
-
     async def callback(self, interaction: discord.Interaction):
         embed = discord.Embed(title="問題追加", description=f"現在の選択問題設定個数:{int(self.values[0])}", color=0x00ff00)
         await interaction.response.edit_message(embed=embed, view=MemorizationControlView(self.title, int(self.values[0])))
@@ -456,8 +455,8 @@ class EditModeSelect(discord.ui.Select):
         self.count = count
         self.mode = mode
         if mode == 0:
-            super().__init__(placeholder="選択してください", 
-                             min_values=1, 
+            super().__init__(placeholder="選択してください",
+                             min_values=1,
                              max_values=1, 
                              options=[
                                     discord.SelectOption(label="問題", value="0"),
@@ -469,12 +468,11 @@ class EditModeSelect(discord.ui.Select):
                              min_values=1, 
                              max_values=1, 
                              options=[
-                                    discord.SelectOption(label="問題", value="0"), 
-                                    discord.SelectOption(label="答え", value="1"), 
+                                    discord.SelectOption(label="問題", value="0"),
+                                    discord.SelectOption(label="答え", value="1"),
                                     discord.SelectOption(label="選択肢", value="2")
                                 ]
                             )
-
     async def callback(self, interaction: discord.Interaction):
         if self.values[0] == "0":
             await interaction.response.send_modal(MemorizationEditModal(self.title, self.selected_index, self.lists,0, self.count))
