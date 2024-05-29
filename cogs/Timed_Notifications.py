@@ -292,7 +292,8 @@ class Timed_NotificationsAdd:
             if (self.data["send_data"][i]["school_id"] == school_id and
                 self.data["send_data"][i]["grade"] == grade and
                 self.data["send_data"][i]["class"] == class_ and
-                self.data["send_data"][i]["time"] == time):
+                self.data["send_data"][i]["time"] == time
+                ):
                 return i
 
     

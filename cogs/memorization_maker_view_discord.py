@@ -102,7 +102,14 @@ class MakerAnswer(ui.Modal,title="回答"):
                                                                 interaction,
                                                                 1
                                                                 ).make_embed()
-        await interaction.response.edit_message(embed=embed, view=MakerAmwerButtonContenu(self.title, self.question, self.counts, self.ms, miss_anwer_indexs_retrun))
+        await interaction.response.edit_message(embed=embed,
+                                                view=MakerAmwerButtonContenu(self.title,
+                                                                             self.question,
+                                                                             self.counts,
+                                                                             self.ms,
+                                                                             miss_anwer_indexs_retrun
+                                                                             )
+                                                )
 
 class MakerAmwerButtonContenu(discord.ui.View):
     def __init__(self, title: str, question: str, count: int, ms: MS, miss_anwer_indexs: list[int]):
