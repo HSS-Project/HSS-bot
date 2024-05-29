@@ -155,7 +155,7 @@ class MemorizationSystem:
         for row in sheet.iter_rows(min_row=1, values_only=True):
             if not row[0] or not row[1] or not row[2]:continue
             mode = int(row[2])
-            if type(mode) != int:return False
+            if not isinstance(mode, int):return False
             question = row[0]
             answer = row[1]
             if mode == 1:
@@ -506,7 +506,7 @@ class MemorizationSystem:
         """
         await self.load_data()
         num_id = str(id_)
-        if num_id in self.data["memorization"] and not title in self.data["memorization"][num_id]:
+        if num_id in self.data["memorization"] and not (title in self.data["memorization"][num_id]):
             make_sheet = ""
             for item in self.data["memorization"][num_id][title]["questions"]:
                 question_text = item["question"]
