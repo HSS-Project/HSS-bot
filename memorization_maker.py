@@ -179,9 +179,10 @@ class MemorizationSystem:
                         while True:
                             random_select = random.randint(1, num_rows + 1) 
                             cell = sheet.cell(row=random_select, column=2)
-                            if cell.value not in select and cell.value is not None and cell.value != answer:
-                                select.append(cell.value)
-                                break
+                            if cell.value not in select and cell.value is not None:
+                                if not cell.value  == answer:
+                                    select.append(cell.value)
+                                    break
                     select[random_answer_index] = answer
                     answer_num =  select.index(answer)+1
                 self.data["memorization"][num_id][title]["questions"].append({"question": question, "mode": 1, "answer": answer_num, "select": select})
