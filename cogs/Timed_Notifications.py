@@ -136,7 +136,7 @@ class RemoveSelect(discord.ui.Select):
             await interaction.response.send_message("取得失敗しました", ephemeral=True)
             return
         time = self.values[0]
-        index = self.timed_notifications_add.get_index_2(self.lists[1], self.lists[2], self.lists[3],time)
+        index = self.timed_notifications_add.get_index_time(self.lists[1], self.lists[2], self.lists[3],time)
         data = await self.timed_notifications_add.get_data(index)
         webhook = await interaction.channel.webhooks()
         for i in webhook:
@@ -275,27 +275,7 @@ class Timed_NotificationsAdd:
         self.load()
         return self.data["send_data"]
     
-    def get_index(self,school_id:int,grade:int,class_:int,webhook_url:str):
-        """
-        Get Index
-        
-        Args:
-            school_id (int): School ID
-            grade (int): Grade
-            class_ (int): Class
-            webhook_url (str): Webhook URL
-        
-        Returns:
-            i (int): Index
-        """
-        self.load()
-        for i in range(len(self.data["send_data"])):
-            if self.data["send_data"][i]["school_id"] == school_id and self.data["send_data"][i]["grade"] == grade and self.data["send_data"][i]["class"] == class_ and self.data["send_data"][i]["webhook_url"] == webhook_url:
-                return i
-            
-        return None
-    
-    def get_index_2(self,school_id:int,grade:int,class_:int,time:str):
+    def get_index_time(self,school_id:int,grade:int,class_:int,time:str):
         """
         Get Index
         
@@ -378,12 +358,9 @@ class Timed_Notifications(commands.Cog):
                 time = datetime.datetime.strptime(data["time"], "%H:%M")
                 if time.hour == now.hour and time.minute == now.minute:
                     school = School(token=token, schoolid=data["school_id"])
-                    print(data)
-                    print(data["grade"], data["class"])
                     grade:int = int(data["grade"])
                     class_:int = int(data["class"])
                     index = school.search_class(grade=grade, classname=class_)
-                    print(index)
                     if now.weekday() == 6:
                         weekday = listsweekdays[0]
                     else:
@@ -391,7 +368,6 @@ class Timed_Notifications(commands.Cog):
                     timeline = school.get_timeline(index, weekday)
                     default_timeline = school.get_default_timeline(index, weekday)
                     homework = school.get_homework(index)
-                    # event = school.get_event(index, weekday)
                     if timeline == []:
                         timeline = default_timeline
                     embed = discord.Embed(title=f"{school.get_data()['details']['name']} {data['grade']}年{data['class']}組", description=f"{weekday} 明日の日程です", color=0x00ff00)

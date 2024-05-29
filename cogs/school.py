@@ -29,7 +29,7 @@ class gettimelineselect(discord.ui.View):
             return
 
     async def make_embed(self, grade:int, _class:int, res,modes:int):
-        embed = discord.Embed(title=f"{grade}-{_class}の{self.date}の{"標準"if modes == 0 else "今週"}の時間割", description="")
+        embed = discord.Embed(title=f"{grade}-{_class}の{self.date}の{'標準' if modes == 0 else '今週'}の時間割", description="")
         for n in range(len(res)):
             embed.add_field(name=f"{n+1}時間目", value=f'教科:{res[n]["name"]}\n 場所:{"指定なし" if res[n]["place"] == "初期値" else res[n]["place"]}\n イベントか:{"はい" if res[n]["IsEvent"] else "いいえ"}', inline=False)
         return embed
@@ -228,7 +228,12 @@ class send(discord.ui.Modal):
         school = School(token=token, schoolid=self.schoolid)
         if self.mode == 0 and self.editmode == None:
             try:
-                school.patch_timeline(grade=self.grade, _class=self._class, date=self.date, name=self.name.value, isEvent=self.isevent.value, place=self.place.value)
+                school.patch_timeline(grade=self.grade,
+                                      _class=self._class,
+                                      date=self.date,
+                                      name=self.name.value,
+                                      isEvent=self.isevent.value,place=self.place.value
+                                      )
                 embed = discord.Embed(title="hss - 設定完了" , description="設定が正常に完了しました。", color=discord.Color.green()
                 ).add_field(name="教科名", value=self.name.value).add_field(name="イベントか", value=f"{'はい' if bool(self.isevent.value) else 'いいえ'}").add_field(name="場所", value=self.place.value)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -238,7 +243,14 @@ class send(discord.ui.Modal):
         elif self.mode == 1 and self.editmode != None:
             try:
                 self.editmode = int(self.editmode)
-                school.patch_timeline(grade=self.grade, _class=self._class, date=self.date, name=self.name.value, isEvent=self.isevent.value, place=self.place.value, state="update",index=self.editmode)
+                school.patch_timeline(grade=self.grade,
+                                      _class=self._class,
+                                      date=self.date,name=self.name.value,
+                                      isEvent=self.isevent.value,
+                                      place=self.place.value,
+                                      state="update",
+                                      index=self.editmode
+                                      )
                 embed = discord.Embed(title="hss - 設定完了" , description="設定が正常に完了しました。", color=discord.Color.green()
                 ).add_field(name="教科名", value=self.name.value).add_field(name="イベントか", value=f"{'はい' if bool(self.isevent.value) else 'いいえ'}").add_field(name="場所", value=self.place.value)
                 await interaction.response.send_message(content=None,embed=embed, ephemeral=True)

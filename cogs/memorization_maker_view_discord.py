@@ -49,8 +49,20 @@ class MakerSelect(discord.ui.Select):
         super().__init__(placeholder="選択してください。", min_values=1, max_values=1, options=[discord.SelectOption(label=select) for select in selectlist])
 
     async def callback(self, interaction: discord.Interaction):
-        embed,miss_anwer_indexs_retrun = await MakerAnswerEmbed(self.title,self.question, self.values[0],self.miss_anwer_indexs,self.count,interaction,1).make_embed()
-        await interaction.response.edit_message(embed=embed,view=MakerAmwerButtonContenu(self.title,self.question,self.count, self.ms, miss_anwer_indexs_retrun))
+        embed,miss_anwer_indexs_retrun = await MakerAnswerEmbed(self.title,self.question,
+                                                                self.values[0],
+                                                                self.miss_anwer_indexs,
+                                                                self.count,
+                                                                interaction,1
+                                                                ).make_embed()
+        await interaction.response.edit_message(embed=embed,
+                                                view=MakerAmwerButtonContenu(self.title,
+                                                                             self.question,
+                                                                             self.count,
+                                                                             self.ms,
+                                                                             miss_anwer_indexs_retrun
+                                                                             )
+                                                )
         return
 
 class MakerAnswer(ui.Modal,title="回答"):
@@ -82,7 +94,14 @@ class MakerAnswer(ui.Modal,title="回答"):
         self.add_item(self.input)
     
     async def on_submit(self, interaction: discord.Interaction):
-        embed,miss_anwer_indexs_retrun = await MakerAnswerEmbed(self.title,self.question, str(self.input.value),self.miss_anwer_indexs,self.counts,interaction,1).make_embed()
+        embed,miss_anwer_indexs_retrun = await MakerAnswerEmbed(self.title,
+                                                                self.question,
+                                                                str(self.input.value),
+                                                                self.miss_anwer_indexs,
+                                                                self.counts,
+                                                                interaction,
+                                                                1
+                                                                ).make_embed()
         await interaction.response.edit_message(embed=embed, view=MakerAmwerButtonContenu(self.title, self.question, self.counts, self.ms, miss_anwer_indexs_retrun))
 
 class MakerAmwerButtonContenu(discord.ui.View):
