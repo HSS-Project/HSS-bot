@@ -213,6 +213,7 @@ class MemorizationSystem:
         - bool: True if the question is successfully deleted, False otherwise.
         """
         await self.load_data()
+        id = str(id_)
         if id in self.data["memorization"]:
             for cont, item in enumerate(self.data["memorization"][id][title]["questions"]):
                 if item["question"] == question:
@@ -237,6 +238,7 @@ class MemorizationSystem:
             bool: True if the mission was successfully edited, False otherwise.
         """
         await self.load_data()
+        id = str(id_)
         if id in self.data["memorization"] and title in self.data["memorization"][id]:
             edit_before = self.data["memorization"][id][title]["questions"][number]
             if edit_before["mode"] == 0:
