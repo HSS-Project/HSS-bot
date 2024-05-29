@@ -268,7 +268,7 @@ class MakerComanndsCog(commands.Cog):
     @app_commands.command()
     async def memorization_maker_view(self, interaction:discord.Interaction):
         """問題を表示するコマンド"""
-        if await self.ms.checkuser_in_HSS(interaction) == False:return
+        if await self.ms.checkuser_in_HSS(interaction) is False:return
         title = await self.ms.get_mission_title(str(interaction.user.id))
         if not title:return await interaction.response.send_message("ユーザーデータが見つかりませんでした。", ephemeral=True)
         embed = discord.Embed(title="問題を選択してください",color=0x00ff00)
@@ -279,7 +279,7 @@ class MakerComanndsCog(commands.Cog):
     @app_commands.command()
     async def get_score(self, interaction:discord.Interaction):
         """スコアを取得するコマンド"""
-        if await self.ms.checkuser_in_HSS(interaction) == False:return
+        if await self.ms.checkuser_in_HSS(interaction) is False:return
         title = await self.ms.get_mission_title(str(interaction.user.id))
         if not title:return await interaction.response.send_message("ユーザーデータが見つかりませんでした。", ephemeral=True)
         embed = discord.Embed(title="問題を選択してください",color=0x00ff00)
@@ -290,7 +290,7 @@ class MakerComanndsCog(commands.Cog):
     @app_commands.command()
     async def memorization_make_sheet(self,interaction:discord.Interaction):
         """暗記シート"""
-        if await self.ms.checkuser_in_HSS(interaction) == False:return
+        if await self.ms.checkuser_in_HSS(interaction) is False:return
         title = await self.ms.get_mission_title(str(interaction.user.id))
         if not title:return await interaction.response.send_message("ユーザーデータが見つかりませんでした。", ephemeral=True)
         embed = discord.Embed(title="問題を選択してください",color=0x00ff00)

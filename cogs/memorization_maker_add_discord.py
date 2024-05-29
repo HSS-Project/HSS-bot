@@ -599,7 +599,7 @@ class MemorizationControlView(discord.ui.View):
     @discord.ui.button(label="問題を削除", style=discord.ButtonStyle.red)
     async def delete(self, interaction: discord.Interaction, _:discord.ui.Button):
         lists = await self.memorization.get_mission(str(interaction.user.id),self.title)
-        if lists == False:return await interaction.response.send_message("問題がありません",ephemeral=True)
+        if lists is False:return await interaction.response.send_message("問題がありません",ephemeral=True)
         self.view.add_item(MemorizationDeleteSelect(lists, self.title,self.base_count))
         embed = discord.Embed(title="削除する問題を選択してください。", color=0x00ff00)
         await interaction.response.edit_message(embed=embed,view=self.view)
@@ -607,7 +607,7 @@ class MemorizationControlView(discord.ui.View):
     @discord.ui.button(label="問題編集", style=discord.ButtonStyle.red)
     async def edit(self, interaction: discord.Interaction, _:discord.ui.Button):
         lists = await self.memorization.get_mission(str(interaction.user.id),self.title)
-        if lists == False:return await interaction.response.send_message("問題がありません",ephemeral=True)
+        if lists is False:return await interaction.response.send_message("問題がありません",ephemeral=True)
         self.view.add_item(MemorizationEditSelect(lists, self.title,self.base_count))
         embed = discord.Embed(title="編集する問題を選択してください", color=0x00ff00)
         await interaction.response.edit_message(embed=embed,view=self.view)
@@ -637,7 +637,7 @@ class MemorizationCog(commands.Cog):
         """
         メモリゼーションを追加するコマンドです。
         """
-        if await self.memorization.checkuser_in_HSS(interaction) == False:return
+        if await self.memorization.checkuser_in_HSS(interaction) is False:return
         await interaction.response.send_modal(TitleAddModal())
 
     @app_commands.command()
@@ -645,7 +645,7 @@ class MemorizationCog(commands.Cog):
         """
         メモリゼーションの問題を編集するコマンドです。
         """
-        if await self.memorization.checkuser_in_HSS(interaction) == False:return
+        if await self.memorization.checkuser_in_HSS(interaction) is False:return
         lists = await self.memorization.get_mission_title(str(interaction.user.id))
         view = discord.ui.View()
         view.add_item(QuestionEditSelect(lists))
@@ -656,7 +656,7 @@ class MemorizationCog(commands.Cog):
         """
         共有コードから問題をコピーするコマンドです。
         """
-        if await self.memorization.checkuser_in_HSS(interaction) == False:return
+        if await self.memorization.checkuser_in_HSS(interaction) is False:return
         await interaction.response.defer(thinking=True)
         ch = await self.memorization.sharecode_question_copy(str(interaction.user.id),code)
         sharecode = await self.memorization.get_sharecode(str(interaction.user.id),self.title)
@@ -667,7 +667,7 @@ class MemorizationCog(commands.Cog):
         """
         Exselファイルから問題を追加するコマンドです。
         """
-        if await self.memorization.checkuser_in_HSS(interaction) == False:return
+        if await self.memorization.checkuser_in_HSS(interaction) is False:return
         await interaction.response.defer(thinking=True)
         file_bytes = await file.read()
         file_like_object = io.BytesIO(file_bytes)
@@ -681,7 +681,7 @@ class MemorizationCog(commands.Cog):
         """
         共有コードを取得するコマンドです。
         """
-        if await self.memorization.checkuser_in_HSS(interaction) == False:return
+        if await self.memorization.checkuser_in_HSS(interaction) is False:return
         lists = await self.memorization.get_mission_title(str(interaction.user.id))
         view = discord.ui.View()
         view.add_item(MemorizationShareSelect(lists))
@@ -692,7 +692,7 @@ class MemorizationCog(commands.Cog):
         """
         タイトルを削除するコマンドです。
         """
-        if await self.memorization.checkuser_in_HSS(interaction) == False:return
+        if await self.memorization.checkuser_in_HSS(interaction) is False:return
         lists = await self.memorization.get_mission_title(str(interaction.user.id))
         view = discord.ui.View()
         view.add_item(MemorizationTitleDeleteSelect(lists))
