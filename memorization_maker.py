@@ -151,20 +151,13 @@ class MemorizationSystem:
         self.data["memorization"].setdefault(num_id, {})
         self.data["memorization"][num_id].setdefault(title, {"questions": [], "sharecode": number})
         row_count = sum(1 for _ in sheet.iter_rows(min_row=1, values_only=True))
-        ch = 0
-        if row_count < 4:
-            ch = 1
-
+        if row_count < 4:return False
         for row in sheet.iter_rows(min_row=1, values_only=True):
-            if not row[0] or not row[1] or not row[2]:
-                continue
-
+            if not row[0] or not row[1] or not row[2]:continue
+            mode = int(row[2])
+            if type(mode) != int:return False
             question = row[0]
             answer = row[1]
-            mode = row[2]
-            mode = int(mode)
-            if type(mode) != int:
-                return False
             if mode == 1:
                 self.data["memorization"][num_id][title]["questions"].append({"question": question, "mode": 0, "answer": answer})
             elif mode == 2:
@@ -178,23 +171,19 @@ class MemorizationSystem:
                         mode_change = 1
                 except:
                     mode_change = 1
-                if ch == 1:
-                    return False
                 if mode_change == 1:
                     num_rows = sheet.max_row 
                     random_answer_index = random.randint(0, 3)
                     select = []
-                    for index in range(4):
+                    for _ in range(4):
                         while True:
                             random_select = random.randint(1, num_rows + 1) 
                             cell = sheet.cell(row=random_select, column=2)
-                            if cell.value not in select and cell.value is not None:
-                                if not cell.value  == answer:
-                                    select.append(cell.value)
-                                    break
+                            if cell.value not in select and cell.value is not None and cell.value != answer:
+                                select.append(cell.value)
+                                break
                     select[random_answer_index] = answer
                     answer_num =  select.index(answer)+1
-                    
                 self.data["memorization"][num_id][title]["questions"].append({"question": question, "mode": 1, "answer": answer_num, "select": select})
         await self.save_data()
         return True
@@ -516,19 +505,20 @@ class MemorizationSystem:
         """
         await self.load_data()
         num_id = str(id_)
-        if not num_id in self.data["memorization"] and not title in self.data["memorization"][num_id]:return False
-        make_sheet = ""
-        for item in self.data["memorization"][num_id][title]["questions"]:
-            question_text = item["question"]
-            if item["mode"] == 0:
-                answer_text = item["answer"]
-            elif item["mode"] == 1:
-                answer_text = item["select"][item["answer"]-1]
-            make_sheet += f"{question_text} : ||{answer_text}||\n"
-            if len(make_sheet) > 1900:
-                make_sheet += "......\n"
-                return make_sheet
-        return make_sheet                            
+        if num_id in self.data["memorization"] and not title in self.data["memorization"][num_id]:
+            make_sheet = ""
+            for item in self.data["memorization"][num_id][title]["questions"]:
+                question_text = item["question"]
+                if item["mode"] == 0:
+                    answer_text = item["answer"]
+                elif item["mode"] == 1:
+                    answer_text = item["select"][item["answer"]-1]
+                make_sheet += f"{question_text} : ||{answer_text}||\n"
+                if len(make_sheet) > 1900:
+                    make_sheet += "......\n"
+                    return make_sheet
+            return make_sheet     
+        return False                       
             
     """
     user_status System ↓
