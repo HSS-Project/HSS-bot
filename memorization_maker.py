@@ -52,8 +52,8 @@ class MemorizationSystem:
         user = User(token=token)
         try:
             user.get_permission_discordUserID(str(interaction.user.id))
-        except Exception as e:
-            await interaction.response.send_message("この機能はHSSにログインしてないユーザーはご利用いただけません。\n[HSSにloginする](https://hss.aknet.tech/login)", ephemeral=True)
+        except:
+            await interaction.response.send_message("この機能はHSSにログインして学校に登録していないユーザーはご利用いただけません。\n[HSSにloginする](https://hss.aknet.tech/login)", ephemeral=True)
             return False
         return True
 
@@ -399,7 +399,6 @@ class MemorizationSystem:
                     if mode == 0:
                         return item["answer"] == answer
                     else:
-                        assert "select" in item
                         return answer == item["select"][int(item["answer"])-1]
         return False
     
@@ -506,7 +505,7 @@ class MemorizationSystem:
         """
         await self.load_data()
         num_id = str(id_)
-        if num_id in self.data["memorization"] and not (title in self.data["memorization"][num_id]):
+        if num_id in self.data["memorization"] and (title in self.data["memorization"][num_id]):
             make_sheet = ""
             for item in self.data["memorization"][num_id][title]["questions"]:
                 question_text = item["question"]

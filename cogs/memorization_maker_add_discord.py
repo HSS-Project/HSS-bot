@@ -647,6 +647,7 @@ class MemorizationCog(commands.Cog):
         """
         if await self.memorization.checkuser_in_HSS(interaction) is False:return
         lists = await self.memorization.get_mission_title(str(interaction.user.id))
+        if len(lists) == 0:return await interaction.response.send_message("問題がありません",ephemeral=True)
         view = discord.ui.View()
         view.add_item(QuestionEditSelect(lists))
         await interaction.response.send_message("編集する問題を選択してください", view=view, ephemeral=True)
@@ -659,8 +660,7 @@ class MemorizationCog(commands.Cog):
         if await self.memorization.checkuser_in_HSS(interaction) is False:return
         await interaction.response.defer(thinking=True)
         ch = await self.memorization.sharecode_question_copy(str(interaction.user.id),code)
-        sharecode = await self.memorization.get_sharecode(str(interaction.user.id),self.title)
-        await interaction.followup.send(f"コピー完了 共有コード:{sharecode}" if ch else "コピー失敗")
+        await interaction.followup.send(f"{code}の問題をコピーしました" if ch else "コピー失敗")
 
     @app_commands.command()
     async def memorization_add_excel(self, interaction: discord.Interaction,file: discord.Attachment,title:str):
@@ -683,6 +683,7 @@ class MemorizationCog(commands.Cog):
         """
         if await self.memorization.checkuser_in_HSS(interaction) is False:return
         lists = await self.memorization.get_mission_title(str(interaction.user.id))
+        if len(lists) == 0:return await interaction.response.send_message("問題がありません",ephemeral=True)
         view = discord.ui.View()
         view.add_item(MemorizationShareSelect(lists))
         await interaction.response.send_message("共有コードを取得する問題を選択してください", view=view, ephemeral=True)
@@ -694,6 +695,7 @@ class MemorizationCog(commands.Cog):
         """
         if await self.memorization.checkuser_in_HSS(interaction) is False:return
         lists = await self.memorization.get_mission_title(str(interaction.user.id))
+        if len(lists) == 0:return await interaction.response.send_message("問題がありません",ephemeral=True)
         view = discord.ui.View()
         view.add_item(MemorizationTitleDeleteSelect(lists))
         await interaction.response.send_message("削除するタイトルを選択してください",view=view,ephemeral=True)

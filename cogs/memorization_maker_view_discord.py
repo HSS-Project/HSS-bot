@@ -53,7 +53,8 @@ class MakerSelect(discord.ui.Select):
                                                                 self.values[0],
                                                                 self.miss_anwer_indexs,
                                                                 self.count,
-                                                                interaction,1
+                                                                interaction,
+                                                                1
                                                                 ).make_embed()
         await interaction.response.edit_message(embed=embed,
                                                 view=MakerAmwerButtonContenu(self.title,
@@ -100,7 +101,7 @@ class MakerAnswer(ui.Modal,title="回答"):
                                                                 self.miss_anwer_indexs,
                                                                 self.counts,
                                                                 interaction,
-                                                                1
+                                                                0
                                                                 ).make_embed()
         await interaction.response.edit_message(embed=embed,
                                                 view=MakerAmwerButtonContenu(self.title,
@@ -318,7 +319,7 @@ class MakerComanndsCog(commands.Cog):
         """暗記シート"""
         if await self.ms.checkuser_in_HSS(interaction) is False:return
         title = await self.ms.get_mission_title(str(interaction.user.id))
-        if not title:return await interaction.response.send_message("ユーザーデータが見つかりませんでした。", ephemeral=True)
+        if not title:return await interaction.response.send_message("問題がありません。", ephemeral=True)
         embed = discord.Embed(title="問題を選択してください",color=0x00ff00)
         view = discord.ui.View()
         view.add_item(MemorizationQuestionSelect(title, self.ms,2))
