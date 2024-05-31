@@ -344,7 +344,18 @@ class HomeworkAddModal(discord.ui.Modal):
                                        istooBig=isevent)
         elif self.modechange == 1:
             homeworkindex = self.school.get_homework(self.school.search_class(self.grade, self._class)).index(self.homework)
-            self.school.patch_homework(grade=self.grade,_class=self._class,date="mon",name=self.name.value,comment=self.comment.value,start=self.page_start.value,end=self.page_end.value,istooBig=isevent,state="update",index=homeworkindex)
+            self.school.patch_homework(
+                grade=self.grade,
+                _class=self._class,
+                date="mon",
+                name=self.name.value,
+                comment=self.comment.value,
+                start=self.page_start.value,
+                end=self.page_end.value,
+                istooBig=isevent,
+                state="update",
+                index=homeworkindex
+                )
         await interaction.response.send_message("宿題を追加しました", ephemeral=True)
 
 class SelectHomeWork(discord.ui.Select):
