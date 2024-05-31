@@ -119,7 +119,9 @@ class ClassSelect(discord.ui.Select):
             lens = len(homework)
             embed = discord.Embed(title=f"{self.values[0]}組の宿題")
             for n in range(lens):
-                embed.add_field(name=f"{n+1}番目の宿題", value=f"教科:{homework[n]['name']}\nとっても大きくてやるのに時間がかかるものか:{homework[n]['istooBig']}\nページ情報:\nはじまり{homework[n]['page']['start']}\nおわり{homework[n]['page']['end']}\n補足:{homework[n]['page']['comment']}",inline=False)
+                embed.add_field(name=f"{n+1}番目の宿題",
+                                value=f"教科:{homework[n]['name']}\nとっても大きくてやるのに時間がかかるものか:{homework[n]['istooBig']}\nページ情報:\nはじまり{homework[n]['page']['start']}\nおわり{homework[n]['page']['end']}\n補足:{homework[n]['page']['comment']}",
+                                inline=False)
             await interaction.response.edit_message(embed=embed,view=None)
         elif self.mode == 4:
             return await interaction.response.edit_message(content="宿題を選択してください", view=HomeworkView(self.schoolid, self.grade, self.values[0]))
@@ -244,7 +246,10 @@ class send(discord.ui.Modal):
                                       )
                 isevent = True if self.isevent.value == "True" else False
                 embed = discord.Embed(title="hss - 設定完了" , description="設定が正常に完了しました。", color=discord.Color.green()
-                ).add_field(name="教科名", value=self.name.value).add_field(name="イベントか", value=f"{'はい' if isevent else 'いいえ'}").add_field(name="場所", value=self.place.value)
+                ).add_field(
+                    name="教科名",value=self.name.value
+                    ).add_field(
+                        name="イベントか",value=f"{'はい' if isevent else 'いいえ'}").add_field(name="場所",value=self.place.value)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
             except Exception as e:
                 print(e)
@@ -324,7 +329,14 @@ class HomeworkAddModal(discord.ui.Modal):
             return await interaction.response.send_message("エラーが発生しました", ephemeral=True)
         isevent = True if self.istooBig.value == "True" else False
         if self.modechange == 0:            
-            self.school.patch_homework(grade=int(self.grade),_class=int(self._class),date="mon",name=str(self.name.value),comment=self.comment.value,start=self.page_start.value,end=self.page_end.value,istooBig=isevent)
+            self.school.patch_homework(grade=int(self.grade),
+                                       _class=int(self._class),
+                                       date="mon",
+                                       name=str(self.name.value),
+                                       comment=self.comment.value,
+                                       start=self.page_start.value,
+                                       end=self.page_end.value,
+                                       istooBig=isevent)
         elif self.modechange == 1:
             homeworkindex = self.school.get_homework(self.school.search_class(self.grade, self._class)).index(self.homework)
             self.school.patch_homework(grade=self.grade,_class=self._class,date="mon",name=self.name.value,comment=self.comment.value,start=self.page_start.value,end=self.page_end.value,istooBig=isevent,state="update",index=homeworkindex)
@@ -348,7 +360,18 @@ class SelectHomeWork(discord.ui.Select):
         if self.modes == 0:
             await interaction.response.send_modal(HomeworkAddModal(self.schoolid, self.grade, self._class, 1, homework))
         elif self.modes == 1:
-            self.school.patch_homework(grade=self.grade,_class=self._class,date="mon",name="aa",comment="aa",start=1,end=1,istooBig=False,state="remove",index=self.values[0])
+            self.school.patch_homework(
+                grade=self.grade,
+                _class=self._class,
+                date="mon",
+                name="aa",
+                comment="aa",
+                start=1,
+                end=1,
+                istooBig=False,
+                state="remove",
+                index=self.values[0]
+                )
             await interaction.response.edit_message(content="削除しました")
 
 class CommandsCog(commands.Cog):
