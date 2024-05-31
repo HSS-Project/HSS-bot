@@ -28,47 +28,39 @@ class gettimelineselect(discord.ui.View):
             self.add_item(discord.ui.Button(style=discord.ButtonStyle.red, label="エラーが発生しました"))
             return
 
-    @discord.ui.button(style=discord.ButtonStyle.green, label="標準時間割")
-    async def default_timeline(self, interaction:discord.Interaction, button:discord.ui.Button):
-        try:
-            res = self.school.get_default_timeline(self.class_index, self.date)
-        except Exception as e:
-            embed = discord.Embed(title="hss - エラー", description="エラーが発生しました。", color=discord.Color.red()).add_field(name="エラー内容", value=e)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-        embed = discord.Embed(title=f"{self.grade}-{self._class}の{self.date}の標準時間割", description="")
+    async def make_embed(self, grade:int, _class:int, res,modes:int):
+        day_of_week = {
+            "mon": "月曜日",
+            "tue": "火曜日",
+            "wed": "水曜日",
+            "thu": "木曜日",
+            "fri": "金曜日",
+            "sat": "土曜日",
+            "sun": "日曜日"
+        }
+        embed = discord.Embed(title=f"{grade}-{_class}の{day_of_week[self.date]}の{'標準' if modes == 0 else '今週'}の時間割", description="")
         for n in range(len(res)):
             embed.add_field(name=f"{n+1}時間目", value=f'教科:{res[n]["name"]}\n 場所:{"指定なし" if res[n]["place"] == "初期値" else res[n]["place"]}\n イベントか:{"はい" if res[n]["IsEvent"] else "いいえ"}', inline=False)
+        return embed
+    
+    @discord.ui.button(style=discord.ButtonStyle.green, label="標準時間割")
+    async def default_timeline(self, interaction:discord.Interaction, button:discord.ui.Button):
+        res = self.school.get_default_timeline(self.class_index, self.date)
+        embed = await self.make_embed(self.grade, self._class, res,0)
         await interaction.response.send_message(embed=embed, ephemeral=True)
     
     @discord.ui.button(style=discord.ButtonStyle.green, label="今週の時間割")
     async def timeline(self, interaction:discord.Interaction, button:discord.ui.Button):
-        try:
-            res = self.school.get_timeline(self.class_index, self.date)
-        except Exception as e:
-            embed = discord.Embed(title="hss - エラー", description="エラーが発生しました。", color=discord.Color.red()).add_field(name="エラー内容", value=e)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-        embed = discord.Embed(title=f"{self.grade}-{self._class}の{self.date}の時間割", description="")
-        for n in range(len(res)):
-            embed.add_field(name=f"{n+1}時間目", value=f'教科:{res[n]["name"]}\n 場所:{"指定なし" if res[n]["place"] == "初期値" else res[n]["place"]}\n イベントか:{"はい" if res[n]["IsEvent"] else "いいえ"}', inline=False)
+        res = self.school.get_timeline(self.class_index, self.date)
+        embed = await self.make_embed(self.grade, self._class, res,1)
         await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
 
 class SchoolSelect(discord.ui.Select):
     def __init__(self,mode:int,id:int):
         self.mode = mode
         options = []
         user = User(token=token)
-        try:
-            schools:list = user.get_permission_discordUserID(id)
-        except Exception as e:
-            print(e)
-            options.append(discord.SelectOption(label="エラーが発生しました", value="error"))
-            super().__init__(placeholder="エラー", options=options)
-            return
-        
+        schools:list = user.get_permission_discordUserID(id)
         names = []
         options = []
         for school_id in schools:
@@ -91,14 +83,7 @@ class GradeSelect(discord.ui.Select):
         options = []
         self.mode = mode
         school = School(token=token,schoolid=schoolid)
-        try:
-            self.get_list:list = school.get_classes()
-        except Exception as e:
-            print(e)
-            options.append(discord.SelectOption(label="エラーが発生しました", value="error"))
-            super().__init__(placeholder="エラー", options=options)
-            return
-        
+        self.get_list:list = school.get_classes()
         for grade in self.get_list.keys():
             options.append(discord.SelectOption(label=f"{grade}年生", value=grade))
                 
@@ -107,17 +92,12 @@ class GradeSelect(discord.ui.Select):
     async def callback(self, interaction:discord.Interaction):
         self.values[0] = str(self.values[0])
         class_list = self.get_list[self.values[0]]
-        if self.values[0] == "error":
-            await interaction.response.edit_message(content="エラーが発生しました", view=None)
-            return
         view = discord.ui.View()
         view.add_item(ClassSelect(self.schoolid, self.values[0], self.mode,class_list))
         await interaction.response.edit_message(content="クラスを選択してください", view=view)
         
-    
 class ClassSelect(discord.ui.Select):
     def __init__(self, schoolid:int, grade:int,mode:int,class_list:list):
-        school = School(token=token,schoolid=schoolid)
         self.mode = mode
         self.schoolid = schoolid
         self.grade = grade
@@ -129,13 +109,26 @@ class ClassSelect(discord.ui.Select):
     
     async def callback(self, interaction:discord.Interaction):
         view = discord.ui.View()
-        if self.mode < 4:
+        if self.mode < 3:
             view.add_item(DayOfWeekSelect(self.schoolid, self.grade, self.values[0], self.mode))
-            await interaction.response.edit_message(content="曜日を選択してください", view=view)
-            return
+            return await interaction.response.edit_message(content="曜日を選択してください", view=view)
+        elif self.mode == 3:
+            school = School(token=token, schoolid=self.schoolid)
+            search_class_index = school.search_class(int(self.grade),int(self.values[0]))
+            homework = school.get_homework(search_class_index)
+            lens = len(homework)
+            embed = discord.Embed(title=f"{self.values[0]}組の宿題")
+            for n in range(lens):
+                subject = homework[n]["name"]
+                big = homework[n]["istooBig"]
+                page = homework[n]["page"]
+                start = page["start"]
+                end = page["end"]
+                comment = page["comment"]
+                embed.add_field(name=f"{n+1}番目の宿題\n教科:{subject}\n時間かかるか{big}\nページ:{start}~{end}\n備考{comment}",inline=False)
+            await interaction.response.edit_message(embed=embed,view=None)
         elif self.mode == 4:
-            await interaction.response.edit_message(content="宿題を選択してください", view=HomeworkView(self.schoolid, self.grade, self.values[0]))
-            return
+            return await interaction.response.edit_message(content="宿題を選択してください", view=HomeworkView(self.schoolid, self.grade, self.values[0]))
 
 class DayOfWeekSelect(discord.ui.Select):
     def __init__(self,schoolid:int, grade:int, _class:int, mode:int):
@@ -144,6 +137,7 @@ class DayOfWeekSelect(discord.ui.Select):
         self._class = _class
         self.mode = mode
         self.school = School(token=token, schoolid=self.schoolid)
+        
         options = [
             discord.SelectOption(label="月曜日", value="mon"),
             discord.SelectOption(label="火曜日", value="tue"),
@@ -156,10 +150,10 @@ class DayOfWeekSelect(discord.ui.Select):
         super().__init__(placeholder="曜日を選択してください", options=options)
     
     async def callback(self, interaction:discord.Interaction):
+        search_class_index = self.school.search_class(int(self.grade),int(self._class))
         if self.mode == 0:            
             await interaction.response.edit_message(content="どちらの時間割を取得しますか", view=gettimelineselect(self.schoolid, self.grade, self._class, self.values[0]))
         elif self.mode == 1:        
-            search_class_index = self.school.search_class(int(self.grade),int(self._class))
             gettimeline = self.school.get_timeline(search_class_index, self.values[0])
             timelineindex = self.school.default_timelineindex(search_class_index)
             if len(gettimeline) < timelineindex:
@@ -168,11 +162,9 @@ class DayOfWeekSelect(discord.ui.Select):
                 view = discord.ui.View()
                 view.add_item(EditSendSelect(self.schoolid, self.grade, self._class, self.values[0]))
                 await interaction.response.edit_message(content="編集する時間を選択してください", view=view)
-
         elif self.mode == 2:
             try:
-                _class = self.school.search_class(int(self.grade),int(self._class))
-                event = self.school.get_event(_class, self.values[0])
+                event = self.school.get_event(search_class_index, self.values[0])
                 await interaction.response.edit_message(embed=discord.Embed(
                     title=f"{self.values[0]}のイベント",
                     description=""
@@ -181,18 +173,6 @@ class DayOfWeekSelect(discord.ui.Select):
                             value=f"{event['timeData']['startTime']}～{event['timeData']['end']}（{'終日' if event['timeData']['isEndofDay'] else '時間内のみ'}）"))
             except TypeError as e:
                 await interaction.response.edit_message(content="エラー\n内容はないようです")
-        elif self.mode == 3:
-            try:
-                _class = self.school.search_class(int(self.grade),int(self._class))
-                homework = self.school.get_homework(_class)
-            except Exception as e:
-                await interaction.response.edit_message(content="エラー\n内容はないようです")
-                return
-            lens = len(homework)
-            embed = discord.Embed(title=f"{self.values[0]}の宿題")
-            for n in range(lens):
-                embed.add_field(name=f"{n+1}番目の宿題", value=f"教科:{homework[n]['name']}\nとっても大きくてやるのに時間がかかるものか:{homework[n]['istooBig']}\nページ情報:\nはじまり{homework[n]['start']}\nおわり{homework[n]['end']}\n補足:{homework[n]['comment']}")
-            await interaction.response.edit_message(embed=embed)
 
 class EditSendSelect(discord.ui.Select):
     def __init__(self, schoolid:int, grade:int, _class:int, date:str):
@@ -253,31 +233,50 @@ class send(discord.ui.Modal):
         
     async def on_submit(self, interaction:discord.Interaction):
         if (self.isevent.value not in ["True", "False"]):
-            print("error")
             embed = discord.Embed(
                 title="hss - エラー", description="エラーが発生しました。", color=discord.Color.orange()
             ).add_field(name="エラー内容", value="イベントかどうかはTrueかFalseで指定してください。")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
 
         school = School(token=token, schoolid=self.schoolid)
         if self.mode == 0 and self.editmode == None:
             try:
-                req = school.patch_timeline(grade=self.grade, _class=self._class, date=self.date, name=self.name.value, isEvent=self.isevent.value, place=self.place.value)
+                school.patch_timeline(grade=self.grade,
+                                      _class=self._class,
+                                      date=self.date,
+                                      name=self.name.value,
+                                      isEvent=self.isevent.value,
+                                      place=self.place.value
+                                      )
+                isevent = True if self.isevent.value == "True" else False
                 embed = discord.Embed(title="hss - 設定完了" , description="設定が正常に完了しました。", color=discord.Color.green()
-                ).add_field(name="教科名", value=self.name.value).add_field(name="イベントか", value=f"{'はい' if bool(self.isevent.value) else 'いいえ'}").add_field(name="場所", value=self.place.value)
+                ).add_field(
+                    name="教科名",value=self.name.value
+                    ).add_field(
+                        name="イベントか",value=f"{'はい' if isevent else 'いいえ'}").add_field(name="場所",value=self.place.value)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
             except Exception as e:
+                print(e)
                 embed = discord.Embed(title="hss - エラー", description="エラーが発生しました。", color=discord.Color.red()).add_field(name="エラー内容", value=e)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
         elif self.mode == 1 and self.editmode != None:
             try:
                 self.editmode = int(self.editmode)
-                req = school.patch_timeline(grade=self.grade, _class=self._class, date=self.date, name=self.name.value, isEvent=self.isevent.value, place=self.place.value, state="update",index=self.editmode)
+                school.patch_timeline(
+                    grade=self.grade,
+                    _class=self._class,
+                    date=self.date,name=self.name.value,
+                    isEvent=self.isevent.value,
+                    place=self.place.value,
+                    state="update",
+                    index=self.editmode
+                )
+                isevent = True if self.isevent.value == "True" else False
                 embed = discord.Embed(title="hss - 設定完了" , description="設定が正常に完了しました。", color=discord.Color.green()
-                ).add_field(name="教科名", value=self.name.value).add_field(name="イベントか", value=f"{'はい' if bool(self.isevent.value) else 'いいえ'}").add_field(name="場所", value=self.place.value)
+                ).add_field(name="教科名", value=self.name.value).add_field(name="イベントか", value=f"{'はい' if isevent else 'いいえ'}").add_field(name="場所", value=self.place.value)
                 await interaction.response.send_message(content=None,embed=embed, ephemeral=True)
             except Exception as e:
+                print(e)
                 embed = discord.Embed(title="hss - エラー", description="エラーが発生しました。", color=discord.Color.red()).add_field(name="エラー内容", value=e)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -286,6 +285,7 @@ class HomeworkView(discord.ui.View):
         self.schoolid = schoolid
         self.grade = grade
         self._class = _class
+        self.view = discord.ui.View()
         super().__init__()
         
     @discord.ui.button(style=discord.ButtonStyle.green, label="宿題追加")
@@ -294,16 +294,14 @@ class HomeworkView(discord.ui.View):
     
     @discord.ui.button(style=discord.ButtonStyle.green, label="宿題削除")
     async def delete_homework(self, interaction:discord.Interaction, button:discord.ui.Button):
-        view = discord.ui.View()
-        view.add_item(SelectHomeWork(self.schoolid, self.grade, self._class, 1))
-        await interaction.response.edit_message(content="削除する宿題を選択してください", view=view)
+        self.view.add_item(SelectHomeWork(self.schoolid, self.grade, self._class, 1))
+        await interaction.response.edit_message(content="削除する宿題を選択してください", view=self.view)
         
     
     @discord.ui.button(style=discord.ButtonStyle.green, label="宿題編集")
     async def edit_homework(self, interaction:discord.Interaction, button:discord.ui.Button):
-        view = discord.ui.View()
-        view.add_item(SelectHomeWork(self.schoolid, self.grade, self._class, 0))
-        await interaction.response.edit_message(content="編集する宿題を選択してください", view=view)
+        self.view.add_item(SelectHomeWork(self.schoolid, self.grade, self._class, 0))
+        await interaction.response.edit_message(content="編集する宿題を選択してください", view=self.view)
     
 class HomeworkAddModal(discord.ui.Modal):
     def __init__(self, schoolid:int,grade:int,_class:int,modechange:int,homwork=None):
@@ -333,13 +331,31 @@ class HomeworkAddModal(discord.ui.Modal):
     
     async def on_submit(self, interaction:discord.Interaction):
         if self.istooBig.value not in ["True", "False"]:
-            await interaction.response.send_message("エラーが発生しました", ephemeral=True)
-            return
+            return await interaction.response.send_message("エラーが発生しました", ephemeral=True)
+        isevent = True if self.istooBig.value == "True" else False
         if self.modechange == 0:            
-            self.school.patch_homework(grade=int(self.grade),_class=int(self._class),date="mon",name=str(self.name.value),comment=self.comment.value,start=self.page_start.value,end=self.page_end.value,istooBig=bool(self.istooBig.value))
+            self.school.patch_homework(grade=int(self.grade),
+                                       _class=int(self._class),
+                                       date="mon",
+                                       name=str(self.name.value),
+                                       comment=self.comment.value,
+                                       start=self.page_start.value,
+                                       end=self.page_end.value,
+                                       istooBig=isevent)
         elif self.modechange == 1:
             homeworkindex = self.school.get_homework(self.school.search_class(self.grade, self._class)).index(self.homework)
-            self.school.patch_homework(grade=self.grade,_class=self._class,date="mon",name=self.name.value,comment=self.comment.value,start=self.page_start.value,end=self.page_end.value,istooBig=bool(self.istooBig.value),state="update",index=homeworkindex)
+            self.school.patch_homework(
+                grade=self.grade,
+                _class=self._class,
+                date="mon",
+                name=self.name.value,
+                comment=self.comment.value,
+                start=self.page_start.value,
+                end=self.page_end.value,
+                istooBig=isevent,
+                state="update",
+                index=homeworkindex
+                )
         await interaction.response.send_message("宿題を追加しました", ephemeral=True)
 
 class SelectHomeWork(discord.ui.Select):
@@ -360,7 +376,18 @@ class SelectHomeWork(discord.ui.Select):
         if self.modes == 0:
             await interaction.response.send_modal(HomeworkAddModal(self.schoolid, self.grade, self._class, 1, homework))
         elif self.modes == 1:
-            self.school.patch_homework(grade=self.grade,_class=self._class,date="mon",name="aa",comment="aa",start=1,end=1,istooBig=False,state="remove",index=self.values[0])
+            self.school.patch_homework(
+                grade=self.grade,
+                _class=self._class,
+                date="mon",
+                name="aa",
+                comment="aa",
+                start=1,
+                end=1,
+                istooBig=False,
+                state="remove",
+                index=self.values[0]
+                )
             await interaction.response.edit_message(content="削除しました")
 
 class CommandsCog(commands.Cog):
@@ -370,13 +397,15 @@ class CommandsCog(commands.Cog):
     
     school = app_commands.Group(name="school", description="school updateやremoveの場合は、indexを指定してください。そのindexで上書きをします。 api")
 
-    async def check_schools(self,id):
+    async def check_schools(self,interaction:discord.Interaction):
         user = User(token=token)
         try:
-            schools:list = user.get_permission_discordUserID(id)
+            schools:list = user.get_permission_discordUserID(str(interaction.user.id))
         except Exception as e:
             schools = []
+            print(e)
         if len(schools) == 0:
+            await interaction.response.send_message("学校が登録されていません", ephemeral=True)
             return 0
         elif len(schools) == 1:
             return 1
@@ -387,30 +416,26 @@ class CommandsCog(commands.Cog):
     async def get_timeline(self, interaction:discord.Interaction):
         """時間割を取得します。"""
         view = discord.ui.View()
-        schools = await self.check_schools(interaction.user.id)
-        if schools == 0:
-            await interaction.response.send_message("学校が登録されていません", ephemeral=True)
-            return
+        schools = await self.check_schools(interaction)
+        if schools == 0:return
         elif schools == 1:
             schoolslist = self.user.get_permission_discordUserID(interaction.user.id) 
             view.add_item(GradeSelect(schoolslist[0], 0))
-            await interaction.response.send_message("学年を選択してください", view=view, ephemeral=True)
+            return await interaction.response.send_message("学年を選択してください", view=view, ephemeral=True)
         else:
             view.add_item(SchoolSelect(0, interaction.user.id))
-            await interaction.response.send_message("学校を選択してください", view=view, ephemeral=True)
+            return await interaction.response.send_message("学校を選択してください", view=view, ephemeral=True)
 
     @school.command(name="patch", description="school/patch")
     async def school_patch(self, interaction:discord.Interaction):
         """時間割を設定します。"""
         view = discord.ui.View()
-        schools = await self.check_schools(interaction.user.id)
-        if schools == 0:
-            await interaction.response.send_message("学校が登録されていません", ephemeral=True)
-            return
+        schools = await self.check_schools(interaction)
+        if schools == 0:return
         elif schools == 1:
             schoolslist = self.user.get_permission_discordUserID(interaction.user.id) 
             view.add_item(GradeSelect(schoolslist[0], 1))
-            await interaction.response.send_message("学年を選択してください", view=view, ephemeral=True)
+            return await interaction.response.send_message("学年を選択してください", view=view, ephemeral=True)
         else:
             view.add_item(SchoolSelect(1, interaction.user.id))
             await interaction.response.send_message("学校を選択してください", view=view, ephemeral=True)
@@ -420,10 +445,8 @@ class CommandsCog(commands.Cog):
         """イベントを取得します。"""
         view = discord.ui.View()
 
-        schools = await self.check_schools(interaction.user.id)
-        if schools == 0:
-            await interaction.response.send_message("学校が登録されていません", ephemeral=True)
-            return
+        schools = await self.check_schools(interaction)
+        if schools == 0:return
         elif schools == 1:
             schoolslist = self.user.get_permission_discordUserID(interaction.user.id) 
             view.add_item(GradeSelect(schoolslist[0], 2))
@@ -436,31 +459,26 @@ class CommandsCog(commands.Cog):
     async def get_homework(self, interaction:discord.Interaction):
         """宿題を取得します。"""
         view = discord.ui.View()
-        schools = await self.check_schools(interaction.user.id)
-        if schools == 0:
-            await interaction.response.send_message("学校が登録されていません", ephemeral=True)
-            return
+        schools = await self.check_schools(interaction)
+        if schools == 0:return
         elif schools == 1:
             schoolslist = self.user.get_permission_discordUserID(interaction.user.id) 
             view.add_item(GradeSelect(schoolslist[0], 3))
-            await interaction.response.send_message("学年を選択してください", view=view, ephemeral=True)
-            return
+            return await interaction.response.send_message("学年を選択してください", view=view, ephemeral=True)
         else:
             view.add_item(SchoolSelect(3, interaction.user.id))
-        await interaction.response.send_message("学校を選択してください", view=view, ephemeral=True)
+            await interaction.response.send_message("学校を選択してください", view=view, ephemeral=True)
     
     @school.command(name="patch_homework", description="school/patch_homework")
     async def patch_homework(self, interaction:discord.Interaction):
         """宿題を設定します。"""
         view = discord.ui.View()
-        schools = await self.check_schools(interaction.user.id)
-        if schools == 0:
-            await interaction.response.send_message("学校が登録されていません", ephemeral=True)
-            return
+        schools = await self.check_schools(interaction)
+        if schools == 0:return
         elif schools == 1:
             schoolslist = self.user.get_permission_discordUserID(interaction.user.id) 
             view.add_item(GradeSelect(schoolslist[0], 4))
-            await interaction.response.send_message("学年を選択してください", view=view, ephemeral=True)
+            return await interaction.response.send_message("学年を選択してください", view=view, ephemeral=True)
         else:
             view.add_item(SchoolSelect(4, interaction.user.id))
             await interaction.response.send_message("学校を選択してください", view=view, ephemeral=True)

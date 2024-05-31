@@ -5,6 +5,7 @@ import json
 import random
 import openpyxl
 from HSS import User
+import discord
 
 from typing import TypedDict
 
@@ -41,7 +42,7 @@ class MemorizationSystem:
         self.filename = filename
         self.data = {"memorization": {}, "user_status": {}}
 
-    async def checkuser_in_HSS(self, id: int) -> bool:
+    async def checkuser_in_HSS(self, interaction:discord.Interaction) -> bool:
         """
         Check if the user is in the HSS.
         """
@@ -49,10 +50,10 @@ class MemorizationSystem:
             token = json.load(f)
             token = token["HSSAPI_TOKEN"]
         user = User(token=token)
-        id = int(id)
         try:
-            schools = user.get_permission_discordUserID(id)
-        except Exception as e:
+            user.get_permission_discordUserID(str(interaction.user.id))
+        except:
+            await interaction.response.send_message("この機能はHSSにログインして学校に登録していないユーザーはご利用いただけません。\n[HSSにloginする](https://hss.aknet.tech/login)", ephemeral=True)
             return False
         return True
 
@@ -82,7 +83,7 @@ class MemorizationSystem:
         except FileNotFoundError:
             self.data = {"memorization": {}, "user_status": {}}
 
-    async def del_mission_title(self, id: str, title: str):
+    async def del_mission_title(self, id_: str, title: str):
         """
         Delete a mission title from the memorization data.
 
@@ -93,16 +94,17 @@ class MemorizationSystem:
         Returns:
             bool: True if the title is deleted successfully, False otherwise.
         """
+        num_id = str(id_)
         await self.load_data()
-        if id in self.data["memorization"]:
-            if title in self.data["memorization"][id]:
-                self.data["memorization"][id].pop(title)
+        if num_id in self.data["memorization"]:
+            if title in self.data["memorization"][num_id]:
+                self.data["memorization"][num_id].pop(title)
                 await self.save_data()
                 return True
         return False
 
 
-    async def add_mission(self, id: str, title: str,random_number:int,mode: int, mission: str, answer: str, select: list | None = None, ):
+    async def add_mission(self, id_: str, title: str,random_number:int,mode: int, mission: str, answer: str, select: list | None = None, ):
         """
         Add a mission to the memorization data.
 
@@ -118,18 +120,18 @@ class MemorizationSystem:
         Returns:
             bool: True if the mission is added successfully, False otherwise.
         """
-        id = str(id)
+        num_id = str(id_)
         await self.load_data()
-        self.data["memorization"].setdefault(id, {})
-        self.data["memorization"][id].setdefault(title, {"questions": [], "sharecode": random_number})
-        self.data["memorization"][id][title]["questions"].append({"question": mission, "mode": mode, "answer": answer})
+        self.data["memorization"].setdefault(num_id, {})
+        self.data["memorization"][num_id].setdefault(title, {"questions": [], "sharecode": random_number})
+        self.data["memorization"][num_id][title]["questions"].append({"question": mission, "mode": mode, "answer": answer})
         if mode == 1:
             assert isinstance(select, list)
-            self.data["memorization"][id][title]["questions"][-1]["select"] = select
+            self.data["memorization"][num_id][title]["questions"][-1]["select"] = select
         await self.save_data()
         return True
 
-    async def add_mission_Excel(self,id: str, title: str, number: int, workbook: openpyxl.Workbook):
+    async def add_mission_Excel(self,id_: str, title: str, number: int, workbook: openpyxl.Workbook):
         """
         Add a mission to the memorization data from an Excel file.
 
@@ -142,29 +144,22 @@ class MemorizationSystem:
         Returns:
             bool: True if the mission is added successfully, False otherwise.
         """
-        id = str(id)
+        num_id = str(id_)
         await self.load_data()
         sheet = workbook.active
         assert sheet is not None
-        self.data["memorization"].setdefault(id, {})
-        self.data["memorization"][id].setdefault(title, {"questions": [], "sharecode": number})
+        self.data["memorization"].setdefault(num_id, {})
+        self.data["memorization"][num_id].setdefault(title, {"questions": [], "sharecode": number})
         row_count = sum(1 for _ in sheet.iter_rows(min_row=1, values_only=True))
-        ch = 0
-        if row_count < 4:
-            ch = 1
-
+        if row_count < 4:return False
         for row in sheet.iter_rows(min_row=1, values_only=True):
-            if not row[0] or not row[1] or not row[2]:
-                continue
-
+            if not row[0] or not row[1] or not row[2]:continue
+            mode = int(row[2])
+            if not isinstance(mode, int):return False
             question = row[0]
             answer = row[1]
-            mode = row[2]
-            mode = int(mode)
-            if type(mode) != int:
-                return False
             if mode == 1:
-                self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 0, "answer": answer})
+                self.data["memorization"][num_id][title]["questions"].append({"question": question, "mode": 0, "answer": answer})
             elif mode == 2:
                 select = []
                 try:
@@ -176,14 +171,11 @@ class MemorizationSystem:
                         mode_change = 1
                 except:
                     mode_change = 1
-                if ch == 1:
-                    return False
                 if mode_change == 1:
                     num_rows = sheet.max_row 
-                    random_selects = random.sample(range(1, num_rows + 1), 4) 
                     random_answer_index = random.randint(0, 3)
                     select = []
-                    for index in range(4):
+                    for _ in range(4):
                         while True:
                             random_select = random.randint(1, num_rows + 1) 
                             cell = sheet.cell(row=random_select, column=2)
@@ -193,12 +185,11 @@ class MemorizationSystem:
                                     break
                     select[random_answer_index] = answer
                     answer_num =  select.index(answer)+1
-                    
-                self.data["memorization"][id][title]["questions"].append({"question": question, "mode": 1, "answer": answer_num, "select": select})
+                self.data["memorization"][num_id][title]["questions"].append({"question": question, "mode": 1, "answer": answer_num, "select": select})
         await self.save_data()
         return True
                 
-    async def del_mission(self, id: str, title: str, question: str):
+    async def del_mission(self, id_: str, title: str, question: str):
         """
         Delete a mission from the memorization data.
 
@@ -211,15 +202,16 @@ class MemorizationSystem:
         - bool: True if the question is successfully deleted, False otherwise.
         """
         await self.load_data()
-        if id in self.data["memorization"]:
-            for cont, item in enumerate(self.data["memorization"][id][title]["questions"]):
+        num_id = str(id_)
+        if num_id in self.data["memorization"]:
+            for cont, item in enumerate(self.data["memorization"][num_id][title]["questions"]):
                 if item["question"] == question:
-                    self.data["memorization"][id][title]["questions"].pop(cont)
+                    self.data["memorization"][num_id][title]["questions"].pop(cont)
                     await self.save_data()
                     return True
         return False
 
-    async def edit_misson(self, id: str, title: str, number: int, modes: int, value: str, select_number: int | None = None):
+    async def edit_misson(self, id_: str, title: str, number: int, modes: int, value: str, select_number: int | None = None):
         """
         Edit a mission in the memorization data.
 
@@ -235,8 +227,9 @@ class MemorizationSystem:
             bool: True if the mission was successfully edited, False otherwise.
         """
         await self.load_data()
-        if id in self.data["memorization"] and title in self.data["memorization"][id]:
-            edit_before = self.data["memorization"][id][title]["questions"][number]
+        num_id = str(id_)
+        if num_id in self.data["memorization"] and title in self.data["memorization"][num_id]:
+            edit_before = self.data["memorization"][num_id][title]["questions"][number]
             if edit_before["mode"] == 0:
                 if modes == 0:
                     edit_before["question"] = value
@@ -253,12 +246,12 @@ class MemorizationSystem:
                         edit_before["select"][select_number] = value
                     else:
                         return False
-            self.data["memorization"][id][title]["questions"][number] = edit_before
+            self.data["memorization"][num_id][title]["questions"][number] = edit_before
             await self.save_data()
             return True
         return False
 
-    async def get_mission(self, id: str, title: str) -> Literal[False] | CardData:
+    async def get_mission(self, id_: str, title: str) -> Literal[False] | CardData:
         """
         Get the content of a mission based on its ID and title.
 
@@ -270,7 +263,7 @@ class MemorizationSystem:
         - content (list): The content of the mission if it exists, False otherwise.
         """
         await self.load_data()
-        return self.data["memorization"].get(id, {}).get(title, False)
+        return self.data["memorization"].get(id_, {}).get(title, False)
 
     async def make_sharecode(self) -> int:
         """
@@ -282,13 +275,13 @@ class MemorizationSystem:
         await self.load_data()
         while True:
             random_number = random.randint(10000000, 99999999)
-            for id in self.data["memorization"]:
-                for title in self.data["memorization"][id]:
-                    if self.data["memorization"][id][title]["sharecode"] == random_number:
+            for num_id in self.data["memorization"]:
+                for title in self.data["memorization"][num_id]:
+                    if self.data["memorization"][num_id][title]["sharecode"] == random_number:
                         continue
             return random_number
 
-    async def get_sharecode(self, id: str, title: str) -> Literal[False] | int:
+    async def get_sharecode(self, id_: str, title: str) -> Literal[False] | int:
         """
         Get the sharecode of a mission.
 
@@ -299,9 +292,10 @@ class MemorizationSystem:
         Returns:
             int: The sharecode of the mission if it exists, False otherwise.
         """
+        num_id = str(id_)
         await self.load_data()
-        if id in self.data["memorization"] and title in self.data["memorization"][id]:
-            return self.data["memorization"][id][title]["sharecode"]
+        if num_id in self.data["memorization"] and title in self.data["memorization"][num_id]:
+            return self.data["memorization"][num_id][title]["sharecode"]
         return False
 
     async def get_mission_sharecode(self, code) -> Literal[False] | list[QuestionData]:
@@ -315,13 +309,13 @@ class MemorizationSystem:
         - content (list): The content of the mission if it exists, False otherwise.
         """
         await self.load_data()
-        for id in self.data["memorization"]:
-            for title in self.data["memorization"][id]:
-                if self.data["memorization"][id][title]["sharecode"] == code:
-                    return self.data["memorization"][id][title]["questions"]
+        for num_id in self.data["memorization"]:
+            for title in self.data["memorization"][num_id]:
+                if self.data["memorization"][num_id][title]["sharecode"] == code:
+                    return self.data["memorization"][num_id][title]["questions"]
         return False 
     
-    async def sharecode_question_copy(self, id: str, sharecode: int):
+    async def sharecode_question_copy(self, id_: str, sharecode: int):
         """
         Copy a mission from a sharecode.
 
@@ -333,14 +327,14 @@ class MemorizationSystem:
             bool: True if the mission was copied successfully, False otherwise.
         """
         await self.load_data()
-        id = str(id)
-        self.data["memorization"].setdefault(id, {})
+        num_id = str(id_)
+        self.data["memorization"].setdefault(num_id, {})
         await self.save_data()#消したらなぜか動かないww
         await self.load_data()
         for bef_id in self.data["memorization"]:
             for title in self.data["memorization"][bef_id]:
                 if self.data["memorization"][bef_id][title].get("sharecode") == sharecode:
-                    self.data["memorization"][id][title] = CardData(
+                    self.data["memorization"][num_id][title] = CardData(
                         questions=self.data["memorization"][bef_id][title]["questions"],
                         sharecode=await self.make_sharecode()
                     )
@@ -348,7 +342,7 @@ class MemorizationSystem:
                     return True
         return False
 
-    async def sharecode_true(self, id: str, title: str) -> bool:
+    async def sharecode_true(self, id_: str, title: str) -> bool:
         """
         Check if the mission has a sharecode.
 
@@ -358,15 +352,16 @@ class MemorizationSystem:
 
         """
         await self.load_data()
-        if id in self.data["memorization"]:
+        num_id = str(id_)
+        if num_id in self.data["memorization"]:
             try:
-                code = self.data["memorization"][id][title]["sharecode"]
+                code = self.data["memorization"][num_id][title]["sharecode"]
             except:
                 return False
             return bool(code)
         return False
 
-    async def get_mission_title(self, id: str):
+    async def get_mission_title(self, id_: str):
         """
         Get the mission titles for a given ID.
 
@@ -377,11 +372,12 @@ class MemorizationSystem:
             list or bool: A list of mission titles if the ID exists in the data, False otherwise.
         """
         await self.load_data()
-        if id in self.data["memorization"]:
-            return list(self.data["memorization"][id].keys())
+        num_id = str(id_)
+        if num_id in self.data["memorization"]:
+            return list(self.data["memorization"][num_id].keys())
         return False
 
-    async def check_answer(self, id: str, title: str, question: str, answer: str, mode: int) -> bool:
+    async def check_answer(self, id_: str, title: str, question: str, answer: str, mode: int) -> bool:
         """
         Check the answer to a mission.
 
@@ -396,17 +392,17 @@ class MemorizationSystem:
             bool: True if the answer is correct, False otherwise.
         """
         await self.load_data()
-        if id in self.data["memorization"] and title in self.data["memorization"][id]:
-            for item in self.data["memorization"][id][title]["questions"]:
+        num_id = str(id_)
+        if num_id in self.data["memorization"] and title in self.data["memorization"][num_id]:
+            for item in self.data["memorization"][num_id][title]["questions"]:
                 if item["question"] == question:
                     if mode == 0:
                         return item["answer"] == answer
                     else:
-                        assert "select" in item
                         return answer == item["select"][int(item["answer"])-1]
         return False
     
-    async def get_answer(self, id: str, title: str, question: str):
+    async def get_answer(self, id_: str, title: str, question: str):
         """
         Get the answer to a mission.
 
@@ -418,9 +414,10 @@ class MemorizationSystem:
         Returns:
             str: The answer to the mission if it exists, False otherwise.
         """
+        num_id = str(id_)
         await self.load_data()
-        if id in self.data["memorization"] and title in self.data["memorization"][id]:
-            for item in self.data["memorization"][id][title]["questions"]:
+        if num_id in self.data["memorization"] and title in self.data["memorization"][num_id]:
+            for item in self.data["memorization"][num_id][title]["questions"]:
                 if item["question"] == question:
                     if item["mode"] == 0:
                         return item["answer"]
@@ -429,7 +426,7 @@ class MemorizationSystem:
                                             
         return False
     
-    async def randam_mission_select(self,id:str,title:str):
+    async def randam_mission_select(self,id_:str,title:str):
         """
         Randomly select a mission.
         
@@ -441,15 +438,15 @@ class MemorizationSystem:
             bool: True if the mission was successfully selected, False otherwise.
         """
         await self.load_data()
-        id = str(id)
-        if id in self.data["memorization"] and title in self.data["memorization"][id]:
-            random.shuffle(self.data["memorization"][id][title]["questions"])
+        num_id = str(id_)
+        if num_id in self.data["memorization"] and title in self.data["memorization"][num_id]:
+            random.shuffle(self.data["memorization"][num_id][title]["questions"])
             
             await self.save_data()
             return True
         return False
 
-    async def get_mission_selectmode_list(self,id:str,title:str):
+    async def get_mission_selectmode_list(self,id_:str,title:str):
         """
         Get the mode of the mission.
         
@@ -462,17 +459,16 @@ class MemorizationSystem:
             list: The mode of the mission.
         """
         await self.load_data()
-        id = str(id)
+        num_id = str(id_)
         selects = []
-        if id in self.data["memorization"] and title in self.data["memorization"][id]:
-            for item in self.data["memorization"][id][title]["questions"]:
+        if num_id in self.data["memorization"] and title in self.data["memorization"][num_id]:
+            for item in self.data["memorization"][num_id][title]["questions"]:
                 if item["mode"] == 1:
                     selects.append(item["mode"])
-                    
             await self.save_data()
             return selects
 
-    async def select_question_randam(self,id,title,question_number):
+    async def select_question_randam(self,id_:str,title:str,question_number:int):
         """
         Randomly select a question.
         
@@ -485,19 +481,18 @@ class MemorizationSystem:
             bool: True if the question was successfully selected, False otherwise.
         """
         await self.load_data()
-        id = str(id)
-        anwer_num = int(self.data["memorization"][id][title]["questions"][question_number]["answer"])-1
-        selects:list = self.data["memorization"][id][title]["questions"][question_number]["select"]
+        num_id = str(id_)
+        anwer_num = int(self.data["memorization"][num_id][title]["questions"][question_number]["answer"])-1
+        selects:list = self.data["memorization"][num_id][title]["questions"][question_number]["select"]
         answer = selects[anwer_num]
-        
         random.shuffle(selects)
         answer_number = selects.index(answer)+1
-        self.data["memorization"][id][title]["questions"][question_number]["select"] = selects
-        self.data["memorization"][id][title]["questions"][question_number]["answer"] = answer_number
+        self.data["memorization"][num_id][title]["questions"][question_number]["select"] = selects
+        self.data["memorization"][num_id][title]["questions"][question_number]["answer"] = answer_number
         await self.save_data()
         return True
 
-    async def memorization_sheet(self,id, title):
+    async def memorization_sheet(self,id_:str, title:str):
         """
         Get the memorization sheet.
         
@@ -509,26 +504,27 @@ class MemorizationSystem:
             str:sheet_text 
         """
         await self.load_data()
-        id = str(id)
-        if not id in self.data["memorization"] and not title in self.data["memorization"][id]:return False
-        make_sheet = ""
-        for item in self.data["memorization"][id][title]["questions"]:
-            question_text = item["question"]
-            if item["mode"] == 0:
-                answer_text = item["answer"]
-            elif item["mode"] == 1:
-                answer_text = item["select"][item["answer"]-1]
-            make_sheet += f"{question_text} : ||{answer_text}||\n"
-            if len(make_sheet) > 1900:
-                make_sheet += "......\n"
-                return make_sheet
-        return make_sheet                            
+        num_id = str(id_)
+        if num_id in self.data["memorization"] and (title in self.data["memorization"][num_id]):
+            make_sheet = ""
+            for item in self.data["memorization"][num_id][title]["questions"]:
+                question_text = item["question"]
+                if item["mode"] == 0:
+                    answer_text = item["answer"]
+                elif item["mode"] == 1:
+                    answer_text = item["select"][item["answer"]-1]
+                make_sheet += f"{question_text} : ||{answer_text}||\n"
+                if len(make_sheet) > 1900:
+                    make_sheet += "......\n"
+                    return make_sheet
+            return make_sheet     
+        return False                       
             
     """
     user_status System ↓
     """
 
-    async def add_user_status(self, id: str, title: str) -> Literal[True]:
+    async def add_user_status(self, id_: str, title: str) -> Literal[True]:
         """
         Add a user status to the user status data.
 
@@ -540,12 +536,13 @@ class MemorizationSystem:
             bool: True if the user status is added successfully, False otherwise.
         """
         await self.load_data()
-        self.data["user_status"].setdefault(id, {title: {"count": 0, "score": 0}})
-        self.data["user_status"][id].setdefault(title, {"count": 0, "score": 0})
+        num_id = str(id_)
+        self.data["user_status"].setdefault(num_id, {title: {"count": 0, "score": 0}})
+        self.data["user_status"][num_id].setdefault(title, {"count": 0, "score": 0})
         await self.save_data()
         return True
 
-    async def edit_user_status(self, id: str, title: str, count: int, score: int) -> bool:
+    async def edit_user_status(self, id_: str, title: str, count: int, score: int) -> bool:
         """
         Edit a user status in the user status data.
 
@@ -559,16 +556,17 @@ class MemorizationSystem:
             bool: True if the user status was successfully edited, False otherwise.
         """
         await self.load_data()
-        if id in self.data["user_status"] and title in self.data["user_status"][id]:
-            edit_before = self.data["user_status"][id][title]
+        num_id = str(id_)
+        if num_id in self.data["user_status"] and title in self.data["user_status"][num_id]:
+            edit_before = self.data["user_status"][num_id][title]
             edit_before["count"] += count
             edit_before["score"] += score
-            self.data["user_status"][id][title] = edit_before
+            self.data["user_status"][num_id][title] = edit_before
             await self.save_data()
             return True
         return False
 
-    async def get_user_status(self, id: str, title: str) -> StatusData | Literal[False]:
+    async def get_user_status(self, id_: str, title: str) -> StatusData | Literal[False]:
         """
         Get the user status of a user based on its ID and title.
 
@@ -579,5 +577,6 @@ class MemorizationSystem:
         Returns:
             dict: The user status of the user if it exists, False otherwise.
         """
+        num_id = str(id_)
         await self.load_data()
-        return self.data["user_status"].get(id, {}).get(title, False)
+        return self.data["user_status"].get(num_id, {}).get(title, False)

@@ -11,31 +11,16 @@ class TitleAddModal(ui.Modal, title="タイトル追加"):
     """
     A class representing a view for adding a title in the Memorization Maker Discord bot system.
     """
-
     def __init__(self):
         super().__init__()
         self.title_input = ui.TextInput(label="タイトル", style=discord.TextStyle.short)
         self.add_item(self.title_input)
 
     async def on_submit(self, interaction: discord.Interaction):
-        """
-        Event handler for when the submit button is clicked.
-
-        Parameters:
-        - interaction (discord.Interaction): The interaction object representing the user's interaction with the view.
-
-        Returns:
-        - None
-        """
         memmorization = memorization_maker.MemorizationSystem()
-        try:
-            titles = await memmorization.get_mission_title(str(interaction.user.id))
-        except:
-            titles = []
+        titles = await memmorization.get_mission_title(str(interaction.user.id))
         content = ""
-        if not False:
-            if isinstance(titles, list) and str(self.title_input.value) in titles:
-                content = "編集モード"
+        if titles and isinstance(titles, list) and str(self.title_input.value) in titles:content = "編集モード"
         title = str(self.title_input.value)        
         embed = discord.Embed(title="問題追加", description=f"現在の選択問題設定個数:4", color=0x00ff00)
         await interaction.response.send_message(content=content,embed=embed, ephemeral=True, view=MemorizationControlView(title))
@@ -53,29 +38,17 @@ class MemorizationAddModal(ui.Modal,title="問題追加"):
         on_submit(self, interaction): Handles the event when the user submits the form.
 
     """
-
     def __init__(self, titles):
         super().__init__()
-        self.title = titles 
+        self.title = titles
         self.inputs =[
             ui.TextInput(label="問題",style=discord.TextStyle.long),
             ui.TextInput(label="答え",style=discord.TextStyle.short)
-        
         ]
         for input_item in self.inputs:
             self.add_item(input_item)
 
     async def on_submit(self, interaction: discord.Interaction):
-        """
-        Handles the event when the user submits the form.
-
-        Args:
-            interaction (discord.Interaction): The interaction object representing the user's interaction with the bot.
-
-        Returns:
-            None
-
-        """
         memorization = memorization_maker.MemorizationSystem()
         getcode = await memorization.sharecode_true(str(interaction.user.id),self.title)
         if not getcode:
@@ -84,41 +57,18 @@ class MemorizationAddModal(ui.Modal,title="問題追加"):
             random_number = getcode
         question, answer = [str(input_item) for input_item in self.inputs]
         ch = await memorization.add_mission(str(interaction.user.id), self.title,random_number, 0, question,answer)
-        if ch:
-            await interaction.response.edit_message(view=MemorizationControlView(self.title))
-        else:
-            await interaction.response.send_message("追加失敗", ephemeral=True)
+        if not ch:return await interaction.response.send_message("追加失敗", ephemeral=True)
+        await interaction.response.edit_message(view=MemorizationControlView(self.title))
+
 
 class EditCountSelect(discord.ui.Select):
-    """
-    A custom select menu for editing the count of selected items in the Memorization Add Discord UI.
-
-    Args:
-        title (str): The title of the select menu.
-
-    Attributes:
-        title (str): The title of the select menu.
-
-    Methods:
-        callback(interaction: discord.Interaction) -> None: The callback method that is called when the select menu is interacted with.
-
-    """
-
     def __init__(self, title):
         self.title = title
-        super().__init__(placeholder="選択数を選択してください", min_values=1, max_values=1, options=[discord.SelectOption(label=str(i), value=str(i)) for i in range(1, 6)])
-
+        super().__init__(placeholder="選択数を選択してください",
+                         min_values=1,
+                         max_values=1,
+                         options=[discord.SelectOption(label=str(i), value=str(i)) for i in range(1, 6)])
     async def callback(self, interaction: discord.Interaction):
-        """
-        The callback method that is called when the select menu is interacted with.
-
-        Args:
-            interaction (discord.Interaction): The interaction object representing the user's interaction with the select menu.
-
-        Returns:
-            None
-
-        """
         embed = discord.Embed(title="問題追加", description=f"現在の選択問題設定個数:{int(self.values[0])}", color=0x00ff00)
         await interaction.response.edit_message(embed=embed, view=MemorizationControlView(self.title, int(self.values[0])))
 
@@ -142,7 +92,7 @@ class TitleSetModal(ui.Modal,title="タイトル設定"):
         self.base_count = base_count
         self.inputs = [
             ui.TextInput(label="問題", style=discord.TextStyle.long),
-        ]        
+        ]
         for input_item in self.inputs:
             self.add_item(input_item)
 
@@ -173,22 +123,17 @@ class QuestionAddModal(ui.Modal, title="選択問題追加"):
         self.base_count = base_count
         self.question = question
         self.inputs = [ui.TextInput(label=f"選択肢:{i+1}", style=discord.TextStyle.short) for i in range(self.base_count)]
-        a = 1
         for input_item in self.inputs:
-            a += 1
             self.add_item(input_item)
-        
     async def on_submit(self, interaction: discord.Interaction):
         select = [str(input_item) for input_item in self.inputs[0:]]
         embed = discord.Embed(title="選択問題", color=0x00ff00)
-        a = 1
-        for value in select:
-            embed.add_field(name=f"選択肢:{a}", value=value, inline=False)
-            a += 1
+        for sen, value in enumerate(select, start=1):
+            embed.add_field(name=f"選択肢:{sen}", value=value, inline=False)
         await interaction.response.edit_message(embed=embed, view=MemorizationAddView(self.title, self.base_count, 2, self.question, select))
 
 
-class AnserEditSelect(discord.ui.Select):
+class AnsewrEditSelect(discord.ui.Select):
     """
     A custom select menu for editing the answer in the Memorization Add Discord UI.
 
@@ -215,9 +160,9 @@ class AnserEditSelect(discord.ui.Select):
         max_values = 1
         options = []
         self.index = len(self.lists[selected_index]["select"])
-        for i in range(self.index):
-            i = str(i+1)
-            options.append(discord.SelectOption(label=i))
+        for raw in range(self.index):
+            num = str(raw+1)
+            options.append(discord.SelectOption(label=num))
         super().__init__(placeholder=placeholder, min_values=min_values, max_values=max_values, options=options)
 
     async def callback(self, interaction: discord.Interaction):
@@ -246,15 +191,6 @@ class AnswerAddSelect(discord.ui.Select):
     """
 
     def __init__(self, title, base_count, question, select):
-        """
-        Initializes the AnswerAddSelect object.
-        
-        Args:
-            title (str): The title of the question.
-            base_count (int): The base count for generating options.
-            question (str): The question to be displayed.
-            select (list): The list of answer choices.
-        """
         options = []
         for i in range(base_count):
             i += 1
@@ -269,30 +205,19 @@ class AnswerAddSelect(discord.ui.Select):
         self.select = select
 
     async def callback(self, interaction: discord.Interaction):
-            """
-            Callback function for handling interaction with a selection question.
-
-            Parameters:
-            - interaction (discord.Interaction): The interaction object representing the user's interaction.
-
-            Returns:
-            - None
-            """
-            self.answer = self.values[0]
-            embed = discord.Embed(title="選択問題", color=0x00ff00)
-            a = 1
-            for value in self.select:
-                embed.add_field(name=f"選択肢{a}", value=value, inline=False)
-                a += 1
-            embed.add_field(name="答え", value=self.answer, inline=False)
-            memorizationmaker = memorization_maker.MemorizationSystem()
-            getcode = await memorizationmaker.sharecode_true(str(interaction.user.id),self.title)
-            if not getcode:
-                random_number = await memorizationmaker.make_sharecode()
-            else:
-                random_number = getcode
-            await memorizationmaker.add_mission(str(interaction.user.id), self.title, random_number,1, self.question, self.answer, self.select)
-            await interaction.response.edit_message(embed=embed, view=MemorizationAddView(self.title, self.base_count, 3, self.question, self.select))
+        self.answer = self.values[0]
+        embed = discord.Embed(title="選択問題", color=0x00ff00)
+        for sen, value in enumerate(self.select, start=1):
+            embed.add_field(name=f"選択肢{sen}", value=value, inline=False)
+        embed.add_field(name="答え", value=self.answer, inline=False)
+        memorizationmaker = memorization_maker.MemorizationSystem()
+        getcode = await memorizationmaker.sharecode_true(str(interaction.user.id),self.title)
+        if getcode:
+            random_number = getcode
+        else:
+            random_number = await memorizationmaker.make_sharecode()
+        await memorizationmaker.add_mission(str(interaction.user.id), self.title, random_number,1, self.question, self.answer, self.select)
+        await interaction.response.edit_message(embed=embed, view=MemorizationAddView(self.title, self.base_count, 3, self.question, self.select))
 
 
 class MemorizationAddView(discord.ui.View):
@@ -316,14 +241,6 @@ class MemorizationAddView(discord.ui.View):
         self.mode = mode
         
     async def swithcing(self, interaction: discord.Interaction, button, mode):
-        """
-        Switches the mode of the select button and sends the appropriate modal.
-
-        Args:
-            interaction (discord.Interaction): The interaction object.
-            button (discord.ui.Button): The button object.
-            mode (int): The mode of the select button.
-        """
         if mode == 0:
             await interaction.response.send_modal(TitleSetModal(self.title))
         elif mode == 1:
@@ -339,13 +256,6 @@ class MemorizationAddView(discord.ui.View):
     
     @discord.ui.button(label="続行", style=discord.ButtonStyle.blurple)
     async def continue_(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """
-        Continues the select button interaction.
-
-        Args:
-            interaction (discord.Interaction): The interaction object.
-            button (discord.ui.Button): The button object.
-        """
         await self.swithcing(interaction, button, self.mode)
 
 class QuestionEditSelect(discord.ui.Select):
@@ -353,9 +263,6 @@ class QuestionEditSelect(discord.ui.Select):
     A custom select menu for selecting a memorization mission in the Memorization Discord UI.
     """
     def __init__(self, lists):
-        """
-        Initializes the Memorization_questionDiscordSelect object.
-        """
         placeholder = "タイトルを選択してください"
         min_values = 1
         max_values = 1
@@ -389,14 +296,6 @@ class MemorizationDeleteSelect(discord.ui.Select):
     """
 
     def __init__(self, lists, title,count):
-        """
-        Initializes the MemorizationDelete_DiscordSelect object.
-
-        Parameters:
-        - lists (list): The list of options for the select menu.
-        - title (str): The title of the mission to be deleted.
-        - count (int): The count of the mission to be deleted.
-        """
         self.title = title
         placeholder = "問題を選択してください"
         min_values = 1
@@ -412,12 +311,6 @@ class MemorizationDeleteSelect(discord.ui.Select):
                 super().add_option(option)
 
     async def callback(self, interaction: discord.Interaction):
-        """
-        The callback method called when an option is selected.
-
-        Parameters:
-        - interaction (discord.Interaction): The interaction object representing the user's interaction with the select menu.
-        """
         selected_index = int(self.values[0])
         selected_question = self.lists[selected_index]["question"]
         memorization = memorization_maker.MemorizationSystem()
@@ -428,8 +321,10 @@ class MemorizationDeleteSelect(discord.ui.Select):
 class MemorizationShareSelect(discord.ui.Select):
     """
     A custom select component for selecting a title for memorization sharing.
+    
+    Attributes:
+    - lists: title select
     """
-
     def __init__(self, lists):
         self.lists = lists
         placeholder = "タイトルを選択してください"
@@ -443,12 +338,6 @@ class MemorizationShareSelect(discord.ui.Select):
                 super().add_option(option)
 
     async def callback(self, interaction: discord.Interaction):
-        """
-        Callback method called when the select component is interacted with.
-
-        Parameters:
-        - interaction (discord.Interaction): The interaction object representing the user's interaction.
-        """
         memorization = memorization_maker.MemorizationSystem()
         number = await memorization.get_sharecode(str(interaction.user.id),self.values[0])
         await interaction.response.edit_message(content=f"共有コード:{number}")
@@ -465,27 +354,19 @@ class MemorizationTitleDeleteSelect(discord.ui.Select):
 
     """
 
-    def __init__(self, list):
-        
+    def __init__(self, title_list):
         placeholder = "問題を選択してください"
         min_values = 1
         max_values = 1
-        self.lists = list
-        options = [discord.SelectOption(label=i) for i in self.lists[:25]]
+        self.title_lists = title_list
+        options = [discord.SelectOption(label=i) for i in self.title_lists[:25]]
         super().__init__(placeholder=placeholder, min_values=min_values, max_values=max_values, options=options)
-        for i in range(25, len(self.lists), 25):
-            for item in self.lists[i:i+25]:
+        for i in range(25, len(self.title_lists), 25):
+            for item in self.title_lists[i:i+25]:
                 option = discord.SelectOption(label=item)
                 super().add_option(option)
 
     async def callback(self, interaction: discord.Interaction):
-        """
-        Callback method called when the select component is interacted with.
-
-        Args:
-            interaction (discord.Interaction): The interaction object representing the user's interaction with the select component.
-
-        """
         memorization = memorization_maker.MemorizationSystem()
         await memorization.del_mission_title(str(interaction.user.id), self.values[0])
         await interaction.response.edit_message(content="削除完了", view=None)
@@ -505,14 +386,6 @@ class MemorizationEditSelect(discord.ui.Select):
     """
 
     def __init__(self, lists, title,count):
-        """
-        Initializes the MemorizationEditDiscordSelect object.
-
-        Parameters:
-        - lists (list): The list of questions to be displayed in the select menu.
-        - title (str): The title of the select menu.
-        - count (int): The count of the select menu.
-        """
         self.title = title
         self.lists = lists
         placeholder = "問題を選択してください"
@@ -531,12 +404,6 @@ class MemorizationEditSelect(discord.ui.Select):
                 index+=1
 
     async def callback(self, interaction: discord.Interaction):
-        """
-        The callback method that is called when a selection is made.
-
-        Parameters:
-        - interaction (discord.Interaction): The interaction object representing the user's interaction with the select menu.
-        """
         selected_index = int(self.values[0])
         mode = self.lists[selected_index]["mode"]
         view = discord.ui.View()
@@ -576,35 +443,39 @@ class EditModeSelect(discord.ui.Select):
         self.selected_index = selected_index
         self.lists = lists
         self.count = count
-
         self.mode = mode
         if mode == 0:
-            super().__init__(placeholder="選択してください", min_values=1, max_values=1, options=[discord.SelectOption(label="問題", value="0"), discord.SelectOption(label="答え", value="1")])
+            super().__init__(placeholder="選択してください",
+                             min_values=1,
+                             max_values=1,
+                             options=[
+                                    discord.SelectOption(label="問題", value="0"),
+                                    discord.SelectOption(label="答え", value="1")
+                                ]
+                            )
         elif mode == 1:
-            super().__init__(placeholder="選択してください", min_values=1, max_values=1, options=[discord.SelectOption(label="問題", value="0"), discord.SelectOption(label="答え", value="1"), discord.SelectOption(label="選択肢", value="2")])
-
+            super().__init__(placeholder="選択してください",
+                             min_values=1,
+                             max_values=1,
+                             options=[
+                                    discord.SelectOption(label="問題", value="0"),
+                                    discord.SelectOption(label="答え", value="1"),
+                                    discord.SelectOption(label="選択肢", value="2")
+                                ]
+                            )
     async def callback(self, interaction: discord.Interaction):
-        """
-        The callback method for handling user interaction.
-
-        Args:
-            interaction (discord.Interaction): The interaction object representing the user's interaction with the select menu.
-
-        Returns:
-            None
-
-        """
+        view = discord.ui.View()
         if self.values[0] == "0":
             await interaction.response.send_modal(MemorizationEditModal(self.title, self.selected_index, self.lists,0, self.count))
+            return
         elif self.values[0] == "1":
             if self.mode == 1:
-                view = discord.ui.View()
-                view.add_item(AnserEditSelect(self.title, self.lists, self.selected_index))
+                view.add_item(AnsewrEditSelect(self.title, self.lists, self.selected_index))
                 await interaction.response.edit_message(view=view)
+                return
             else:
                 await interaction.response.send_modal(MemorizationEditModal(self.title, self.selected_index, self.lists, 1, self.count))
         elif self.values[0] == "2":
-            view = discord.ui.View()
             view.add_item(ChoiceEditSelect(self.title, self.selected_index, self.lists,self.count))
             await interaction.response.edit_message(view=view)
 
@@ -624,15 +495,6 @@ class ChoiceEditSelect(discord.ui.Select):
     """
 
     def __init__(self, title, selected_index, lists,count):
-        """
-        Initializes a MemorizationEditDiscordSelectMenu instance.
-
-        Args:
-            title (str): The title of the select menu.
-            selected_index (int): The index of the selected question.
-            lists (list): The list of questions to choose from.
-            count (int): The count of the select menu.
-        """
         self.title = title
         self.selected_index = selected_index
         self.lists = lists
@@ -643,8 +505,7 @@ class ChoiceEditSelect(discord.ui.Select):
         max_values = 1
         options = []
         for i in range(len(lists)):
-            i = str(i)
-            options.append(discord.SelectOption(label=lists[int(i)], value=i))
+            options.append(discord.SelectOption(label=lists[int(i)], value=str(i)))
         super().__init__(placeholder=placeholder, min_values=min_values, max_values=max_values, options=options)
         for i in range(25, len(lists), 25):
             for item in lists[i:i+25]:
@@ -678,7 +539,6 @@ class MemorizationEditModal(ui.Modal, title="問題編集"):
         count (int): The count of the modal.
         selected_number (int, optional): The selected number. Defaults to None.
     """
-
     def __init__(self, title, selected_index, lists, mode, count,selected_number=None):
         self.title = title
         self.selected_index = selected_index
@@ -719,6 +579,8 @@ class MemorizationControlView(discord.ui.View):
         super().__init__()
         self.base_count = base_count
         self.title = title
+        self.memorization = memorization_maker.MemorizationSystem()
+        self.view = discord.ui.View()
 
     @discord.ui.button(label="問題を追加", style=discord.ButtonStyle.blurple)
     async def add(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -730,39 +592,29 @@ class MemorizationControlView(discord.ui.View):
 
     @discord.ui.button(label="選択数変更", style=discord.ButtonStyle.gray)
     async def count(self, interaction: discord.Interaction, _:discord.ui.Button):
-        view = discord.ui.View()
-        view.add_item(EditCountSelect(self.title))
+        self.view.add_item(EditCountSelect(self.title))
         embed = discord.Embed(title="選択数変更", description=f"現在の選択問題設定個数:{self.base_count}", color=0x00ff00)
-        await interaction.response.edit_message(embed=embed,view=view)
+        await interaction.response.edit_message(embed=embed,view=self.view)
 
     @discord.ui.button(label="問題を削除", style=discord.ButtonStyle.red)
     async def delete(self, interaction: discord.Interaction, _:discord.ui.Button):
-        memorization = memorization_maker.MemorizationSystem()
-        lists = await memorization.get_mission(str(interaction.user.id),self.title)
-        if lists:
-            view = discord.ui.View()
-            view.add_item(MemorizationDeleteSelect(lists, self.title,self.base_count))
-            embed = discord.Embed(title="削除する問題を選択してください。", color=0x00ff00)
-            await interaction.response.edit_message(embed=embed,view=view)
-        else:
-            await interaction.response.send_message("問題がありません",ephemeral=True)
+        lists = await self.memorization.get_mission(str(interaction.user.id),self.title)
+        if lists is False:return await interaction.response.send_message("問題がありません",ephemeral=True)
+        self.view.add_item(MemorizationDeleteSelect(lists, self.title,self.base_count))
+        embed = discord.Embed(title="削除する問題を選択してください。", color=0x00ff00)
+        await interaction.response.edit_message(embed=embed,view=self.view)
 
     @discord.ui.button(label="問題編集", style=discord.ButtonStyle.red)
     async def edit(self, interaction: discord.Interaction, _:discord.ui.Button):
-        memorization = memorization_maker.MemorizationSystem()
-        lists = await memorization.get_mission(str(interaction.user.id),self.title)
-        if lists:
-            view = discord.ui.View()
-            view.add_item(MemorizationEditSelect(lists, self.title,self.base_count))
-            embed = discord.Embed(title="編集する問題を選択してください", color=0x00ff00)
-            await interaction.response.edit_message(embed=embed,view=view)
-        else:
-            await interaction.response.send_message("問題がありません",ephemeral=True)
+        lists = await self.memorization.get_mission(str(interaction.user.id),self.title)
+        if lists is False:return await interaction.response.send_message("問題がありません",ephemeral=True)
+        self.view.add_item(MemorizationEditSelect(lists, self.title,self.base_count))
+        embed = discord.Embed(title="編集する問題を選択してください", color=0x00ff00)
+        await interaction.response.edit_message(embed=embed,view=self.view)
 
     @discord.ui.button(label="終了", style=discord.ButtonStyle.red)
     async def close(self, interaction: discord.Interaction, _:discord.ui.Button):
-        memorization = memorization_maker.MemorizationSystem()
-        sharecode = await memorization.get_sharecode(str(interaction.user.id),self.title)
+        sharecode = await self.memorization.get_sharecode(str(interaction.user.id),self.title)
         await interaction.response.edit_message(content=f"終了\nこの問題の共有コード:{sharecode}",embed=None,view=None)
 
 
@@ -785,9 +637,7 @@ class MemorizationCog(commands.Cog):
         """
         メモリゼーションを追加するコマンドです。
         """
-        if await self.memorization.checkuser_in_HSS(interaction.user.id) == False:
-            await interaction.response.send_message("HSSにユーザー登録がされていません。\nこの機能はHSSに登録してないユーザーはご利用いただけません。", ephemeral=True)
-            return
+        if await self.memorization.checkuser_in_HSS(interaction) is False:return
         await interaction.response.send_modal(TitleAddModal())
 
     @app_commands.command()
@@ -795,11 +645,9 @@ class MemorizationCog(commands.Cog):
         """
         メモリゼーションの問題を編集するコマンドです。
         """
-        if await self.memorization.checkuser_in_HSS(interaction.user.id) == False:
-            await interaction.response.send_message("HSSにユーザー登録がされていません。\nこの機能はHSSに登録してないユーザーはご利用いただけません。", ephemeral=True)
-            return
+        if await self.memorization.checkuser_in_HSS(interaction) is False:return
         lists = await self.memorization.get_mission_title(str(interaction.user.id))
-        print(lists)
+        if len(lists) == 0:return await interaction.response.send_message("問題がありません",ephemeral=True)
         view = discord.ui.View()
         view.add_item(QuestionEditSelect(lists))
         await interaction.response.send_message("編集する問題を選択してください", view=view, ephemeral=True)
@@ -809,61 +657,48 @@ class MemorizationCog(commands.Cog):
         """
         共有コードから問題をコピーするコマンドです。
         """
-        if await self.memorization.checkuser_in_HSS(interaction.user.id) == False:
-            await interaction.response.send_message("HSSにユーザー登録がされていません。\nこの機能はHSSに登録してないユーザーはご利用いただけません。", ephemeral=True)
-            return
+        if await self.memorization.checkuser_in_HSS(interaction) is False:return
         await interaction.response.defer(thinking=True)
         ch = await self.memorization.sharecode_question_copy(str(interaction.user.id),code)
-        if ch:
-            await interaction.followup.send("コピー完了")
-        else:
-            await interaction.followup.send("コピー失敗")
+        await interaction.followup.send(f"{code}の問題をコピーしました" if ch else "コピー失敗")
 
     @app_commands.command()
     async def memorization_add_excel(self, interaction: discord.Interaction,file: discord.Attachment,title:str):
         """
         Exselファイルから問題を追加するコマンドです。
         """
-        if await self.memorization.checkuser_in_HSS(interaction.user.id) == False:
-            await interaction.response.send_message("HSSにユーザー登録がされていません。\nこの機能はHSSに登録してないユーザーはご利用いただけません。", ephemeral=True)
-            return
+        if await self.memorization.checkuser_in_HSS(interaction) is False:return
         await interaction.response.defer(thinking=True)
         file_bytes = await file.read()
         file_like_object = io.BytesIO(file_bytes)
         workbook = openpyxl.load_workbook(file_like_object)
-        id = str(interaction.user.id)
         number = await self.memorization.make_sharecode()
-        ch = await self.memorization.add_mission_Excel(id,title,number,workbook)
-        if ch:
-            await interaction.followup.send("追加完了")
-        else:
-            await interaction.followup.send("追加失敗")
+        ch = await self.memorization.add_mission_Excel(str(interaction.user.id),title,number,workbook)
+        await interaction.followup.send("追加完了" if ch else "追加失敗")
 
     @app_commands.command()
     async def memorization_sharecode(self, interaction:discord.Interaction):
         """
         共有コードを取得するコマンドです。
         """
-        if await self.memorization.checkuser_in_HSS(interaction.user.id) == False:
-            await interaction.response.send_message("HSSにユーザー登録がされていません。\nこの機能はHSSに登録してないユーザーはご利用いただけません。", ephemeral=True)
-            return
+        if await self.memorization.checkuser_in_HSS(interaction) is False:return
         lists = await self.memorization.get_mission_title(str(interaction.user.id))
+        if len(lists) == 0:return await interaction.response.send_message("問題がありません",ephemeral=True)
         view = discord.ui.View()
         view.add_item(MemorizationShareSelect(lists))
         await interaction.response.send_message("共有コードを取得する問題を選択してください", view=view, ephemeral=True)
 
     @app_commands.command()
-    async def delete_title(self,intearction:discord.Interaction):
+    async def delete_title(self,interaction:discord.Interaction):
         """
         タイトルを削除するコマンドです。
         """
-        if await self.memorization.checkuser_in_HSS(intearction.user.id) == False:
-            await intearction.response.send_message("HSSにユーザー登録がされていません。\nこの機能はHSSに登録してないユーザーはご利用いただけません。", ephemeral=True)
-            return
-        lists = await self.memorization.get_mission_title(str(intearction.user.id))
+        if await self.memorization.checkuser_in_HSS(interaction) is False:return
+        lists = await self.memorization.get_mission_title(str(interaction.user.id))
+        if len(lists) == 0:return await interaction.response.send_message("問題がありません",ephemeral=True)
         view = discord.ui.View()
         view.add_item(MemorizationTitleDeleteSelect(lists))
-        await intearction.response.send_message("削除するタイトルを選択してください",view=view,ephemeral=True)
+        await interaction.response.send_message("削除するタイトルを選択してください",view=view,ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(MemorizationCog(bot))

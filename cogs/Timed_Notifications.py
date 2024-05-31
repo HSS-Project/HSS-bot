@@ -34,7 +34,7 @@ class SchoolSelect(discord.ui.Select):
         for school_id in schools:
             try:
                 school = School(token=token, schoolid=school_id)
-                data = school.get_data()            
+                data = school.get_data()
                 name = data["details"]["name"]
                 names.append(name)
             except Exception as e:
@@ -44,7 +44,7 @@ class SchoolSelect(discord.ui.Select):
         for name,id in zip(names, schools):
             options.append(discord.SelectOption(label=name, value=id))
         super().__init__(placeholder="学校を選択してください", options=options)
-    
+
     async def callback(self, interaction:discord.Interaction):
         if self.values[0] == "取得失敗":
             await interaction.response.send_message("取得失敗しました", ephemeral=True)
@@ -66,12 +66,9 @@ class GradeSelect(discord.ui.Select):
             options.append(discord.SelectOption(label="エラーが発生しました", value="error"))
             super().__init__(placeholder="エラー", options=options)
             return
-        
         for grade in self.get_list.keys():
             options.append(discord.SelectOption(label=f"{grade}年生", value=grade))
-                
         super().__init__(placeholder="学年を選択してください", options=options)
-                    
     async def callback(self, interaction:discord.Interaction):
         self.values[0] = str(self.values[0])
         class_list = self.get_list[self.values[0]]
@@ -85,7 +82,6 @@ class GradeSelect(discord.ui.Select):
     
 class ClassSelect(discord.ui.Select):
     def __init__(self, schoolid:int, grade:int,mode:int,class_list:list):
-        school = School(token=token,schoolid=schoolid)
         self.mode = mode
         self.schoolid = schoolid
         self.grade = grade
@@ -140,7 +136,7 @@ class RemoveSelect(discord.ui.Select):
             await interaction.response.send_message("取得失敗しました", ephemeral=True)
             return
         time = self.values[0]
-        index = self.timed_notifications_add.get_index_2(self.lists[1], self.lists[2], self.lists[3],time)
+        index = self.timed_notifications_add.get_index_time(self.lists[1], self.lists[2], self.lists[3],time)
         data = await self.timed_notifications_add.get_data(index)
         webhook = await interaction.channel.webhooks()
         for i in webhook:
@@ -171,8 +167,9 @@ class TimeModal(discord.ui.Modal,title="送信時間指定"):
         timed_notifications_add = Timed_NotificationsAdd()
         time = self.input.value
         try:
-            temp_time = datetime.datetime.strptime(time, "%H:%M")
-        except:
+            datetime.datetime.strptime(time, "%H:%M")
+        except Exception as e:
+            print(e)
             await interaction.response.send_message("時間の形式が間違っています")
             return
         try:
@@ -211,7 +208,7 @@ class Timed_NotificationsAdd:
         """ 
         with open("send_data.json", "r", encoding="utf-8") as f:
             self.data = json.load(f)
-
+            
     def save(self):
         """
         Save send_data.json
@@ -278,27 +275,7 @@ class Timed_NotificationsAdd:
         self.load()
         return self.data["send_data"]
     
-    def get_index(self,school_id:int,grade:int,class_:int,webhook_url:str):
-        """
-        Get Index
-        
-        Args:
-            school_id (int): School ID
-            grade (int): Grade
-            class_ (int): Class
-            webhook_url (str): Webhook URL
-        
-        Returns:
-            i (int): Index
-        """
-        self.load()
-        for i in range(len(self.data["send_data"])):
-            if self.data["send_data"][i]["school_id"] == school_id and self.data["send_data"][i]["grade"] == grade and self.data["send_data"][i]["class"] == class_ and self.data["send_data"][i]["webhook_url"] == webhook_url:
-                return i
-            
-        return None
-    
-    def get_index_2(self,school_id:int,grade:int,class_:int,time:str):
+    def get_index_time(self,school_id:int,grade:int,class_:int,time:str):
         """
         Get Index
         
@@ -312,7 +289,11 @@ class Timed_NotificationsAdd:
         """
         self.load()
         for i in range(len(self.data["send_data"])):
-            if self.data["send_data"][i]["school_id"] == school_id and self.data["send_data"][i]["grade"] == grade and self.data["send_data"][i]["class"] == class_ and self.data["send_data"][i]["time"] == time:
+            if (self.data["send_data"][i]["school_id"] == school_id and
+                self.data["send_data"][i]["grade"] == grade and
+                self.data["send_data"][i]["class"] == class_ and
+                self.data["send_data"][i]["time"] == time
+                ):
                 return i
 
     
@@ -347,21 +328,6 @@ class Timed_NotificationsAdd:
         self.load()
         return self.data["send_data"][index]
     
-    async def get_data_index(self,school_id:int,grade:int,class_:int):
-        """ 
-        Get Data Index
-        Args:
-            school_id (int): School ID
-            grade (int): Grade
-            class_ (int): Class
-        Returns:
-            self.data["send_data"][index]
-        """
-        self.load()
-        index = await self.get_index(school_id,grade,class_)
-        return self.data["send_data"][index]    
-    
-
 class Timed_Notifications(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -393,12 +359,9 @@ class Timed_Notifications(commands.Cog):
                 time = datetime.datetime.strptime(data["time"], "%H:%M")
                 if time.hour == now.hour and time.minute == now.minute:
                     school = School(token=token, schoolid=data["school_id"])
-                    print(data)
-                    print(data["grade"], data["class"])
                     grade:int = int(data["grade"])
                     class_:int = int(data["class"])
                     index = school.search_class(grade=grade, classname=class_)
-                    print(index)
                     if now.weekday() == 6:
                         weekday = listsweekdays[0]
                     else:
@@ -406,18 +369,17 @@ class Timed_Notifications(commands.Cog):
                     timeline = school.get_timeline(index, weekday)
                     default_timeline = school.get_default_timeline(index, weekday)
                     homework = school.get_homework(index)
-                    # event = school.get_event(index, weekday)
                     if timeline == []:
                         timeline = default_timeline
                     embed = discord.Embed(title=f"{school.get_data()['details']['name']} {data['grade']}年{data['class']}組", description=f"{weekday} 明日の日程です", color=0x00ff00)
-                    for i in range(len(timeline)):
+                    for i in enumerate(timeline):
                         if timeline[i]['place'] == "初期値":
                             place = "未設定"
                         else:
                             place = timeline[i]['place']
-                        embed.add_field(name=f"{i+1}時間目:{timeline[i]['name']}",value=place,inline=False) 
+                        embed.add_field(name=f"{i+1}時間目:{timeline[i]['name']}",value=place,inline=False)
                     embed.add_field(name="〜〜宿題〜〜",value="",inline=False)
-                    for i in range(len(homework)):
+                    for i in enumerate(homework):
                         embed.add_field(name=f"ーーー{homework[i]['name']}ーーーー",value="",inline=False)
                         embed.add_field(name="時間かかるか",value="はい" if homework[i]['istooBig'] == True else "いいえ",inline=False)
                         embed.add_field(name="ページ",value=f"{homework[i]['page']['start']}〜{homework[i]['page']['end']}",inline=False)
@@ -425,7 +387,7 @@ class Timed_Notifications(commands.Cog):
                     try:
                         async with aiohttp.ClientSession() as session:
                             webhook = discord.Webhook.from_url(data["webhook_url"], session=session)
-                            await webhook.send(embed=embed)    
+                            await webhook.send(embed=embed)
                     except Exception as e:
                         print("送信失敗",data,e)
         except Exception as e:
