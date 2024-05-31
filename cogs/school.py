@@ -119,9 +119,13 @@ class ClassSelect(discord.ui.Select):
             lens = len(homework)
             embed = discord.Embed(title=f"{self.values[0]}組の宿題")
             for n in range(lens):
-                embed.add_field(name=f"{n+1}番目の宿題",
-                                value=f"教科:{homework[n]['name']}\nとっても大きくてやるのに時間がかかるものか:{homework[n]['istooBig']}\nページ情報:\nはじまり{homework[n]['page']['start']}\nおわり{homework[n]['page']['end']}\n補足:{homework[n]['page']['comment']}",
-                                inline=False)
+                subject = homework[n]["name"]
+                big = homework[n]["istooBig"]
+                page = homework[n]["page"]
+                start = page["start"]
+                end = page["end"]
+                comment = page["comment"]
+                embed.add_field(name=f"{n+1}番目の宿題\n教科:{subject}\n時間かかるか{big}\nページ:{start}~{end}\n備考{comment}",inline=False)
             await interaction.response.edit_message(embed=embed,view=None)
         elif self.mode == 4:
             return await interaction.response.edit_message(content="宿題を選択してください", view=HomeworkView(self.schoolid, self.grade, self.values[0]))
@@ -258,14 +262,15 @@ class send(discord.ui.Modal):
         elif self.mode == 1 and self.editmode != None:
             try:
                 self.editmode = int(self.editmode)
-                school.patch_timeline(grade=self.grade,
-                                      _class=self._class,
-                                      date=self.date,name=self.name.value,
-                                      isEvent=self.isevent.value,
-                                      place=self.place.value,
-                                      state="update",
-                                      index=self.editmode
-                                      )
+                school.patch_timeline(
+                    grade=self.grade,
+                    _class=self._class,
+                    date=self.date,name=self.name.value,
+                    isEvent=self.isevent.value,
+                    place=self.place.value,
+                    state="update",
+                    index=self.editmode
+                )
                 isevent = True if self.isevent.value == "True" else False
                 embed = discord.Embed(title="hss - 設定完了" , description="設定が正常に完了しました。", color=discord.Color.green()
                 ).add_field(name="教科名", value=self.name.value).add_field(name="イベントか", value=f"{'はい' if isevent else 'いいえ'}").add_field(name="場所", value=self.place.value)
