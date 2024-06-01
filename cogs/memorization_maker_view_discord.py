@@ -41,10 +41,14 @@ class MakerAnswerEmbed:
             embed.add_field(name="正誤",value=f"あなたの回答は「{self.ch}」です",inline=False)
             embed.add_field(name="解答",value=f"正解は「{answers}」です",inline=False)
         elif self.modes == 2:
-            for i in range(len(self.answer)):
-                embed.add_field(name=f"{i+1}番目の回答",value=f"{self.answer[i]}",inline=False)
-                embed.add_field(name=f"{i+1}番目の正誤",value=f"あなたの回答は「{self.ch[i]}」です\n\n",inline=False)
-                embed.add_field(name=f"{i+1}番目の正解",value=f"正解は「{answers[i]}」です。",inline=False)
+            # for i in range(len(self.answer)):
+            #     embed.add_field(name=f"{i+1}番目の回答",value=f"{self.answer[i]}",inline=False)
+            #     embed.add_field(name=f"{i+1}番目の正誤",value=f"あなたの回答は「{self.ch[i]}」です\n\n",inline=False)
+            #     embed.add_field(name=f"{i+1}番目の正解",value=f"正解は「{answers[i]}」です。",inline=False)
+            for number,answer in enumerate(self.answer):
+                embed.add_field(name=f"{number+1}番目の回答",value=f"{answer}",inline=False)
+                embed.add_field(name=f"{number+1}番目の正誤",value=f"あなたの回答は「{self.ch[number]}」です\n\n",inline=False)
+                embed.add_field(name=f"{number+1}番目の正解",value=f"正解は「{answers[number]}」です。",inline=False)
         return embed, self.miss_anwer_indexs
 
 class MakerSelect(discord.ui.Select):

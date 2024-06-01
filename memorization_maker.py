@@ -139,7 +139,7 @@ class MemorizationSystem:
         if len(answers) > 5:
             return  False, False
         for i, answer in enumerate(answers):
-            text = text.replace(f"({answer})", f"①" if i == 0 else f"②" if i == 1 else f"③" if i == 2 else f"④" if i == 3 else f"⑤")
+            text = text.replace(f'({answer})', f'①' if i == 0 else f'②' if i == 1 else f'③' if i == 2 else f'④' if i == 3 else f"⑤")
         return text, answers
 
     async def add_mission_textinput(self, id_:str, title:str, random_number:int,text:str):
