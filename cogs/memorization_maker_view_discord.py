@@ -26,8 +26,8 @@ class MakerAnswerEmbed:
                 self.miss_anwer_indexs.append(self.count)
         elif self.modes == 2:
             self.ch = []
-            for i in range(len(self.answer)):
-                if await self.ms.check_answer(str(self.interaction.user.id), self.title,self.question,self.answer[i],self.modes,i):
+            for i in self.answer:
+                if await self.ms.check_answer(str(self.interaction.user.id), self.title,self.question,i,self.modes,i):
                     await self.ms.edit_user_status(str(self.interaction.user.id),self.title,0,1)
                     self.ch.append("正解")
                 else:

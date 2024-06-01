@@ -41,7 +41,7 @@ class MemorizationAddTextModal(ui.Modal, title="文章問題追加"):
             random_number = getcode
         question = str(self.inputs[0])
         ch = await memorization.add_mission_textinput(str(interaction.user.id), self.title, random_number,question)
-        if ch == False:
+        if ch is False:
             return await interaction.response.edit_message(content="追加に失敗しました。答えの最大個数は5つまでです。確認してください",view=MemorizationControlView(self.title))
         await interaction.response.edit_message(content=None,view=MemorizationControlView(self.title))
 
@@ -620,7 +620,7 @@ class MemorizationEditModal(ui.Modal, title="問題編集"):
         embed = discord.Embed(title="問題追加", description=f"現在の選択問題設定個数:{self.count}", color=0x00ff00)
         if self.mode <= 1 or self.mode == 3:
             ch = await memorization.edit_misson(str(interaction.user.id), self.title, self.selected_index, self.mode, value)
-            if self.mode == 3 and ch == False:
+            if self.mode == 3 and ch is False:
                 return await interaction.response.edit_message(content="編集に失敗しました。答えの最大個数は5つまでです。確認してください",
                                                                embed=embed,
                                                                view=MemorizationControlView(self.title,self.count))

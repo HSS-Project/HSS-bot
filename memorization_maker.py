@@ -148,8 +148,8 @@ class MemorizationSystem:
         self.data["memorization"].setdefault(num_id, {})
         self.data["memorization"][num_id].setdefault(title, {"questions": [], "sharecode": random_number})
         new_text, extracted_answers = await self.replace_parentheses(text)
-        if new_text == False or extracted_answers == False:return False
-        self.data["memorization"][num_id][title]["questions"].append({"question": new_text, "mode": 2, "answer": extracted_answers}) 
+        if new_text is False or extracted_answers is False:return False
+        self.data["memorization"][num_id][title]["questions"].append({"question": new_text, "mode": 2, "answer": extracted_answers})
         await self.save_data()
         return True
     
