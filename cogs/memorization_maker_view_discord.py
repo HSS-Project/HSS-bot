@@ -27,7 +27,7 @@ class MakerAnswerEmbed:
         elif self.modes == 2:
             self.ch = []
             for number,answer in enumerate(self.answer):
-                if await self.ms.check_answer(str(self.interaction.user.id), self.title,self.question,answer,self.modes,answer):
+                if await self.ms.check_answer(str(self.interaction.user.id), self.title,self.question,answer,self.modes,number):
                     await self.ms.edit_user_status(str(self.interaction.user.id),self.title,0,1)
                     self.ch.append("正解")
                 else:
