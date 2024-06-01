@@ -270,7 +270,7 @@ class MemorizationSystem:
                         return False
             elif edit_before["mode"] == 2:
                 new_text, extracted_answers = await self.replace_parentheses(value)
-                if new_text == False or extracted_answers == False:return False
+                if new_text is False or extracted_answers is False:return False
                 edit_before["question"] = new_text
                 edit_before["answer"] = extracted_answers
             self.data["memorization"][num_id][title]["questions"][number] = edit_before
