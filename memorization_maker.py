@@ -131,17 +131,16 @@ class MemorizationSystem:
         await self.save_data()
         return True
     
-    async def replace_parentheses(text):
+    async def replace_parentheses(self,text):
         # ()内のテキストを抽出
-        answers = re.findall(r'\((.*?)\)', text)
+        answers:list = re.findall(r'\((.*?)\)', text)
         
         # ()内のテキストを①、②、③...に置き換え
         if len(answers) > 5:
             return False, False
         for i, answer in enumerate(answers):
             number = chr(9312 + i)  # 9312はUnicodeで①の値
-            text = text.replace(f'({answer})', f'{number}')
-        
+            text:str = text.replace(f'({answer})', f'{number}')
         return text, answers
 
     async def add_mission_textinput(self, id_:str, title:str, random_number:int,text:str):
