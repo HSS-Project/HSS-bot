@@ -33,16 +33,18 @@ class MakerAnswerEmbed:
                 else:
                     self.miss_anwer_indexs.append(self.count)
                     self.ch.append("不正解")
+        answers = await self.ms.get_answer(str(self.interaction.user.id),self.title,self.question)
         embed = discord.Embed(title="回答結果",color=0x00ff00)
         embed.add_field(name="問題",value=f"{self.question}",inline=False)
         if self.modes <= 1:
             embed.add_field(name="あなたの回答",value=f"{self.answer}",inline=False)
             embed.add_field(name="正誤",value=f"あなたの回答は「{self.ch}」です",inline=False)
+            embed.add_field(name="解答",value=f"正解は「{answers}」です",inline=False)
         elif self.modes == 2:
             for i in range(len(self.answer)):
-                embed.add_field(name=f"{i+1}番目の回答",value=f"{self.answer[i]}")
+                embed.add_field(name=f"{i+1}番目の回答",value=f"{self.answer[i]}",inline=False)
                 embed.add_field(name=f"{i+1}番目の正誤",value=f"あなたの回答は「{self.ch[i]}」です\n\n",inline=False)
-        embed.add_field(name="解答",value=f"正解は「{await self.ms.get_answer(str(self.interaction.user.id),self.title,self.question)}」です",inline=False)
+                embed.add_field(name=f"{i+1}番目の正解",value=f"正解は「{answers[i]}」です。",inline=False)
         return embed, self.miss_anwer_indexs
 
 class MakerSelect(discord.ui.Select):
@@ -82,16 +84,15 @@ class MakerSelect(discord.ui.Select):
         return
 
 class MakerAnswer_text(ui.Modal,title="回答"):
-    def __init__(self,interaction:discord.Interaction,title:str,question:str,counts:int,ms:MS,miss_anwer_indexs:list[int]):
+    def __init__(self,title:str,question:str,counts:int,ms:MS,miss_anwer_indexs:list[int],answwer_len:int):
         super().__init__()
         self.title = title
         self.question = question
         self.counts = counts
         self.ms = ms
         self.miss_anwer_indexs = miss_anwer_indexs
-        answwer_len = len(self.ms.get_answer(str(interaction.user.id),self.title,self.question))
         for i in range(answwer_len):
-            self.add_item(ui.TextInput(label=f"{i+1}番目の回答",style=discord.TextStyle.long))
+            self.add_item(ui.TextInput(label=f"{i+1}番目の回答",style=discord.TextStyle.short))
             
     async def on_submit(self,interaction:discord.Interaction):
         answers = []
@@ -224,8 +225,8 @@ class MakerAnwerButton(discord.ui.View):
             await interaction.response.edit_message(view=view)
         elif self.mode == 2:
             view = discord.ui.View()
-            view.add_item(MakerAnswer_text(interaction,self.title,self.question,self.counts,self.ms,self.miss_anwer_indexs))
-            await interaction.response.edit_message(view=view)
+            answwer_len = len(await self.ms.get_answer(str(interaction.user.id),self.title,self.question))
+            await interaction.response.send_modal(MakerAnswer_text(self.title,self.question,self.counts,self.ms,self.miss_anwer_indexs,answwer_len))
 
 class MemorizationQuestionSelect(discord.ui.Select):
     """

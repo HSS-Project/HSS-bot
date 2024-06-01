@@ -26,9 +26,9 @@ class TitleAddModal(ui.Modal, title="タイトル追加"):
         await interaction.response.send_message(content=content,embed=embed, ephemeral=True, view=MemorizationControlView(title))
 
 class MemorizationAddTextModal(ui.Modal, title="文章問題追加"):
-    def _init__(self,title):
+    def __init__(self, titles):
+        self.title = titles
         super().__init__()
-        self.title = title
         self.inputs = [ui.TextInput(label="文章を入力してください", style=discord.TextStyle.long)]
         for input_item in self.inputs:
             self.add_item(input_item)
@@ -41,8 +41,9 @@ class MemorizationAddTextModal(ui.Modal, title="文章問題追加"):
             random_number = getcode
         question = str(self.inputs[0])
         ch = await memorization.add_mission_textinput(str(interaction.user.id), self.title, random_number,question)
-        if not ch:return await interaction.response.send_message("追加失敗", ephemeral=True)
-        await interaction.response.edit_message(view=MemorizationControlView(self.title))
+        if ch == False:
+            return await interaction.response.edit_message(content="追加に失敗しました。答えの最大個数は5つまでです。確認してください",view=MemorizationControlView(self.title))
+        await interaction.response.edit_message(content=None,view=MemorizationControlView(self.title))
 
 
 class MemorizationAddModal(ui.Modal,title="問題追加"):
@@ -76,9 +77,8 @@ class MemorizationAddModal(ui.Modal,title="問題追加"):
         else:
             random_number = getcode
         question, answer = [str(input_item) for input_item in self.inputs]
-        ch = await memorization.add_mission(str(interaction.user.id), self.title,random_number, 0, question,answer)
-        if not ch:return await interaction.response.send_message("追加失敗", ephemeral=True)
-        await interaction.response.edit_message(view=MemorizationControlView(self.title))
+        await memorization.add_mission(str(interaction.user.id), self.title,random_number, 0, question,answer)
+        await interaction.response.edit_message(content=None,view=MemorizationControlView(self.title))
 
 
 class EditCountSelect(discord.ui.Select):
@@ -391,6 +391,35 @@ class MemorizationTitleDeleteSelect(discord.ui.Select):
         await memorization.del_mission_title(str(interaction.user.id), self.values[0])
         await interaction.response.edit_message(content="削除完了", view=None)
 
+class MemorizationEditTextContenu(discord.ui.View):
+    """
+    A custom button class for answering questions in the memorization maker view.
+
+    Attributes:
+        title (str): The title of the question.
+        question (str): The content of the question.
+        mode (int): The mode of the view.
+        counts (int): The number of counts.
+        select (Optional): The optional select parameter.
+
+    Methods:
+        callback(interaction: discord.Interaction, button: discord.ui.Button) -> None:
+            The callback method for handling button interactions.
+    """
+
+    def __init__(self, title, selected_index, lists,mode, counts):
+        super().__init__()
+        self.title = title
+        self.selected_index = selected_index
+        self.lists = lists
+        self.mode = mode
+        self.counts = counts
+        
+    @discord.ui.button(label="編集する", style=discord.ButtonStyle.primary)
+    async def callback(self, interaction: discord.Interaction, _: discord.ui.Button):
+        await interaction.response.send_modal(MemorizationEditModal(self.title, self.selected_index, self.lists, 3, self.counts))
+
+
 class MemorizationEditSelect(discord.ui.Select):
     """
     A custom select menu for selecting a question in the Memorization Edit Discord UI.
@@ -437,12 +466,15 @@ class MemorizationEditSelect(discord.ui.Select):
                 embed.add_field(name="選択肢", value=i, inline=False)
         if mode == 2:
             embed.add_field(name="文章",value=self.lists[selected_index]["question"],inline=False)
-            view.add_item(MemorizationEditModal(self.title, selected_index, self.lists, 3, self.count))
+            for i in range(len(self.lists[selected_index]['answer'])):
+                embed.add_field(name="解答",value=f"{i+1}番目の解答「{self.lists[selected_index]['answer'][i]}」",inline=False)
+            view = MemorizationEditTextContenu(self.title, selected_index, self.lists, mode, self.count)
         await interaction.response.edit_message(embed=embed,view=view)
 
 class EditModeSelect(discord.ui.Select):
     """
     A custom select menu for selecting the mode in the Memorization Edit Discord.
+        if not ch:return await interaction.response.send_message("追加失敗", ephemeral=True)
 
     Args:
         title (str): The title of the select menu.
@@ -565,13 +597,13 @@ class MemorizationEditModal(ui.Modal, title="問題編集"):
         selected_number (int, optional): The selected number. Defaults to None.
     """
     def __init__(self, title, selected_index, lists, mode, count,selected_number=None):
+        super().__init__()
         self.title = title
         self.selected_index = selected_index
         self.lists = lists
         self.mode = mode
         self.count = count
         self.selected_number = selected_number
-        super().__init__()
         if self.mode == 0:
             self.input = ui.TextInput(label="問題", style=discord.TextStyle.long)
         elif self.mode == 1:
@@ -585,11 +617,16 @@ class MemorizationEditModal(ui.Modal, title="問題編集"):
     async def on_submit(self, interaction: discord.Interaction):
         value = str(self.input)
         memorization = memorization_maker.MemorizationSystem()
+        embed = discord.Embed(title="問題追加", description=f"現在の選択問題設定個数:{self.count}", color=0x00ff00)
         if self.mode <= 1 or self.mode == 3:
-            await memorization.edit_misson(str(interaction.user.id), self.title, self.selected_index, self.mode, value)
+            ch = await memorization.edit_misson(str(interaction.user.id), self.title, self.selected_index, self.mode, value)
+            if self.mode == 3 and ch == False:
+                return await interaction.response.edit_message(content="編集に失敗しました。答えの最大個数は5つまでです。確認してください",
+                                                               embed=embed,
+                                                               view=MemorizationControlView(self.title,self.count))
         elif self.mode == 2:
             await memorization.edit_misson(str(interaction.user.id), self.title, self.selected_index, self.mode, value, self.selected_number)
-        embed = discord.Embed(title="問題追加", description=f"現在の選択問題設定個数:{self.count}", color=0x00ff00)
+        
         await interaction.response.edit_message(embed=embed, view=MemorizationControlView(self.title,self.count))
 
 

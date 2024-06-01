@@ -131,13 +131,13 @@ class MemorizationSystem:
         await self.save_data()
         return True
     
-    async def replace_parentheses(text):
+    async def replace_parentheses(self,text:str):
         # ()内のテキストを抽出
         answers = re.findall(r'\((.*?)\)', text)
         
         # ()内のテキストを①、②、③...に置き換え　MAX5つまで
         if len(answers) > 5:
-            return "エラー: 答えが多すぎます", []
+            return  False, False
         for i, answer in enumerate(answers):
             text = text.replace(f"({answer})", f"①" if i == 0 else f"②" if i == 1 else f"③" if i == 2 else f"④" if i == 3 else f"⑤")
         return text, answers
@@ -148,6 +148,7 @@ class MemorizationSystem:
         self.data["memorization"].setdefault(num_id, {})
         self.data["memorization"][num_id].setdefault(title, {"questions": [], "sharecode": random_number})
         new_text, extracted_answers = await self.replace_parentheses(text)
+        if new_text == False or extracted_answers == False:return False
         self.data["memorization"][num_id][title]["questions"].append({"question": new_text, "mode": 2, "answer": extracted_answers}) 
         await self.save_data()
         return True
@@ -268,8 +269,10 @@ class MemorizationSystem:
                     else:
                         return False
             elif edit_before["mode"] == 2:
-                edit_before["question"] = value
-                return True
+                new_text, extracted_answers = await self.replace_parentheses(value)
+                if new_text == False or extracted_answers == False:return False
+                edit_before["question"] = new_text
+                edit_before["answer"] = extracted_answers
             self.data["memorization"][num_id][title]["questions"][number] = edit_before
             await self.save_data()
             return True
