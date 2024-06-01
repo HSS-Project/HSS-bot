@@ -8,7 +8,7 @@ from HSS import User
 import discord
 
 from typing import TypedDict
-
+import re
 
 class QuestionData(TypedDict):
     question: str
@@ -130,7 +130,30 @@ class MemorizationSystem:
             self.data["memorization"][num_id][title]["questions"][-1]["select"] = select
         await self.save_data()
         return True
+    
+    async def replace_parentheses(self,text):
+        # ()内のテキストを抽出
+        answers:list = re.findall(r'\((.*?)\)', text)
+        
+        # ()内のテキストを①、②、③...に置き換え
+        if len(answers) > 5:
+            return False, False
+        for i, answer in enumerate(answers):
+            number = chr(9312 + i)  # 9312はUnicodeで①の値
+            text:str = text.replace(f'({answer})', f'{number}')
+        return text, answers
 
+    async def add_mission_textinput(self, id_:str, title:str, random_number:int,text:str):
+        num_id = str(id_)
+        await self.load_data()
+        self.data["memorization"].setdefault(num_id, {})
+        self.data["memorization"][num_id].setdefault(title, {"questions": [], "sharecode": random_number})
+        new_text, extracted_answers = await self.replace_parentheses(text)
+        if new_text is False or extracted_answers is False:return False
+        self.data["memorization"][num_id][title]["questions"].append({"question": new_text, "mode": 2, "answer": extracted_answers})
+        await self.save_data()
+        return True
+    
     async def add_mission_Excel(self,id_: str, title: str, number: int, workbook: openpyxl.Workbook):
         """
         Add a mission to the memorization data from an Excel file.
@@ -246,6 +269,11 @@ class MemorizationSystem:
                         edit_before["select"][select_number] = value
                     else:
                         return False
+            elif edit_before["mode"] == 2:
+                new_text, extracted_answers = await self.replace_parentheses(value)
+                if new_text is False or extracted_answers is False:return False
+                edit_before["question"] = new_text
+                edit_before["answer"] = extracted_answers
             self.data["memorization"][num_id][title]["questions"][number] = edit_before
             await self.save_data()
             return True
@@ -377,7 +405,7 @@ class MemorizationSystem:
             return list(self.data["memorization"][num_id].keys())
         return False
 
-    async def check_answer(self, id_: str, title: str, question: str, answer: str, mode: int) -> bool:
+    async def check_answer(self, id_: str, title: str, question: str, answer: str, mode: int, text_question_number:int = None) -> bool:
         """
         Check the answer to a mission.
 
@@ -398,8 +426,10 @@ class MemorizationSystem:
                 if item["question"] == question:
                     if mode == 0:
                         return item["answer"] == answer
-                    else:
+                    elif mode == 1:
                         return answer == item["select"][int(item["answer"])-1]
+                    elif mode == 2:
+                        return answer == item["answer"][text_question_number]
         return False
     
     async def get_answer(self, id_: str, title: str, question: str):
@@ -423,6 +453,8 @@ class MemorizationSystem:
                         return item["answer"]
                     elif item["mode"] == 1:
                         return item["select"][int(item["answer"])-1]
+                    elif item["mode"] == 2:
+                        return item["answer"]
                                             
         return False
     
@@ -508,12 +540,13 @@ class MemorizationSystem:
         if num_id in self.data["memorization"] and (title in self.data["memorization"][num_id]):
             make_sheet = ""
             for item in self.data["memorization"][num_id][title]["questions"]:
-                question_text = item["question"]
-                if item["mode"] == 0:
-                    answer_text = item["answer"]
-                elif item["mode"] == 1:
-                    answer_text = item["select"][item["answer"]-1]
-                make_sheet += f"{question_text} : ||{answer_text}||\n"
+                if not item["mode"] == 2:
+                    question_text = item["question"]
+                    if item["mode"] == 0:
+                        answer_text = item["answer"]
+                    elif item["mode"] == 1:
+                        answer_text = item["select"][item["answer"]-1]
+                    make_sheet += f"{question_text} : ||{answer_text}||\n"
                 if len(make_sheet) > 1900:
                     make_sheet += "......\n"
                     return make_sheet

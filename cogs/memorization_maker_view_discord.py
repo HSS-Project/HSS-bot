@@ -17,17 +17,38 @@ class MakerAnswerEmbed:
         self.ms = MS()
 
     async def make_embed(self):
-        if await self.ms.check_answer(str(self.interaction.user.id), self.title,self.question,self.answer,self.modes):
-            await self.ms.edit_user_status(str(self.interaction.user.id),self.title,0,1)
-            self.ch = "正解"
-        else:
-            self.ch = "不正解"
-            self.miss_anwer_indexs.append(self.count)
+        if self.modes <= 1:
+            if await self.ms.check_answer(str(self.interaction.user.id), self.title,self.question,self.answer,self.modes):
+                await self.ms.edit_user_status(str(self.interaction.user.id),self.title,0,1)
+                self.ch = "正解"
+            else:
+                self.ch = "不正解"
+                self.miss_anwer_indexs.append(self.count)
+        elif self.modes == 2:
+            self.ch = []
+            for i in self.answer:
+                if await self.ms.check_answer(str(self.interaction.user.id), self.title,self.question,i,self.modes,i):
+                    await self.ms.edit_user_status(str(self.interaction.user.id),self.title,0,1)
+                    self.ch.append("正解")
+                else:
+                    self.miss_anwer_indexs.append(self.count)
+                    self.ch.append("不正解")
+        answers = await self.ms.get_answer(str(self.interaction.user.id),self.title,self.question)
         embed = discord.Embed(title="回答結果",color=0x00ff00)
         embed.add_field(name="問題",value=f"{self.question}",inline=False)
-        embed.add_field(name="あなたの回答",value=f"{self.answer}",inline=False)
-        embed.add_field(name="正誤",value=f"あなたの回答は「{self.ch}」です",inline=False)
-        embed.add_field(name="解答",value=f"正解は「{await self.ms.get_answer(str(self.interaction.user.id),self.title,self.question)}」です",inline=False)
+        if self.modes <= 1:
+            embed.add_field(name="あなたの回答",value=f"{self.answer}",inline=False)
+            embed.add_field(name="正誤",value=f"あなたの回答は「{self.ch}」です",inline=False)
+            embed.add_field(name="解答",value=f"正解は「{answers}」です",inline=False)
+        elif self.modes == 2:
+            # for i in range(len(self.answer)):
+            #     embed.add_field(name=f"{i+1}番目の回答",value=f"{self.answer[i]}",inline=False)
+            #     embed.add_field(name=f"{i+1}番目の正誤",value=f"あなたの回答は「{self.ch[i]}」です\n\n",inline=False)
+            #     embed.add_field(name=f"{i+1}番目の正解",value=f"正解は「{answers[i]}」です。",inline=False)
+            for number,answer in enumerate(self.answer):
+                embed.add_field(name=f"{number+1}番目の回答",value=f"{answer}",inline=False)
+                embed.add_field(name=f"{number+1}番目の正誤",value=f"あなたの回答は「{self.ch[number]}」です\n\n",inline=False)
+                embed.add_field(name=f"{number+1}番目の正解",value=f"正解は「{answers[number]}」です。",inline=False)
         return embed, self.miss_anwer_indexs
 
 class MakerSelect(discord.ui.Select):
@@ -65,6 +86,38 @@ class MakerSelect(discord.ui.Select):
                                                                              )
                                                 )
         return
+
+class MakerAnswer_text(ui.Modal,title="回答"):
+    def __init__(self,title:str,question:str,counts:int,ms:MS,miss_anwer_indexs:list[int],answwer_len:int):
+        super().__init__()
+        self.title = title
+        self.question = question
+        self.counts = counts
+        self.ms = ms
+        self.miss_anwer_indexs = miss_anwer_indexs
+        for i in range(answwer_len):
+            self.add_item(ui.TextInput(label=f"{i+1}番目の回答",style=discord.TextStyle.short))
+            
+    async def on_submit(self,interaction:discord.Interaction):
+        answers = []
+        for i in self.children:
+            answers.append(i.value)
+        embed,miss_anwer_indexs_retrun = await MakerAnswerEmbed(self.title,
+                                                                self.question,
+                                                                answers,
+                                                                self.miss_anwer_indexs,
+                                                                self.counts,
+                                                                interaction,
+                                                                2
+                                                                ).make_embed()
+        await interaction.response.edit_message(embed=embed,
+                                                view=MakerAmwerButtonContenu(self.title,
+                                                                             self.question,
+                                                                             self.counts,
+                                                                             self.ms,
+                                                                             miss_anwer_indexs_retrun
+                                                                             )
+                                                )
 
 class MakerAnswer(ui.Modal,title="回答"):
     """
@@ -174,7 +227,10 @@ class MakerAnwerButton(discord.ui.View):
             view = discord.ui.View()
             view.add_item(MakerSelect(self.select, self.title, self.question, self.counts, self.ms, self.miss_anwer_indexs))
             await interaction.response.edit_message(view=view)
-
+        elif self.mode == 2:
+            view = discord.ui.View()
+            answwer_len = len(await self.ms.get_answer(str(interaction.user.id),self.title,self.question))
+            await interaction.response.send_modal(MakerAnswer_text(self.title,self.question,self.counts,self.ms,self.miss_anwer_indexs,answwer_len))
 
 class MemorizationQuestionSelect(discord.ui.Select):
     """
@@ -277,7 +333,7 @@ class MemorizationPlayMain:
         question = self.lists[self.counts]["question"]
         embed = discord.Embed(title=f"{self.counts+1}問目",color=0x00ff00)
         embed.add_field(name="問題",value=f"{question}",inline=False)
-        if mode == 0:
+        if mode == 0 or mode == 2:
             view = MakerAnwerButton(self.title,question,mode,self.counts, self.ms,self.miss_anwer_indexs)
             await interaction.response.send_message(embed=embed, view=view,ephemeral=True)
         elif mode == 1:
@@ -286,7 +342,7 @@ class MemorizationPlayMain:
             select = x["select"]
             view = MakerAnwerButton(self.title, question, mode, self.counts, self.ms, self.miss_anwer_indexs,select)
             await interaction.response.send_message(embed=embed, view=view,ephemeral=True)
-
+            
 class MakerComanndsCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
