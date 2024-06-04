@@ -320,7 +320,7 @@ class MemorizationPlayMain:
                 question = self.lists[i]["question"]
                 anwer = await self.ms.get_answer(str(interaction.user.id), self.title, question)
                 embed.add_field(name=f"問題: {question}",value=f"解答: {anwer}",inline=False)                
-            await interaction.response.edit_message(content=None,embed=embed,ephemeral=True)
+            await interaction.response.edit_message(content=None,embed=embed)
             await self.ms.randam_mission_select(str(interaction.user.id), self.title)
             mission_lists = await self.ms.get_mission_selectmode_list(str(interaction.user.id), self.title)
             for i in mission_lists:
@@ -335,13 +335,13 @@ class MemorizationPlayMain:
         embed.add_field(name="問題",value=f"{question}",inline=False)
         if mode == 0 or mode == 2:
             view = MakerAnwerButton(self.title,question,mode,self.counts, self.ms,self.miss_anwer_indexs)
-            await interaction.response.edit_message(content=None,embed=embed, view=view,ephemeral=True)
+            await interaction.response.edit_message(content=None,embed=embed, view=view)
         elif mode == 1:
             x = self.lists[self.counts]
             assert "select" in x
             select = x["select"]
             view = MakerAnwerButton(self.title, question, mode, self.counts, self.ms, self.miss_anwer_indexs,select)
-            await interaction.response.edit_message(content=None,embed=embed, view=view,ephemeral=True)
+            await interaction.response.edit_message(content=None,embed=embed, view=view)
             
 class MakerComanndsCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
