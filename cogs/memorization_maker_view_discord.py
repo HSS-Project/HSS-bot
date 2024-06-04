@@ -320,7 +320,7 @@ class MemorizationPlayMain:
                 question = self.lists[i]["question"]
                 anwer = await self.ms.get_answer(str(interaction.user.id), self.title, question)
                 embed.add_field(name=f"問題: {question}",value=f"解答: {anwer}",inline=False)                
-            await interaction.response.edit_message(content=None,embed=embed)
+            await interaction.response.edit_message(content=None,embed=embed,view=None)
             await self.ms.randam_mission_select(str(interaction.user.id), self.title)
             mission_lists = await self.ms.get_mission_selectmode_list(str(interaction.user.id), self.title)
             for i in mission_lists:
