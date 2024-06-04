@@ -188,7 +188,7 @@ class MakerAmwerButtonContenu(discord.ui.View):
     async def callback(self, interaction: discord.Interaction, _: discord.ui.Button):
         self.count += 1
         lists = await self.ms.get_mission(str(interaction.user.id), self.title)
-        if not lists:return await interaction.response.edit_message("エラー: データが見つかりませんでした。", ephemeral=True)
+        if not lists:return await interaction.response.send_message("エラー: データが見つかりませんでした。", ephemeral=True)
         memorizationPlayMain = MemorizationPlayMain(self.title, lists, self.count, self.ms, self.miss_anwer_indexs)
         await memorizationPlayMain.main_start(interaction)
 
@@ -261,13 +261,13 @@ class MemorizationQuestionSelect(discord.ui.Select):
             title = self.values[0]
             miss_anwer_indexs = []
             lists = await self.ms.get_mission(str(interaction.user.id), title)
-            if not lists:return await interaction.response.edit_message("エラー: データが見つかりませんでした。", ephemeral=True)
+            if not lists:return await interaction.response.send_message("エラー: データが見つかりませんでした。", ephemeral=True)
             memorizationPlayMain = MemorizationPlayMain(title, lists, 0, self.ms,miss_anwer_indexs)
             await memorizationPlayMain.main_start(interaction)
         elif self.mode == 1:
             title = self.values[0]
             dicts = await self.ms.get_user_status(str(interaction.user.id), title)
-            if not dicts:return await interaction.response.edit_message("エラー: データが見つかりませんでした。", ephemeral=True)
+            if not dicts:return await interaction.response.send_message("エラー: データが見つかりませんでした。", ephemeral=True)
             score = dicts["score"]
             count = dicts["count"]
             embed = discord.Embed(title=f"{count}回挑戦", color=0x00ff00)
@@ -276,7 +276,7 @@ class MemorizationQuestionSelect(discord.ui.Select):
         elif self.mode == 2:
             title = self.values[0]
             lists = await self.ms.get_mission(str(interaction.user.id), title)
-            if not lists:return await interaction.response.edit_message("エラー: データが見つかりませんでした。", ephemeral=True)
+            if not lists:return await interaction.response.send_message("エラー: データが見つかりませんでした。", ephemeral=True)
             await interaction.response.defer(thinking=True)
             sheet = await self.ms.memorization_sheet(str(interaction.user.id), title)
             await interaction.followup.send(content=sheet)
@@ -310,7 +310,7 @@ class MemorizationPlayMain:
         """
         if self.counts == len(self.lists):
             dicts = await self.ms.get_user_status(str(interaction.user.id), self.title)
-            if not dicts:return await interaction.response.edit_message(content="エラー：ユーザーデータの取得に失敗しました。")
+            if not dicts:return await interaction.response.send_message("エラー：ユーザーデータの取得に失敗しました。")
             score = dicts["score"] 
             count = dicts["count"]
             embed = discord.Embed(title=f"{count}回目の挑戦終了",color=0x00ff00)
@@ -353,33 +353,33 @@ class MakerComanndsCog(commands.Cog):
         """問題を表示するコマンド"""
         if await self.ms.checkuser_in_HSS(interaction) is False:return
         title = await self.ms.get_mission_title(str(interaction.user.id))
-        if not title:return await interaction.response.edit_message("ユーザーデータが見つかりませんでした。", ephemeral=True)
+        if not title:return await interaction.response.send_message("ユーザーデータが見つかりませんでした。", ephemeral=True)
         embed = discord.Embed(title="問題を選択してください",color=0x00ff00)
         view = discord.ui.View()
         view.add_item(MemorizationQuestionSelect(title, self.ms,0))
-        await interaction.response.edit_message(embed=embed, view=view, ephemeral=True)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
     @app_commands.command()
     async def get_score(self, interaction:discord.Interaction):
         """スコアを取得するコマンド"""
         if await self.ms.checkuser_in_HSS(interaction) is False:return
         title = await self.ms.get_mission_title(str(interaction.user.id))
-        if not title:return await interaction.response.edit_message("ユーザーデータが見つかりませんでした。", ephemeral=True)
+        if not title:return await interaction.response.send_message("ユーザーデータが見つかりませんでした。", ephemeral=True)
         embed = discord.Embed(title="問題を選択してください",color=0x00ff00)
         view = discord.ui.View()
         view.add_item(MemorizationQuestionSelect(title, self.ms,1))
-        await interaction.response.edit_message(embed=embed, view=view, ephemeral=True)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
     @app_commands.command()
     async def memorization_make_sheet(self,interaction:discord.Interaction):
         """暗記シート"""
         if await self.ms.checkuser_in_HSS(interaction) is False:return
         title = await self.ms.get_mission_title(str(interaction.user.id))
-        if not title:return await interaction.response.edit_message("問題がありません。", ephemeral=True)
+        if not title:return await interaction.response.send_message("問題がありません。", ephemeral=True)
         embed = discord.Embed(title="問題を選択してください",color=0x00ff00)
         view = discord.ui.View()
         view.add_item(MemorizationQuestionSelect(title, self.ms,2))
-        await interaction.response.edit_message(embed=embed, view=view, ephemeral=True)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
         
 async def setup(bot):
     await bot.add_cog(MakerComanndsCog(bot))
