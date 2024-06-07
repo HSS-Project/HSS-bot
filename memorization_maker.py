@@ -142,6 +142,13 @@ class MemorizationSystem:
             number = chr(9312 + i)  # 9312はUnicodeで①の値
             text:str = text.replace(f'({answer})', f'{number}')
         return text, answers
+    
+    def replace_numbers_with_answers(self,text, answers):
+        # 正規表現で番号を探して置き換える
+        for i, answer in enumerate(answers):
+            number = chr(9312 + i)  # 9312はUnicodeで①の値
+            text = text.replace(f'{number}', f'||{answer}||')
+        return text
 
     async def add_mission_textinput(self, id_:str, title:str, random_number:int,text:str):
         num_id = str(id_)
@@ -523,7 +530,7 @@ class MemorizationSystem:
         self.data["memorization"][num_id][title]["questions"][question_number]["answer"] = answer_number
         await self.save_data()
         return True
-
+    
     async def memorization_sheet(self,id_:str, title:str):
         """
         Get the memorization sheet.
@@ -540,13 +547,18 @@ class MemorizationSystem:
         if num_id in self.data["memorization"] and (title in self.data["memorization"][num_id]):
             make_sheet = ""
             for item in self.data["memorization"][num_id][title]["questions"]:
-                if not item["mode"] == 2:
+                if item["mode"] <=1:
                     question_text = item["question"]
                     if item["mode"] == 0:
                         answer_text = item["answer"]
                     elif item["mode"] == 1:
                         answer_text = item["select"][item["answer"]-1]
                     make_sheet += f"{question_text} : ||{answer_text}||\n"
+                if item["mode"] == 2:
+                    raw_text = item["question"]
+                    answer_text_list:list = item["answer"]
+                    question_text = self.replace_numbers_with_answers(raw_text, answer_text_list)
+                    make_sheet += f"{question_text}\n------\n"
                 if len(make_sheet) > 1900:
                     make_sheet += "......\n"
                     return make_sheet
