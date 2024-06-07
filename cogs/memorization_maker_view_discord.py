@@ -333,13 +333,14 @@ class MemorizationPlayMain:
                     #anwerがリストの場合
                     anwer_text = ""
                     if isinstance(anwer,list):
+                        #リストの場合 for i,anwer in enumerate(anwer)で回す
                         for i,anwer in enumerate(anwer):
                             anwer_text += f"{chr(9312 + i)}:{anwer} "
                     else:
                         anwer_text = anwer
                     embed.add_field(name=f"問題: {question}",value=f"解答: {anwer_text}",inline=False)
             else:
-                embed.add_field(name="不正解問題が多すぎるため表示できません。",value="",inline=False)          
+                embed.add_field(name="不正解問題が多すぎるため表示できません。",value="",inline=False)    
             await interaction.response.edit_message(content=None,embed=embed,view=None)
             await self.ms.randam_mission_select(str(interaction.user.id), self.title)
             mission_lists = await self.ms.get_mission_selectmode_list(str(interaction.user.id), self.title)
