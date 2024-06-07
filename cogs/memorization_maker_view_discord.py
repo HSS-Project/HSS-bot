@@ -316,10 +316,20 @@ class MemorizationPlayMain:
             embed = discord.Embed(title=f"{count}回目の挑戦終了",color=0x00ff00)
             embed.add_field(name="結果",value=f"問題: [{self.title}]のスコアは{score}点です")
             embed.add_field(name="不正解問題",value=f"{len(self.miss_anwer_indexs)}問",inline=False)
-            for i in self.miss_anwer_indexs:
-                question = self.lists[i]["question"]
-                anwer = await self.ms.get_answer(str(interaction.user.id), self.title, question)
-                embed.add_field(name=f"問題: {question}",value=f"解答: {anwer}",inline=False)                
+            if len(self.miss_anwer_indexs) <= 20:
+                for i,miss in enumerate(self.miss_anwer_indexs):
+                    question = self.lists[miss]["question"]
+                    anwer = await self.ms.get_answer(str(interaction.user.id), self.title, question)
+                    #anwerがリストの場合
+                    anwer_text = ""
+                    if isinstance(anwer,list):
+                        for i,anwer in enumerate(anwer):
+                            anwer_text += f"{chr(9312 + i)}:{anwer} "
+                    else:
+                        anwer_text = anwer
+                    embed.add_field(name=f"問題: {question}",value=f"解答: {anwer_text}",inline=False)
+            else:
+                embed.add_field(name="不正解問題が多すぎるため表示できません。",value="",inline=False)          
             await interaction.response.edit_message(content=None,embed=embed,view=None)
             await self.ms.randam_mission_select(str(interaction.user.id), self.title)
             mission_lists = await self.ms.get_mission_selectmode_list(str(interaction.user.id), self.title)
