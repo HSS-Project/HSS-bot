@@ -277,10 +277,20 @@ class MemorizationQuestionSelect(discord.ui.Select):
             title = self.values[0]
             lists = await self.ms.get_mission(str(interaction.user.id), title)
             if not lists:return await interaction.response.send_message("エラー: データが見つかりませんでした。", ephemeral=True)
-            await interaction.response.defer(thinking=True)
             sheet = await self.ms.memorization_sheet(str(interaction.user.id), title)
-            await interaction.followup.send(content=sheet)
-            
+            await interaction.response.send_message(content=sheet,view=MemorizationReStart(title,self.ms))
+
+class MemorizationReStart(discord.ui.View):
+    def __init__(self,title:str,ms:MS):
+        self.title = title
+        self.ms = ms
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="同期", style=discord.ButtonStyle.primary)
+    async def callback(self, interaction: discord.Interaction, _: discord.ui.Button):
+        sheet = await self.ms.memorization_sheet(str(interaction.user.id), self.title)
+        await interaction.response.edit_message(content=sheet, view=MemorizationReStart(self.title,self.ms))
+        
 class MemorizationPlayMain:
     """
     Represents a class for playing the memorization game.
@@ -323,13 +333,14 @@ class MemorizationPlayMain:
                     #anwerがリストの場合
                     anwer_text = ""
                     if isinstance(anwer,list):
+                        #リストの場合 for i,anwer in enumerate(anwer)で回す
                         for i,anwer in enumerate(anwer):
                             anwer_text += f"{chr(9312 + i)}:{anwer} "
                     else:
                         anwer_text = anwer
                     embed.add_field(name=f"問題: {question}",value=f"解答: {anwer_text}",inline=False)
             else:
-                embed.add_field(name="不正解問題が多すぎるため表示できません。",value="",inline=False)          
+                embed.add_field(name="不正解問題が多すぎるため表示できません。",value="",inline=False)    
             await interaction.response.edit_message(content=None,embed=embed,view=None)
             await self.ms.randam_mission_select(str(interaction.user.id), self.title)
             mission_lists = await self.ms.get_mission_selectmode_list(str(interaction.user.id), self.title)
