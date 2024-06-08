@@ -278,19 +278,19 @@ class MemorizationQuestionSelect(discord.ui.Select):
             lists = await self.ms.get_mission(str(interaction.user.id), title)
             if not lists:return await interaction.response.send_message("エラー: データが見つかりませんでした。", ephemeral=True)
             sheet = await self.ms.memorization_sheet(str(interaction.user.id), title)
-            await interaction.response.send_message(content=sheet,view=MemorizationReStart(title,self.ms,str((interaction.user.id))))
+            await interaction.response.send_message(content=sheet,view=MemorizationReStart(title,self.ms))
 
 class MemorizationReStart(discord.ui.View):
-    def __init__(self,title:str,ms:MS,id:str):
+    def __init__(self,title:str,ms:MS):
         self.title = title
         self.ms = ms
-        self.id:str = id
         super().__init__(timeout=None)
 
     @discord.ui.button(label="同期", style=discord.ButtonStyle.primary)
     async def callback(self, interaction: discord.Interaction, _: discord.ui.Button):
-        sheet = await self.ms.memorization_sheet(str(self.id), self.title)
-        await interaction.response.edit_message(content=sheet, view=MemorizationReStart(self.title,self.ms,str(self.id)))
+        sheet = await self.ms.memorization_sheet(str(interaction.user.id), self.title)
+        if not sheet:return await interaction.response.send_message("エラー: データが見つかりませんでした。", ephemeral=True)
+        await interaction.response.edit_message(content=sheet, view=MemorizationReStart(self.title,self.ms))
         
 class MemorizationPlayMain:
     """
