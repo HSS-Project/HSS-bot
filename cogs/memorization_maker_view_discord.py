@@ -290,7 +290,7 @@ class MemorizationReStart(discord.ui.View):
     @discord.ui.button(label="同期", style=discord.ButtonStyle.primary)
     async def callback(self, interaction: discord.Interaction, _: discord.ui.Button):
         sheet = await self.ms.memorization_sheet(str(self.id), self.title)
-        await interaction.response.edit_message(content=sheet, view=MemorizationReStart(self.title,self.ms))
+        await interaction.response.edit_message(content=sheet, view=MemorizationReStart(self.title,self.ms,self.id))
         
 class MemorizationPlayMain:
     """
