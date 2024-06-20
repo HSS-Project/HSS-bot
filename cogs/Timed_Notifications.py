@@ -352,46 +352,43 @@ class Timed_Notifications(commands.Cog):
         
     @tasks.loop(seconds=60)
     async def send(self):
-        try:
-            now = datetime.datetime.now()
-            listsweekdays = ["mon","tue","wed","thu","fri","sat","sun"]
-            for data in await self.Timed_NotificationsAdd.get():
-                time = datetime.datetime.strptime(data["time"], "%H:%M")
-                if time.hour == now.hour and time.minute == now.minute:
-                    school = School(token=token, schoolid=data["school_id"])
-                    grade:int = int(data["grade"])
-                    class_:int = int(data["class"])
-                    index = school.search_class(grade=grade, classname=class_)
-                    if now.weekday() == 6:
-                        weekday = listsweekdays[0]
+        now = datetime.datetime.now()
+        listsweekdays = ["mon","tue","wed","thu","fri","sat","sun"]
+        for data in await self.Timed_NotificationsAdd.get():
+            time = datetime.datetime.strptime(data["time"], "%H:%M")
+            if time.hour == now.hour and time.minute == now.minute:
+                school = School(token=token, schoolid=data["school_id"])
+                grade:int = int(data["grade"])
+                class_:int = int(data["class"])
+                index = school.search_class(grade=grade, classname=class_)
+                if now.weekday() == 6:
+                    weekday = listsweekdays[0]
+                else:
+                    weekday = listsweekdays[now.weekday()+1]
+                timeline = school.get_timeline(index, weekday)
+                default_timeline = school.get_default_timeline(index, weekday)
+                homework = school.get_homework(index)
+                if timeline == []:
+                    timeline = default_timeline
+                embed = discord.Embed(title=f"{school.get_data()['details']['name']} {data['grade']}年{data['class']}組", description=f"{weekday} 明日の日程です", color=0x00ff00)
+                print(timeline)
+                for i in range(len(timeline)):
+                    if timeline[i]['place'] == "初期値":
+                        place = "未設定"
                     else:
-                        weekday = listsweekdays[now.weekday()+1]
-                    timeline = school.get_timeline(index, weekday)
-                    default_timeline = school.get_default_timeline(index, weekday)
-                    homework = school.get_homework(index)
-                    if timeline == []:
-                        timeline = default_timeline
-                    embed = discord.Embed(title=f"{school.get_data()['details']['name']} {data['grade']}年{data['class']}組", description=f"{weekday} 明日の日程です", color=0x00ff00)
-                    for i in enumerate(timeline):
-                        if timeline[i]['place'] == "初期値":
-                            place = "未設定"
-                        else:
-                            place = timeline[i]['place']
-                        embed.add_field(name=f"{i+1}時間目:{timeline[i]['name']}",value=place,inline=False)
-                    embed.add_field(name="〜〜宿題〜〜",value="",inline=False)
-                    for i in enumerate(homework):
-                        embed.add_field(name=f"ーーー{homework[i]['name']}ーーーー",value="",inline=False)
-                        embed.add_field(name="時間かかるか",value="はい" if homework[i]['istooBig'] == True else "いいえ",inline=False)
-                        embed.add_field(name="ページ",value=f"{homework[i]['page']['start']}〜{homework[i]['page']['end']}",inline=False)
-                        embed.add_field(name="コメント",value=homework[i]['page']['comment'],inline=False)
-                    try:
-                        async with aiohttp.ClientSession() as session:
-                            webhook = discord.Webhook.from_url(data["webhook_url"], session=session)
-                            await webhook.send(embed=embed)
-                    except Exception as e:
-                        print("送信失敗",data,e)
-        except Exception as e:
-            print(e)
-                
+                        place = timeline[i]['place']
+                    embed.add_field(name=f"{i+1}時間目:{timeline[i]['name']}",value=place,inline=False)
+                embed.add_field(name="〜〜宿題〜〜",value="",inline=False)
+                for i in enumerate(homework):
+                    embed.add_field(name=f"ーーー{homework[i]['name']}ーーーー",value="",inline=False)
+                    embed.add_field(name="時間かかるか",value="はい" if homework[i]['istooBig'] == True else "いいえ",inline=False)
+                    embed.add_field(name="ページ",value=f"{homework[i]['page']['start']}〜{homework[i]['page']['end']}",inline=False)
+                    embed.add_field(name="コメント",value=homework[i]['page']['comment'],inline=False)
+                try:
+                    async with aiohttp.ClientSession() as session:
+                        webhook = discord.Webhook.from_url(data["webhook_url"], session=session)
+                        await webhook.send(embed=embed)
+                except Exception as e:
+                    print("送信失敗",data,e)
 async def setup(bot: commands.Bot):
     await bot.add_cog(Timed_Notifications(bot))
