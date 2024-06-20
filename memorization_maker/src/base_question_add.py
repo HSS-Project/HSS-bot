@@ -34,14 +34,14 @@ class Add:
         num_id = str(user_id)
         sharecode = str(_sharecode)
         self.base_data:dict = await self.rw.load_base()
-        self.base_data["memorization"][num_id].setdefault(sharecode, {"title":f"{title}_{sharecode}","questions": [], "onwer":[num_id]})
+        self.base_data["memorization"].setdefault(sharecode, {"title":f"{title}_{sharecode}","questions": [], "onwer":[num_id]})
         return self.base_data        
 
     async def add_misson(self, _id:str,title,_sharecode,quetion:str,answer:str):
         user_id = str(_id)
         sharecode = str(_sharecode)
         self.base_data:dict = await self.init_add(user_id,title,sharecode)
-        if not await self.owner.ower_check(user_id,title):return False
+        if not await self.owner.owner_check(user_id,title):return False
         self.base_data["memorization"][sharecode]["questions"].append({"question":quetion,"answer":answer,"mode":0})
         await self.rw.write_base(self.base_data)
         
@@ -49,7 +49,7 @@ class Add:
         user_id = str(_id)
         sharecode = str(_sharecode)
         self.base_data:dict = await self.init_add(user_id,title,sharecode)
-        if not await self.owner.ower_check(user_id,title):return False
+        if not await self.owner.owner_check(user_id,title):return False
         select.append(answer)
         select = random.sample(select, len(select))
         self.base_data["memorization"][sharecode]["questions"].append({"question":quetion,"answer":select.index(answer)+1,"mode":1,"select":select})
@@ -80,7 +80,7 @@ class Add:
         user_id = str(_id)
         sharecode = str(_sharecode)
         self.base_data:dict = await self.init_add(user_id,title,sharecode)
-        if not await self.owner.ower_check(user_id,title):return False
+        if not await self.owner.owner_check(user_id,title):return False
         text, answers = await self.replace_parentheses(text)
         if text is False or answers is False:return False
         self.base_data["memorization"][sharecode]["questions"].append({"question":text,"answer":answers, "mode":2})
@@ -89,7 +89,7 @@ class Add:
     async def add_misson_in_Excel(self,user_id:str,title,_sharecode,text:str,excelfile:openpyxl.Workbook):
         sharecode = str(_sharecode)
         self.base_data:dict = await self.init_add(user_id,title,sharecode)
-        if not await self.owner.ower_check(user_id,title):return False
+        if not await self.owner.owner_check(user_id,title):return False
         sheet = excelfile.active
         row_count = sum(1 for _ in sheet.iter_rows(min_col=1,values_only=True))
         if row_count > 4:return False

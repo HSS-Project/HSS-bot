@@ -13,7 +13,7 @@ class Edit:
         user_id = str(_id)
         self.base_data:dict = await self.rw.load_base()
         sharecode = await self.share.get_sharecode(user_id,title)
-        if not await self.owner.ower_check(user_id,title):return False
+        if not await self.owner.owner_check(user_id,title):return False
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["question"] = quetion
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["answer"] = answer
         await self.rw.write_base(self.base_data)
@@ -22,7 +22,7 @@ class Edit:
     async def edit_misson_select(self,_id:str,title:str,quetion:str,answer:str,select:list,select_len_number:int):
         user_id = str(_id)
         self.base_data:dict = await self.rw.load_base()
-        if not await self.owner.ower_check(user_id,title):return False
+        if not await self.owner.owner_check(user_id,title):return False
         sharecode = await self.share.get_sharecode(user_id,title)
         select.append(answer)
         select = random.sample(select, len(select))

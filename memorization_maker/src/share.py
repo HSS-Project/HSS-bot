@@ -22,7 +22,7 @@ class Share:
         
     async def get_sharecode(self,user_id:str,title:str):
         self.base_data:dict = await self.rw.load_base()
-        if not await self.owner.ower_check(user_id,title):return False
+        if not await self.owner.owner_check(user_id,title):return False
         for sharecode in self.base_data["memorization"]:
             if self.base_data["memorization"][sharecode]["title"] == title:
                 return sharecode

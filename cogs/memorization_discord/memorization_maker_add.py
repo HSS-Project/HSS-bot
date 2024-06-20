@@ -194,36 +194,81 @@ class MemorizationMakeGenre(discord.ui.Modal, title="ジャンル作成"):
         embed = discord.Embed(title="問題追加", color=0x00ff00)
         await interaction.response.edit_message(embed=embed,view=MemorizationControlView(str(interaction.user.id),genre))
 
+class OwnerAddModal(discord.ui.Modal, title="オーナー追加"):
+    def __init__(self, title):
+        self.title = title
+        self.owner_input = discord.ui.TextInput(label="discord idを入力してください", style=discord.TextStyle.short)
+        super().__init__()
+        self.add_item(self.owner_input)
+    async def on_submit(self, interaction: discord.Interaction):
+        owner = OwnerManager()
+        await owner.owner_add(str(interaction.user.id),self.title,str(self.owner_input.value))
+        embed = discord.Embed(title="問題追加", color=0x00ff00)
+        await interaction.response.edit_message(embed=embed,view=MemorizationControlView(self.title))
+
+class OwnerDeleteSelect(discord.ui.Select, title="オーナー削除"):
+    def __init__(self, intraction:discord.Interaction,title,owners:list,usernames:list):
+        self.title = title
+        self.get = Get()
+        self.options = []
+        for owner in owners:
+            if owner != str(intraction.user.id):
+                self.options.append(discord.SelectOption(label=usernames,value=owner))
+        super().__init__(placeholder="オーナーを選択してください", options=self.options, row=1, min_values=1, max_values=1)
+    async def callback(self, interaction: discord.Interaction):
+        owner = OwnerManager()
+        await owner.owmer_remove(str(interaction.user.id),self.title,self.values[0])
+        embed = discord.Embed(title="問題追加", color=0x00ff00)
+        await interaction.response.edit_message(embed=embed,view=MemorizationControlView(self.title))
+        
 class MemorizationControlView(discord.ui.View):
     def __init__(self,title,genres:list):
+        self.bot = discord.Client()
         super().__init__()
         self.title = title
         self.view = discord.ui.View()
         self.share = Share()
         self.add_item(SelectGenre(genres,0))
 
-    @discord.ui.button(label="問題を追加", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="問題追加", style=discord.ButtonStyle.green)
     async def add(self, interaction: discord.Interaction, _: discord.ui.Button):
         await interaction.response.send_modal(MemorizationAddModal(self.title))
         
-    @discord.ui.button(label="選択問題を追加", style=discord.ButtonStyle.green)
+    @discord.ui.button(label="選択問題追加", style=discord.ButtonStyle.green)
     async def select_add(self, interaction: discord.Interaction, _:discord.ui.Button):
         await interaction.response.send_modal(TitleSetModal(self.title))
 
-    @discord.ui.button(label="文章問題を追加", style=discord.ButtonStyle.green)
+    @discord.ui.button(label="文章問題追加", style=discord.ButtonStyle.green)
     async def text_add(self, interaction: discord.Interaction, _:discord.ui.Button):
         await interaction.response.send_modal(MemorizationAddTextModal(self.title))
 
-    @discord.ui.button(label="問題を削除", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="問題削除", style=discord.ButtonStyle.red)
     async def delete(self, interaction: discord.Interaction, _:discord.ui.Button):
         data = await self.share.get_sharedata(str(interaction.user.id),self.title)        
         missions = data["questions"]
         embed = discord.Embed(title="問題削除", color=0x00ff00)
         await interaction.response.send_message(embed=embed,view=SelectMissionView(missions))
 
-    @discord.ui.button(label="ジャンル作成", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="ジャンル作成", style=discord.ButtonStyle.blurple)
     async def genre(self, interaction: discord.Interaction, _:discord.ui.Button):
         await interaction.response.send_modal(MemorizationMakeGenre())
+
+    @discord.ui.button(label="オーナー追加", style=discord.ButtonStyle.red)
+    async def owner(self, interaction: discord.Interaction, _:discord.ui.Button):
+        await interaction.response.send_modal(OwnerAddModal(self.title))
+        
+    @discord.ui.button(label="オーナー削除", style=discord.ButtonStyle.red)
+    async def owner_delete(self, interaction: discord.Interaction, _:discord.ui.Button):
+        onewr = OwnerManager()
+        owners = await onewr.owner_list(str(interaction.user.id),self.title)
+        view = discord.ui.View()
+        username = []
+        for owner in owners:
+            user = await self.bot.fetch_user(owner)
+            username.append(user.name)
+        view.add_item(OwnerDeleteSelect(interaction,self.title,owners,username))
+        embed = discord.Embed(title="削除するユーザーを選択してください", color=0x00ff00)
+        await interaction.response.send_message(embeds=embed,view=view)
 
     @discord.ui.button(label="終了", style=discord.ButtonStyle.red)
     async def close(self, interaction: discord.Interaction, _:discord.ui.Button):

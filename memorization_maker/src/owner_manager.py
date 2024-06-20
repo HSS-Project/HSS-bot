@@ -7,7 +7,7 @@ class OwnerManager:
         self.share = share.Share()
         self.base_data:dict = {"memorization":{}}
         
-    async def ower_check(self, user_id:str,title:str):
+    async def owner_check(self, user_id:str,title:str):
         num_id = str(user_id)
         self.base_data:dict = await self.rw.load_base()
         sharecode = await self.share.get_sharecode(user_id,title)
@@ -19,9 +19,9 @@ class OwnerManager:
         else:
             return False
         
-    async def ower_add(self,user_id:str,title:str,_target_id:str):
+    async def owner_add(self,user_id:str,title:str,_target_id:str):
         num_id = str(user_id)
-        if not await self.ower_check(num_id,title):return False
+        if not await self.owner_check(num_id,title):return False
         target_id = str(_target_id)
         self.base_data:dict = await self.rw.load_base()
         sharecode = await self.share.get_sharecode(user_id,title)
@@ -29,12 +29,19 @@ class OwnerManager:
         await self.rw.write_base(self.base_data)
         return True
     
-    async def ower_remove(self,user_id:str,title:str,_target_id:str):
+    async def owmer_remove(self,user_id:str,title:str,_target_id:str):
         num_id = str(user_id)
-        if not await self.ower_check(num_id,title):return False
+        if not await self.owner_check(num_id,title):return False
         target_id = str(_target_id)
         self.base_data:dict = await self.rw.load_base()
         sharecode = await self.share.get_sharecode(user_id,title)
         self.base_data["memorization"][sharecode]["onwer"].remove(target_id)
         await self.rw.write_base(self.base_data)
         return True
+    
+    async def owner_list(self,user_id:str,title:str):
+        num_id = str(user_id)
+        if not await self.owner_check(num_id,title):return False
+        self.base_data:dict = await self.rw.load_base()
+        sharecode = await self.share.get_sharecode(user_id,title)
+        return self.base_data["memorization"][sharecode]["onwer"]
