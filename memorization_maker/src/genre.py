@@ -10,7 +10,7 @@ class Genre:
         self.base_data:dict = {"memorization":{}}
         self.user_data:dict = {}
         
-    async def make_genre(self,user_id:str,genre_title,title:str):
+    async def make_genre(self,user_id:str,genre_title):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
         if not await self.owner.ower_check(num_id,genre_title):return False
@@ -44,10 +44,31 @@ class Genre:
         self.user_data["genre"][num_id][genre_title]["sharecodes"].remove(sharecode)
         await self.rw.write_user(self.user_data)
     
-    async def get_genres(self,user_id:str):
+    async def move_genre(self,user_id:str,genre_title:str,sharecode:int):
+        num_id = str(user_id)
+        self.user_data:dict = await self.rw.load_user()
+        if not await self.owner.ower_check(num_id,genre_title):return False
+        if genre_title not in self.user_data["genre"][num_id].keys():return False
+        self.user_data["genre"][num_id][genre_title]["sharecodes"].remove(sharecode)
+        self.user_data["genre"][num_id]["defult"]["sharecodes"].append(sharecode)
+        await self.rw.write_user(self.user_data)
+    
+    async def get_genres_name(self,user_id:str):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
         gnres_list = []
         for genre in self.user_data["genre"][num_id].keys():
             gnres_list.append(genre)
         return gnres_list
+    
+    async def get_genres_list_sharecodes(self,user_id:str,genre_title:str):
+        num_id = str(user_id)
+        self.user_data:dict = await self.rw.load_user()
+        if genre_title not in self.user_data["genre"][num_id].keys():return False
+        return self.user_data["genre"][num_id][genre_title]["sharecodes"]
+    
+    async def get_genres_sharecode(self,user_id:str,genre_title:str):
+        num_id = str(user_id)
+        self.user_data:dict = await self.rw.load_user()
+        if genre_title not in self.user_data["genre"][num_id].keys():return False
+        return self.user_data["genre"][num_id][genre_title]["share"]
