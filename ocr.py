@@ -11,11 +11,15 @@ tool = tools[0]
 builder = pyocr.builders.TextBuilder(tesseract_layout=6)
 
 #解析画像読み込み(雨ニモマケズ)
-img = Image.open('image.png') #他の拡張子でもOK
+img = Image.open('image copy.png') #他の拡張子でもOK
 
 img_g = img.convert('L') #Gray変換
+#黒白にする
+img_g = img_g.point(lambda x: 0 if x < 128 else 255) #2値化
 enhancer= ImageEnhance.Contrast(img_g) #コントラストを上げる
-img_con = enhancer.enhance(2.0) #コントラストを上げる
+img_con = enhancer.enhance(20000000.0) #コントラストを上げる
+img_con.save('image_con.jpg') #保存
+img_con.show() #表示
 
 #画像からOCRで日本語を読んで、文字列として取り出す
 #言語は日本語(jpn)、ビルダーはテキスト
@@ -32,10 +36,10 @@ txt_pyocr_japanese_vert = txt_pyocr_japanese_vert.replace(' ', '')
 
 
 print(txt_pyocr)
-print("\n\n")
+print("---\n\n")
 print(txt_pyocr_vert)
-print("\n\n")
+print("---\n\n")
 print(txt_pyocr_japanese)
-print("\n\n")
+print("---\n\n")
 print(txt_pyocr_japanese_vert)
 

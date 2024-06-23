@@ -90,3 +90,6 @@ class SelectMiView:
     async def select_response(self):
         if self.mode == 0:
             await Delete().delete_misson_select(str(self.intracton.user.id),self.title,self.selectnumber)
+        if self.mode == 1:
+            # await Edit().edit_misson_select(str(self.intracton.user.id),self.title,self.selectnumber)
+            pass

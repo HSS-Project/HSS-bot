@@ -23,9 +23,7 @@ class Edit:
         user_id = str(_id)
         self.base_data:dict = await self.rw.load_base()
         if not await self.owner.owner_check(user_id,title):return False
-        sharecode = await self.share.get_sharecode(user_id,title)
-        select.append(answer)
-        select = random.sample(select, len(select))
+        sharecode = await self.share.get_sharecode(user_id,title)        
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["question"] = quetion
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["answer"] = select.index(answer)+1
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["select"] = select
