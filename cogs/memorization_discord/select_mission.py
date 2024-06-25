@@ -1,6 +1,7 @@
 import discord 
 from discord import ui
 from memorization_maker.inc.pakege import Add, Get, OwnerManager, Edit, Delete, Share, Genre
+from memorization_maker_edit import EditModeSelect
 
 class SelectMission_1(discord.ui.Select):
     def __init__(self,title,missions: list,mode):
@@ -12,7 +13,7 @@ class SelectMission_1(discord.ui.Select):
             options.append(discord.SelectOption(label=mission, value=str(num)))
         super().__init__(placeholder="問題を選択してください", options=options, row=1, min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
-        await SelectMiView(interaction,self.title,int(self.values[0]),self.mode).select_response()
+        await SelectView(interaction,self.title,int(self.values[0]),self.mode).select_response()
             
 class SelectMission_2(discord.ui.Select):
     def __init__(self,title,missions: list,mode):
@@ -24,7 +25,7 @@ class SelectMission_2(discord.ui.Select):
             options.append(discord.SelectOption(label=mission, value=str(num)))
         super().__init__(placeholder="問題を選択してください", options=options, row=1, min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
-        await SelectMiView(interaction,self.title,int(self.values[0]),self.mode).select_response()
+        await SelectView(interaction,self.title,int(self.values[0]),self.mode).select_response()
     
 class SelectMission_3(discord.ui.Select):
     def __init__(self,title,missions: list,mode):
@@ -36,7 +37,7 @@ class SelectMission_3(discord.ui.Select):
             options.append(discord.SelectOption(label=mission, value=str(num)))
         super().__init__(placeholder="問題を選択してください", options=options, row=1, min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
-        await SelectMiView(interaction,self.title,int(self.values[0]),self.mode).select_response()
+        await SelectView(interaction,self.title,int(self.values[0]),self.mode).select_response()
     
 class SelectMission_4(discord.ui.Select):
     def __init__(self,title,missions: list,mode):
@@ -48,7 +49,7 @@ class SelectMission_4(discord.ui.Select):
             options.append(discord.SelectOption(label=mission, value=str(num)))
         super().__init__(placeholder="問題を選択してください", options=options, row=1, min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
-        await SelectMiView(interaction,self.title,int(self.values[0]),self.mode).select_response()
+        await SelectView(interaction,self.title,int(self.values[0]),self.mode).select_response()
     
 class SelectMissionView(discord.ui.View):
     def __init__(self,title,missions:list,mode):
@@ -80,16 +81,17 @@ class SelectMissionView(discord.ui.View):
         if missions_len > 75:
             self.add_item(SelectMission_4(self.title,self.options_4,self.mode))
                 
-class SelectMiView:
-    def __init__(self,intracton:discord.Interaction,title,selectnumber,mode):
-        self.intracton = intracton
+class SelectView:
+    def __init__(self,interaction:discord.Interaction,title,selectnumber,mode):
+        self.interaction:discord.Interaction = interaction
         self.title = title
         self.selectnumber = selectnumber
         self.mode = mode
         
     async def select_response(self):
         if self.mode == 0:
-            await Delete().delete_misson_select(str(self.intracton.user.id),self.title,self.selectnumber)
+            await Delete().delete_misson_select(str(self.interaction.user.id),self.title,self.selectnumber)
         if self.mode == 1:
-            # await Edit().edit_misson_select(str(self.intracton.user.id),self.title,self.selectnumber)
-            pass
+            datas = await Get().get_misson(str(self.interaction.user.id),self.title)
+            missonmode = datas["questions"][self.selectnumber]["mode"]
+            await self.interaction.response.send_message("編集モードを選択してください", view=EditModeSelect(self.title,self.selectnumber,missonmode))

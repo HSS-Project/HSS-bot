@@ -254,13 +254,12 @@ class MemorizationControlView(discord.ui.View):
         data = await self.share.get_sharedata(str(interaction.user.id),self.title)        
         missions = data["questions"]
         embed = discord.Embed(title="問題削除", color=0x00ff00)
-        await interaction.response.send_message(embed=embed,view=SelectMissionView(missions))
+        await interaction.response.send_message(embed=embed,view=SelectMissionView(self.title,missions,0))
 
     @discord.ui.button(label="ジャンル作成", style=discord.ButtonStyle.blurple)
     async def genre(self, interaction: discord.Interaction, _:discord.ui.Button):
         await interaction.response.send_modal(MemorizationMakeGenre())
         
-
     @discord.ui.button(label="オーナー追加", style=discord.ButtonStyle.red)
     async def owner(self, interaction: discord.Interaction, _:discord.ui.Button):
         await interaction.response.send_modal(OwnerAddModal(self.title))
