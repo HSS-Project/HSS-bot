@@ -11,7 +11,7 @@ tool = tools[0]
 builder = pyocr.builders.TextBuilder(tesseract_layout=6)
 
 #解析画像読み込み(雨ニモマケズ)
-img = Image.open('image copy.png') #他の拡張子でもOK
+img = Image.open('image.png') #他の拡張子でもOK
 
 img_g = img.convert('L') #Gray変換
 #黒白にする

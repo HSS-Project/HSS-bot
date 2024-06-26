@@ -38,10 +38,11 @@ class User:
         self.user_data = await self.rw.load_user()
         missondata = await self.share.get_sharedata(sharecode)
         #listを1 2 3 ・・・と番号を振る
-        questions_number_list = [i for i in range(len(missondata["questions"]))]
+        questions_number_list:list = [i for i in range(len(missondata["questions"]))]
+        #listをシャッフル
+        random.shuffle(questions_number_list)
         self.user_data[num_id].setdefault(sharecode,{
             "title":missondata["title"],
-            "randam":False,
             "questions_number_list":questions_number_list,
             "miss_numbers":[],
             "try_number":0,
@@ -50,20 +51,20 @@ class User:
         await self.rw.write_user(self.user_data)
         return True
     
-    async def randam_Trerue(self,user_id,sharecode):
+    async def get_mission(self,user_id:str,sharecode:str):
         num_id = str(user_id)
         self.user_data = await self.rw.load_user()
-        self.user_data[num_id][sharecode]["randam"] = True
+        return self.user_data[num_id][sharecode]
+    
+    async def user_data_shuffle(self,user_id:str,sharecode:str):
+        num_id = str(user_id)
+        self.user_data = await self.rw.load_user()
+        questions_number_list:list = self.user_data[num_id][sharecode]["questions_number_list"]
+        random.shuffle(questions_number_list)
+        self.user_data[num_id][sharecode]["questions_number_list"] = questions_number_list
         await self.rw.write_user(self.user_data)
         return True
     
-    async def randam_False(self,user_id,sharecode):
-        num_id = str(user_id)
-        self.user_data = await self.rw.load_user()
-        self.user_data[num_id][sharecode]["randam"] = False
-        await self.rw.write_user(self.user_data)
-        return True
-
     async def get_user_data(self,user_id):
         num_id = str(user_id)
         self.user_data = await self.rw.load_user()

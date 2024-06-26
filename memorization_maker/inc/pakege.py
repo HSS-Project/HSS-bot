@@ -7,3 +7,4 @@ from memorization_maker.src.base_question_edit import Edit
 from memorization_maker.src.base_question_delete import Delete
 from memorization_maker.src.share import Share
 from memorization_maker.src.genre import Genre
+from memorization_maker.src.user_setting import User
