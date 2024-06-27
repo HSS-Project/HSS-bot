@@ -1,9 +1,8 @@
 import discord
 from memorization_maker.inc.pakege import Add, Get, OwnerManager, Share, Genre
 import random
-from select_mission import SelectMissionView
-from memorization_discord.select_title import SelectGenre
-
+import memorization_discord.select_mission as select_mission
+import memorization_discord.select_title as select_title
 class TitleModal(discord.ui.Modal,title="タイトル追加"):
     def __init__(self):
         self.title_input = discord.ui.TextInput(label="タイトル", style=discord.TextStyle.short)
@@ -216,7 +215,7 @@ class OwnerAddModal(discord.ui.Modal, title="オーナー追加"):
         genre_list = await self.genre.get_genres_name(str(interaction.user.id))
         await interaction.response.edit_message(embed=embed,view=MemorizationControlView(self.title,genre_list))
 
-class OwnerDeleteSelect(discord.ui.Select, title="オーナー削除"):
+class OwnerDeleteSelect(discord.ui.Select):
     def __init__(self, intraction:discord.Interaction,title,owners:list,usernames:list):
         self.title = title
         self.get = Get()
@@ -240,7 +239,9 @@ class MemorizationControlView(discord.ui.View):
         self.title = title
         self.view = discord.ui.View()
         self.share = Share()
-        self.add_item(SelectGenre(genres,0))
+        self.select_mission = select_mission
+        self.select_title = select_title
+        self.add_item(self.select_title.SelectGenre(genres,0))
 
     @discord.ui.button(label="問題追加", style=discord.ButtonStyle.green)
     async def add(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -259,14 +260,14 @@ class MemorizationControlView(discord.ui.View):
         data = await self.share.get_sharedata(str(interaction.user.id),self.title)
         missions = data["questions"]
         embed = discord.Embed(title="問題編集", color=0x00ff00)
-        await interaction.response.send_message(embed=embed,view=SelectMissionView(self.title,missions,1))
+        await interaction.response.send_message(embed=embed,view=self.select_mission.SelectMissionView(self.title,missions,1))
 
     @discord.ui.button(label="問題削除", style=discord.ButtonStyle.red)
     async def delete(self, interaction: discord.Interaction, _:discord.ui.Button):
         data = await self.share.get_sharedata(str(interaction.user.id),self.title)        
         missions = data["questions"]
         embed = discord.Embed(title="問題削除", color=0x00ff00)
-        await interaction.response.send_message(embed=embed,view=SelectMissionView(self.title,missions,0))
+        await interaction.response.send_message(embed=embed,view=self.select_mission.SelectMissionView(self.title,missions,0))
 
     @discord.ui.button(label="ジャンル作成", style=discord.ButtonStyle.blurple)
     async def genre(self, interaction: discord.Interaction, _:discord.ui.Button):

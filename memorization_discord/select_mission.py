@@ -1,6 +1,6 @@
 import discord 
 from memorization_maker.inc.pakege import Get,Delete
-from memorization_maker_edit import EditModeSelect
+from memorization_discord.memorization_maker_edit import EditModeSelect
 
 class SelectMission_1(discord.ui.Select):
     def __init__(self,title,missions: list,mode):

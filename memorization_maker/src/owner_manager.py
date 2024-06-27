@@ -1,5 +1,5 @@
-import Read_and_Write
-import share
+import memorization_maker.src.Read_and_Write as Read_and_Write
+import memorization_maker.src.share as share
 
 class OwnerManager:
     def __init__(self):
@@ -18,6 +18,7 @@ class OwnerManager:
                 return False
         else:
             return False
+        return False
         
     async def owner_add(self,user_id:str,title:str,_target_id:str):
         num_id = str(user_id)

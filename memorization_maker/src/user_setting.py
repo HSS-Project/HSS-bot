@@ -1,7 +1,7 @@
-import owner_manager
+import memorization_maker.src.owner_manager as owner_manager
 import random
-import Read_and_Write
-import share
+import memorization_maker.src.Read_and_Write as Read_and_Write
+import memorization_maker.src.share as share
 
 class User:
     def __init__(self):

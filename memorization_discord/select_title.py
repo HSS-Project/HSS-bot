@@ -1,7 +1,7 @@
 import discord
 from memorization_maker.inc.pakege import Get,Genre,Share,Delete
-from memorization_maker_add import MemorizationControlView
-from memorization_maker_play import ChoicePlayMode
+import memorization_discord.memorization_maker_add as maker_add
+import memorization_discord.memorization_maker_play as maker_play
 
 class SelectGenre(discord.ui.Select):
     def __init__(self, genres: list, mode:int,classmodes:int=0):
@@ -108,11 +108,11 @@ class SelectTitleResponse:
     async def select_response(self):
         if self.modes == 0:
             embed = discord.Embed(title="問題編集",color=0x00ff00)
-            await self.intraction.response.edit_message(embed=embed,view=MemorizationControlView(self.title,await self.genre.get_genres_name(str(self.intraction.user.id))))
+            await self.intraction.response.edit_message(embed=embed,view=maker_add.MemorizationControlView(self.title,await self.genre.get_genres_name(str(self.intraction.user.id))))
         elif self.modes == 1:
             embed = discord.Embed(title="出題方式選択",color=0x00ff00)
             sharecode = await Share().get_sharecode(str(self.intraction.user.id),self.title)
-            await self.intraction.response.edit_message(embed=embed,view=ChoicePlayMode(sharecode))
+            await self.intraction.response.edit_message(embed=embed,view=maker_play.ChoicePlayMode(sharecode))
         elif self.modes == 2:
             sharecode = await Share().get_sharecode(str(self.intraction.user.id),self.title)
             genrename = await self.genre.search_genre(str(self.intraction.user.id),sharecode)

@@ -41,5 +41,5 @@ bot = MyBot(intents=discord.Intents.all(), prefix='k!')
 if __name__ == '__main__':
     with open("token.json", 'r', encoding='utf-8') as file:
         t = json.load(file)
-        TOKEN = t["TOKEN_2"]
+        TOKEN = t["TOKEN"]
     bot.run(token=TOKEN)

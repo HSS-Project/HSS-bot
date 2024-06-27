@@ -1,12 +1,12 @@
-import Read_and_Write
-import owner_manager
-import share
+import memorization_maker.src.Read_and_Write as Read_and_Write
+import memorization_maker.src.owner_manager as owner_manager
+from memorization_maker.src.share import Share
 from memorization_maker.src.genre import Genre
 class Delete:
     def __init__(self):
         self.rw = Read_and_Write.Read_and_Write()
         self.owner = owner_manager.OwnerManager()
-        self.share = share.Share()
+        self.share = Share()
         self.base_data:dict = {"memorization":{}}
         
     

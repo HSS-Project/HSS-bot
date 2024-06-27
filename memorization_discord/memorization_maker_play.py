@@ -264,7 +264,7 @@ class MemorizationPlay:
                                                              )
                                                          )
             
-class MemorizationMissView(discord.ui.view):
+class MemorizationMissView(discord.ui.View):
     def __init__(self,sharecode:list,miss_number_list:list,page:int = 0):
         self.sharecode = sharecode
         self.page = page
