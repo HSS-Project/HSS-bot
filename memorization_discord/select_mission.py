@@ -1,6 +1,5 @@
 import discord 
-from discord import ui
-from memorization_maker.inc.pakege import Add, Get, OwnerManager, Edit, Delete, Share, Genre
+from memorization_maker.inc.pakege import Get,Delete
 from memorization_maker_edit import EditModeSelect
 
 class SelectMission_1(discord.ui.Select):

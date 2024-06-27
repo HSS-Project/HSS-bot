@@ -1,5 +1,5 @@
 import discord
-from memorization_maker.inc.pakege import Get,Genre,Share,User
+from memorization_maker.inc.pakege import Get,Share,User
 
 class ChoicePlayMode(discord.ui.View):
     def __init__(self, sharecode:int):
@@ -194,7 +194,9 @@ class MemorizationPlay:
             if len(self.miss_list) > 0 and len(self.miss_list) < 20:
                 for miss_num in self.miss_list:
                     embed.add_field(name=f"{miss_num+1}問目:{self.question_list[miss_num]['question']}",value=self.question_list[miss_num]["anwer"],inline=False)
-            return await self.interaction.response.edit_message(embed=embed,view=None)
+                return await self.interaction.response.edit_message(embed=embed,view=None)
+            elif len(self.miss_list) >= 20:
+                return await self.interaction.response.edit_message(embed=embed,view=MemorizationMissView(self.sharecode,self.miss_list))
         embed = discord.Embed(title="問題",color=0x00ff00)
         question = self.question_list[self.counts]["question"]
         embed.add_field(name="問題",value=question,inline=False)
@@ -207,15 +209,45 @@ class MemorizationPlay:
             await self.interaction.response.send_message(embed=embed,view=MemorizationSelectAnswer(self.interaction,self.sharecode,self.playmode,self.question_list,self.score,self.miss_list,self.counts))
             
 class MemorizationMissView(discord.ui.view):
-    def __init__(self,sharecode:list,page):
+    def __init__(self,sharecode:list,miss_number_list:list,page:int = 0):
         self.sharecode = sharecode
         self.page = page
+        self.user = User()
+        self.gets = Get()
+        self.miss_number_list = miss_number_list
+        self.miss_list = []
+        #miss_number_listを20個ずつに分ける
+        for i in range(0, len(self.miss_number_list), 20):
+            self.miss_list.append(self.miss_number_list[i:i + 20])
         super().__init__()
         
-    @discord.ui.button(label="左", style=discord.ButtonStyle.primary)
+    async def page_show_embed(self):
+        embed = discord.Embed(title=f"間違った問題 : {self.page+1}ページ目",color=0x00ff00)
+        for num,miss_num in enumerate(self.miss_list[self.page]):
+            datas = await self.gets.get_misson(self.sharecode)
+            if datas["questions"][miss_num]["mode"] == 0:
+                embed.add_field(name=f"{num+1}問目",value=f"問題:{datas['questions'][miss_num]['question']}\n解答:{datas['questions'][miss_num]['answer']}",inline=False)
+            elif datas["questions"][miss_num]["mode"] == 1:
+                question = datas["questions"][miss_num]["question"]
+                anwer = datas['questions'][miss_num]['select'][datas['questions'][miss_num]['answer']]
+                select = datas['questions'][miss_num]['select']
+                embed.add_field(name=f"{num+1}問目",value=f"問題:{question}\n解答:{anwer}\n選択肢:{select}",inline=False)
+            elif datas["questions"][miss_num]["mode"] == 2:
+                answer = ""
+                for i,ans in enumerate(datas["questions"][miss_num]["answer"]):
+                    answer += f"{i+1}番目の解答:{ans}\n"
+                embed.add_field(name=f"{num+1}問目",value=f"問題:{datas['questions'][miss_num]['question']}\n{answer}",inline=False)
+        return embed
+
+    @discord.ui.button(label="左ページ", style=discord.ButtonStyle.primary)
     async def left(self, button: discord.ui.Button, interaction: discord.Interaction):
-        pass
-    
-    @discord.ui.button(label="右", style=discord.ButtonStyle.primary)
+        if not self.page == 0:
+            self.page -= 1
+        embed = await self.page_show_embed()
+        await interaction.response.edit_message(embed=embed,view=MemorizationMissView(self.sharecode,self.miss_number_list,self.page))
+    @discord.ui.button(label="右ページ", style=discord.ButtonStyle.primary)
     async def right(self, button: discord.ui.Button, interaction: discord.Interaction):
-        pass
+        if not self.page == len(self.miss_list) - 1:
+            self.page += 1
+        embed = await self.page_show_embed()
+        await interaction.response.edit_message(embed=embed,view=MemorizationMissView(self.sharecode,self.miss_number_list,self.page))

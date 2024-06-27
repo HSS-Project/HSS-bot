@@ -65,6 +65,11 @@ class User:
         await self.rw.write_user(self.user_data)
         return True
     
+    async def get_mission_number(self,user_id:str,sharecode:str):
+        num_id = str(user_id)
+        self.user_data = await self.rw.load_user()
+        return self.user_data[num_id][sharecode]["questions_number_list"]
+    
     async def user_data_miss(self,user_id:str,sharecode:str,miss_number_list:list):
         num_id = str(user_id)
         self.user_data = await self.rw.load_user()

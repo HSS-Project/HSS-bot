@@ -62,7 +62,7 @@ class Genre:
                 return genre
         return False
     
-    async def get_genres_name(self,user_id:str):
+    async def get_genres_name(self,user_id:str) -> list:
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
         gnres_list = []
@@ -81,3 +81,14 @@ class Genre:
         self.user_data:dict = await self.rw.load_user()
         if genre_title not in self.user_data["genre"][num_id].keys():return False
         return self.user_data["genre"][num_id][genre_title]["share"]
+    
+    async def genres_sharecode_title(self,user_id:str,sharecode:str):
+        num_id = str(user_id)
+        self.user_data:dict = await self.rw.load_user()
+        for genre in self.user_data["genre"][num_id].keys():
+            if sharecode == self.user_data["genre"][num_id][genre]["share"]:
+                return genre
+    
+    async def sharegenere(self,user_id:str,sharecode:int):
+        num_id = str(user_id)
+        self.user_data:dict = await self.rw.load_user()
