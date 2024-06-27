@@ -11,7 +11,7 @@ class MemorizationCog(commands.Cog):
         self.genres = Genre()
         self.get = Get()
     memorization = app_commands.Group(name="memorization", description="暗記メーカ")
-    
+
     @memorization.command(name="add", description="問題を追加します。")
     async def add(self, interaction:discord.Interaction):
         await interaction.response.send_modal(maker_add.TitleModal())

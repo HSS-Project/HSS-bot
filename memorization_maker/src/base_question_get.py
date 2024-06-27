@@ -8,7 +8,7 @@ class Get:
         self.owner = owner_manager.OwnerManager()
         self.share = share.Share()
         self.base_data:dict = {"memorization":{}}
-                               
+       
     async def get_titles(self,user_id:str):
         num_id = str(user_id)
         self.base_data:dict = await self.rw.load_base()
@@ -16,7 +16,7 @@ class Get:
         lists = []
         for title in self.base_data["memorization"].keys():
             if num_id in self.base_data["memorization"][title]["onwer"]:
-                lists.append(title)        
+                lists.append(title)
                 
         return lists
 

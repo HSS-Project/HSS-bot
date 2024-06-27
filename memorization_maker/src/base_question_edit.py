@@ -1,6 +1,5 @@
 import Read_and_Write
 import owner_manager
-import random
 import share
 import base_question_add
 class Edit:

@@ -58,7 +58,15 @@ class MemorizationAnswer(discord.ui.View):
         
     @discord.ui.button(label="回答する", style=discord.ButtonStyle.primary)
     async def answer(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await interaction.response.send_modal(MemorizationAnswerModal(self.sharecode,self.playmode,self.question_list,self.score,self.miss_list,self.counts))
+        await interaction.response.send_modal(MemorizationAnswerModal(
+            self.sharecode,
+            self.playmode,
+            self.question_list,
+            self.score,
+            self.miss_list,
+            self.counts
+            )
+                                              )
         
 class MemorizationAnswerModal(discord.ui.Modal,title="問題回答"):
     def __init__(self,sharecode:int,playmode:int,question_list:list,score:int,miss_list:list,counts):
@@ -111,7 +119,17 @@ class MemorizationAnswerModal(discord.ui.Modal,title="問題回答"):
                     self.miss_list.append(self.counts)
                 embed.add_field(name="あなたの解答",value=i.value,inline=False)
                 embed.add_field(name="結果",value=view_ch,inline=False)
-        await interaction.response.edit_message(embed=embed,view=Contenu(interaction,self.sharecode,self.playmode,self.question_list,self.score,self.miss_list,self.counts+1))
+        await interaction.response.edit_message(embed=embed,
+                                                view=Contenu(
+                                                    interaction,
+                                                    self.sharecode,
+                                                    self.playmode,
+                                                    self.question_list,
+                                                    self.score,
+                                                    self.miss_list,
+                                                    self.counts+1
+                                                    )
+                                                )
         
 class Contenu(discord.ui.View):
     def __init__(self, interaction:discord.Interaction,sharecode:int,playmode:int,question_list:list,score:int,miss_list:list,counts):
@@ -126,7 +144,15 @@ class Contenu(discord.ui.View):
         
     @discord.ui.button(label="次の問題", style=discord.ButtonStyle.primary)
     async def next(self, button: discord.ui.Button, interaction: discord.Interaction):
-        await MemorizationPlay(interaction,self.sharecode,self.playmode,self.question_list,self.score,self.miss_list,self.counts+1).main_start()
+        await MemorizationPlay(
+            interaction,
+            self.sharecode,
+            self.playmode,
+            self.question_list,
+            self.score,
+            self.miss_list,
+            self.counts+1
+            ).main_start()
 
 class MemorizationSelectAnswer(discord.ui.View):
     def __init__(self, interaction:discord.Interaction,sharecode:int,playmode:int,question_list:list,score:int,miss_list:list,counts:int=0):
@@ -156,7 +182,17 @@ class MemorizationSelectAnswer(discord.ui.View):
             view_ch = "不正解"
             self.miss_list.append(self.counts)
         embed.add_field(name="結果",value=view_ch,inline=False)
-        await self.interaction.response.edit_message(embed=embed,view=Contenu(self.interaction,self.sharecode,self.playmode,self.question_list,self.score,self.miss_list,self.counts+1))
+        await self.interaction.response.edit_message(embed=embed,
+                                                     view=Contenu(
+                                                         self.interaction,
+                                                         self.sharecode,
+                                                         self.playmode,
+                                                         self.question_list,
+                                                         self.score,
+                                                         self.miss_list,
+                                                         self.counts+1
+                                                         )
+                                                     )
     
     @discord.ui.button(label="選択肢①", style=discord.ButtonStyle.green)
     async def choice1(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -201,12 +237,32 @@ class MemorizationPlay:
         question = self.question_list[self.counts]["question"]
         embed.add_field(name="問題",value=question,inline=False)
         if self.question_list[self.counts]["mode"] == 0 or self.question_list[self.counts]["mode"] == 2:
-            await self.interaction.response.send_message(embed=embed,view=MemorizationAnswer(self.interaction,self.sharecode,self.playmode,self.question_list,self.score,self.miss_list,self.counts))
+            await self.interaction.response.send_message(embed=embed,
+                                                         view=MemorizationAnswer(
+                                                             self.interaction,
+                                                             self.sharecode,
+                                                             self.playmode,
+                                                             self.question_list,
+                                                             self.score,
+                                                             self.miss_list,
+                                                             self.counts
+                                                             )
+                                                         )
         elif self.question_list[self.counts]["mode"] == 1:
             select = self.question_list[self.counts]["select"]
             for num,selects in enumerate(select):
                 embed.add_field(name=f"選択肢{num+1}",value=selects,inline=False)
-            await self.interaction.response.send_message(embed=embed,view=MemorizationSelectAnswer(self.interaction,self.sharecode,self.playmode,self.question_list,self.score,self.miss_list,self.counts))
+            await self.interaction.response.send_message(embed=embed,
+                                                         view=MemorizationSelectAnswer(
+                                                             self.interaction,
+                                                             self.sharecode,
+                                                             self.playmode,
+                                                             self.question_list,
+                                                             self.score,
+                                                             self.miss_list,
+                                                             self.counts
+                                                             )
+                                                         )
             
 class MemorizationMissView(discord.ui.view):
     def __init__(self,sharecode:list,miss_number_list:list,page:int = 0):

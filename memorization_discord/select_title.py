@@ -4,10 +4,11 @@ from memorization_maker_add import MemorizationControlView
 from memorization_maker_play import ChoicePlayMode
 
 class SelectGenre(discord.ui.Select):
-    def __init__(self, genres: list, mode:int):
+    def __init__(self, genres: list, mode:int,classmodes:int=0):
         options = []
         self.mode = mode
         self.genres = genres
+        self.classmodes = classmodes
         for num,genre in enumerate(genres):
             options.append(discord.SelectOption(label=genre, value=str(num)))
         super().__init__(placeholder="ジャンルを選択してください", options=options, row=1, min_values=1, max_values=1)
@@ -16,7 +17,7 @@ class SelectGenre(discord.ui.Select):
         if self.mode == 0:
             await genre.move_genre(str(interaction.user.id),self.genres[int(self.values[0])])
         elif self.mode == 1:
-            await interaction.response.edit_message(view=SelectTitleView(self.genres[int(self.values[0])],await Get().get_titles(str(interaction.user.id))))
+            await interaction.response.edit_message(view=SelectTitleView(self.genres[int(self.values[0])],await Get().get_titles(str(interaction.user.id)),self.classmodes))
         elif self.mode == 2:
             sharecode = await Genre().get_genres_sharecode(str(interaction.user.id),self.genres[int(self.values[0])])
             await interaction.response.edit_message(content=f"{self.genres[int(self.values[0])]} このジャンルの共有コード:{sharecode}")
@@ -45,7 +46,7 @@ class SelectTitle_2(discord.ui.Select):
         super().__init__(placeholder="タイトルを選択してください", options=options, row=1, min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
         await SelectTitleResponse(interaction,self.values[0],self.modes).select_response()
-        
+
 class SelectTitle_3(discord.ui.Select):
     def __init__(self, titles: list,modes:int):
         self.modes = modes
@@ -70,7 +71,7 @@ class SelectTitleView(discord.ui.View):
     def __init__(self,genres:list,titles:list,modes:int):
         super().__init__()
         self.modes = modes
-        self.add_item(SelectGenre(genres,1))
+        self.add_item(SelectGenre(genres,1,self.modes))
         #25個ずつに分ける
         self.options_1 = []
         self.options_2 = []

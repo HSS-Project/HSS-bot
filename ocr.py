@@ -1,7 +1,6 @@
 #ライブラリインポート
 import pyocr
 from PIL import Image, ImageEnhance
-import os
 
 #OCRエンジン取得
 tools = pyocr.get_available_tools()

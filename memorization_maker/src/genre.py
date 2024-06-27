@@ -7,7 +7,6 @@ class Genre:
         self.rw = Read_and_Write.Read_and_Write()
         self.owner = owner_manager.OwnerManager()
         self.share = share.Share()
-        
         self.base_data:dict = {"memorization":{}}
         self.user_data:dict = {}
         

@@ -8,7 +8,7 @@ class Share:
         self.owner = owner_manager.OwnerManager()
         self.base_data:dict = {"memorization":{}}
         self.user_data:dict = {}
-    
+
     async def make_sharecode(self,modes:int = 0):
         #全てのtitleのsharecodeと被っていないことを確認する　被っていたら再生成
         self.base_data:dict = await self.rw.load_base()
