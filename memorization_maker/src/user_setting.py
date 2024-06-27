@@ -65,6 +65,27 @@ class User:
         await self.rw.write_user(self.user_data)
         return True
     
+    async def user_data_miss(self,user_id:str,sharecode:str,miss_number_list:list):
+        num_id = str(user_id)
+        self.user_data = await self.rw.load_user()
+        self.user_data[num_id][sharecode]["miss_numbers"] = miss_number_list
+        await self.rw.write_user(self.user_data)
+        return True
+    
+    async def user_data_try(self,user_id:str,sharecode:str):
+        num_id = str(user_id)
+        self.user_data = await self.rw.load_user()
+        self.user_data[num_id][sharecode]["try_number"] += 1
+        await self.rw.write_user(self.user_data)
+        return True
+
+    async def user_data_score(self,user_id:str,sharecode:str, score:int):
+        num_id = str(user_id)
+        self.user_data = await self.rw.load_user()
+        self.user_data[num_id][sharecode]["score"] = score
+        await self.rw.write_user(self.user_data)
+        return True
+    
     async def get_user_data(self,user_id):
         num_id = str(user_id)
         self.user_data = await self.rw.load_user()
