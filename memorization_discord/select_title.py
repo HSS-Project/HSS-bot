@@ -1,5 +1,5 @@
 import discord
-from memorization_maker.inc.pakege import Get,Genre,Share
+from memorization_maker.inc.pakege import Get,Genre,Share,Delete
 from memorization_maker_add import MemorizationControlView
 from memorization_maker_play import ChoicePlayMode
 
@@ -18,8 +18,14 @@ class SelectGenre(discord.ui.Select):
         elif self.mode == 1:
             await interaction.response.edit_message(view=SelectTitleView(self.genres[int(self.values[0])],await Get().get_titles(str(interaction.user.id))))
         elif self.mode == 2:
-            sharecode = await Share().get_genre_sharecode(str(interaction.user.id),self.genres[int(self.values[0])])
+            sharecode = await Genre().get_genres_sharecode(str(interaction.user.id),self.genres[int(self.values[0])])
             await interaction.response.edit_message(content=f"{self.genres[int(self.values[0])]} このジャンルの共有コード:{sharecode}")
+        elif self.mode == 3:
+            ch = await Genre().delete_genre(str(interaction.user.id),self.genres[int(self.values[0])])
+            if ch:
+                await interaction.response.edit_message(content="削除しました。")
+            else:
+                await interaction.response.edit_message(content="削除に失敗しました。defultジャンルは削除できません。また、defultジャンルに100個以上の問題がある場合は削除できません。")
 
 class SelectTitle_1(discord.ui.Select):
     def __init__(self, titles: list,modes:int):
@@ -95,6 +101,8 @@ class SelectTitleResponse:
         self.title = title
         self.modes = mode
         self.genre = Genre()
+        self.share = Share()
+        self.delete = Delete()
 
     async def select_response(self):
         if self.modes == 0:
@@ -109,3 +117,9 @@ class SelectTitleResponse:
             genrename = await self.genre.search_genre(str(self.intraction.user.id),sharecode)
             genre_sharecode = await Share().get_genre_sharecode(str(self.intraction.user.id),genrename)
             await self.intraction.response.edit_message(content=f"{self.title} この問題の共有コード:{sharecode}\nこの問題があるジャンルの共有コード:{genre_sharecode}")
+        elif self.modes == 3:
+            sharecode = await self.share.get_sharecode(str(self.intraction.user.id),self.title)
+            genrename = await self.genre.search_genre(str(self.intraction.user.id),sharecode)
+            await self.genre.remove_genre(str(self.intraction.user.id),genrename)
+            await self.delete.delete_title(str(self.intraction.user.id),self.title)
+            await self.intraction.response.edit_message(content="削除しました。")

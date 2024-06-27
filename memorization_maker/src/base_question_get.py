@@ -47,3 +47,10 @@ class Get:
             return data[int(data["answer"])-1] == answer
         elif mode == 2:
             return answer == data["answer"][text_question_number]
+        
+    async def len_misson(self,user_id:str,title:str):
+        num_id = str(user_id)
+        self.base_data:dict = await self.rw.load_base()
+        sharecode = await self.share.get_sharecode(user_id,title)
+        if not await self.owner.owner_check(num_id,title):return False
+        return len(self.base_data["memorization"][sharecode]["questions"])

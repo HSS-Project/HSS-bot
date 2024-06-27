@@ -9,16 +9,24 @@ class Share:
         self.base_data:dict = {"memorization":{}}
         self.user_data:dict = {}
     
-    async def make_sharecode(self):
+    async def make_sharecode(self,modes:int = 0):
         #全てのtitleのsharecodeと被っていないことを確認する　被っていたら再生成
         self.base_data:dict = await self.rw.load_base()
         self.user_data:dict = await self.rw.load_user()
-        while True:
-            sharecode = random.randint(000000,999999)
-            for sharecodes in self.base_data["memorization"]:
-                if sharecode == self.base_data["memorization"][sharecodes]["sharecode"]:
-                    continue
-            return sharecode
+        if modes == 0:
+            while True:
+                sharecode = random.randint(000000,999999)
+                for sharecodes in self.base_data["memorization"]:
+                    if sharecode == self.base_data["memorization"][sharecodes]["sharecode"]:
+                        continue
+                return sharecode
+        elif modes == 1:
+            while True:
+                sharecode = random.randint(0000,9999)
+                for sharecodes in self.user_data["genre"]:
+                    if sharecode == self.user_data["genre"][sharecodes]["share"]:
+                        continue
+                return sharecode
         
     async def get_sharecode(self,user_id:str,title:str):
         self.base_data:dict = await self.rw.load_base()
