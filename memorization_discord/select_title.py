@@ -10,6 +10,8 @@ class SelectGenre(discord.ui.Select):
         self.genres = genres
         self.classmodes = classmodes
         for num,genre in enumerate(genres):
+            print(genre)
+            print(num)
             options.append(discord.SelectOption(label=genre, value=str(num)))
         super().__init__(placeholder="ジャンルを選択してください", options=options, row=1, min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):

@@ -18,11 +18,9 @@ class OwnerManager:
                 return False
         else:
             return False
-        return False
         
     async def owner_add(self,user_id:str,title:str,_target_id:str):
         num_id = str(user_id)
-        if not await self.owner_check(num_id,title):return False
         target_id = str(_target_id)
         self.base_data:dict = await self.rw.load_base()
         sharecode = await self.share.get_sharecode(user_id,title)
@@ -32,7 +30,6 @@ class OwnerManager:
     
     async def owmer_remove(self,user_id:str,title:str,_target_id:str):
         num_id = str(user_id)
-        if not await self.owner_check(num_id,title):return False
         target_id = str(_target_id)
         self.base_data:dict = await self.rw.load_base()
         sharecode = await self.share.get_sharecode(user_id,title)
@@ -42,7 +39,6 @@ class OwnerManager:
     
     async def owner_list(self,user_id:str,title:str):
         num_id = str(user_id)
-        if not await self.owner_check(num_id,title):return False
         self.base_data:dict = await self.rw.load_base()
         sharecode = await self.share.get_sharecode(user_id,title)
         return self.base_data["memorization"][sharecode]["onwer"]

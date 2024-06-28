@@ -1,11 +1,9 @@
-import memorization_maker.src.owner_manager as owner_manager
 import random
 import memorization_maker.src.Read_and_Write as Read_and_Write
 import memorization_maker.src.share as share
 
 class User:
     def __init__(self):
-        self.owner = owner_manager.OwnerManager()
         self.rw = Read_and_Write.Read_and_Write()
         self.share = share.Share()
         self.base_data:dict = {"memorization":{}}

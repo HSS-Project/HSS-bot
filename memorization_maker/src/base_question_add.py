@@ -1,5 +1,4 @@
 import memorization_maker.src.Read_and_Write as Read_and_Write
-import memorization_maker.src.owner_manager as owner_manager
 import re
 from typing import TypedDict
 from typing_extensions import NotRequired
@@ -27,33 +26,28 @@ class MemorizationData(answerTypedDict):
 class Add:
     def __init__(self):
         self.rw = Read_and_Write.Read_and_Write()
-        self.owner = owner_manager.OwnerManager()
         self.base_data:dict = {"memorization":{}, "genre":{}}
 
     async def init_add(self,user_id:str,title:str,_sharecode):
         num_id = str(user_id)
         sharecode = str(_sharecode)
         self.base_data:dict = await self.rw.load_base()
+        # すでにタイトルが存在している場合はFalseを返す
+        if title in self.base_data["memorization"].keys():
+            return False
         self.base_data["memorization"].setdefault(sharecode, {"title":f"{title}_{sharecode}","questions": [], "onwer":[num_id]})
-        return self.base_data        
+        await self.rw.write_base(self.base_data)
+        return True
 
-    async def add_misson(self, _id:str,title,_sharecode,quetion:str,answer:str):
-        user_id = str(_id)
+    async def add_misson(self,_sharecode,quetion:str,answer:str):
+        self.base_data:dict = await self.rw.load_base()
         sharecode = str(_sharecode)
-        self.base_data:dict = await self.init_add(user_id,title,sharecode)
-        if not await self.owner.owner_check(user_id,title):return False
         self.base_data["memorization"][sharecode]["questions"].append({"question":quetion,"answer":answer,"mode":0})
         await self.rw.write_base(self.base_data)
         
-    async def add_misson_select(self,_id:str,title,_sharecode,quetion:str,answer:str,select:list):
-        user_id = str(_id)
+    async def add_misson_select(self,_sharecode,quetion:str,answer,select:list):
+        self.base_data:dict = await self.rw.load_base()
         sharecode = str(_sharecode)
-        self.base_data:dict = await self.init_add(user_id,title,sharecode)
-        if not await self.owner.owner_check(user_id,title):return False
-        select.append(answer)
-        select = random.sample(select, len(select))
-        self.base_data["memorization"][sharecode]["questions"].append({"question":quetion,"answer":select.index(answer)+1,"mode":1,"select":select})
-        await self.rw.write_base(self.base_data)
         self.base_data["memorization"][sharecode]["questions"].append({"question":quetion,"answer":answer,"mode":1,"select":select})
         await self.rw.write_base(self.base_data)
 
@@ -76,20 +70,17 @@ class Add:
             text = text.replace(f'{number}', f'||{answer}||')
         return text
     
-    async def add_misson_text(self,_id:str,title,_sharecode,text:str):
-        user_id = str(_id)
+    async def add_misson_text(self,_sharecode,text:str):
+        self.base_data:dict = await self.rw.load_base()
         sharecode = str(_sharecode)
-        self.base_data:dict = await self.init_add(user_id,title,sharecode)
-        if not await self.owner.owner_check(user_id,title):return False
         text, answers = await self.replace_parentheses(text)
         if text is False or answers is False:return False
         self.base_data["memorization"][sharecode]["questions"].append({"question":text,"answer":answers, "mode":2})
         await self.rw.write_base(self.base_data)
         
-    async def add_misson_in_Excel(self,user_id:str,title,_sharecode,text:str,excelfile:openpyxl.Workbook):
+    async def add_misson_in_Excel(self,_sharecode,text:str,excelfile:openpyxl.Workbook):
+        self.base_data:dict = await self.rw.load_base()
         sharecode = str(_sharecode)
-        self.base_data:dict = await self.init_add(user_id,title,sharecode)
-        if not await self.owner.owner_check(user_id,title):return False
         sheet = excelfile.active
         row_count = sum(1 for _ in sheet.iter_rows(min_col=1,values_only=True))
         if row_count > 4:return False

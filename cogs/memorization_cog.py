@@ -73,4 +73,4 @@ class MemorizationCog(commands.Cog):
         await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,3))
 
 async def setup(bot):
-    bot.add_cog(MemorizationCog(bot))
+    await bot.add_cog(MemorizationCog(bot))

@@ -1,11 +1,9 @@
 import memorization_maker.src.Read_and_Write as Read_and_Write
-import memorization_maker.src.owner_manager as owner_manager
 import memorization_maker.src.share as share
 
 class Genre:
     def __init__(self):
         self.rw = Read_and_Write.Read_and_Write()
-        self.owner = owner_manager.OwnerManager()
         self.share = share.Share()
         self.base_data:dict = {"memorization":{}}
         self.user_data:dict = {}
@@ -13,7 +11,6 @@ class Genre:
     async def make_genre(self,user_id:str,genre_title):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        if not await self.owner.owner_check(num_id,genre_title):return False
         def_number = await self.share.make_sharecode(1)
         self.user_data["genre"].setdefault(num_id,{"defult":{"sharecodes":[],"share":def_number}})
         sharecode = await self.share.make_sharecode(1)
@@ -23,7 +20,6 @@ class Genre:
     async def delete_genre(self,user_id:str,genre_title:str):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        if not await self.owner.owner_check(num_id,genre_title):return False
         if genre_title not in self.user_data["genre"][num_id].keys():return False
         if genre_title == "defult":return False
         #デフォルトに移動 もし100個以上ある場合はエラー
@@ -36,7 +32,6 @@ class Genre:
     async def add_genre(self,user_id:str,genre_title:str,sharecode:int):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        if not await self.owner.owner_check(num_id,genre_title):return False
         if genre_title not in self.user_data["genre"][num_id].keys():return False
         self.user_data["genre"][num_id][genre_title]["sharecodes"].append(sharecode)
         await self.rw.write_user(self.user_data)
@@ -44,7 +39,6 @@ class Genre:
     async def remove_genre(self,user_id:str,genre_title:str,sharecode:int):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        if not await self.owner.owner_check(num_id,genre_title):return False
         if genre_title not in self.user_data["genre"][num_id].keys():return False
         self.user_data["genre"][num_id][genre_title]["sharecodes"].remove(sharecode)
         await self.rw.write_user(self.user_data)
@@ -52,7 +46,6 @@ class Genre:
     async def move_genre(self,user_id:str,genre_title:str,sharecode:int):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        if not await self.owner.owner_check(num_id,genre_title):return False
         if genre_title not in self.user_data["genre"][num_id].keys():return False
         self.user_data["genre"][num_id][genre_title]["sharecodes"].remove(sharecode)
         self.user_data["genre"][num_id]["defult"]["sharecodes"].append(sharecode)
