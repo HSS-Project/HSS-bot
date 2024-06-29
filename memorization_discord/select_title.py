@@ -4,20 +4,21 @@ import memorization_discord.memorization_maker_add as maker_add
 import memorization_discord.memorization_maker_play as maker_play
 
 class SelectGenre(discord.ui.Select):
-    def __init__(self, genres: list, mode:int,classmodes:int=0):
+    def __init__(self, genres: list, mode:int,classmodes,title=None):
         options = []
         self.mode = mode
         self.genres = genres
         self.classmodes = classmodes
+        self.title = title
         for num,genre in enumerate(genres):
-            print(genre)
-            print(num)
             options.append(discord.SelectOption(label=genre, value=str(num)))
-        super().__init__(placeholder="ジャンルを選択してください", options=options, row=1, min_values=1, max_values=1)
+        super().__init__(placeholder="ジャンルを選択してください", options=options,min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
         genre = Genre()
+        share = Share()
         if self.mode == 0:
-            await genre.move_genre(str(interaction.user.id),self.genres[int(self.values[0])])
+            sharecode = await share.get_sharecode(self.title)
+            await genre.move_genre(str(interaction.user.id),self.genres[int(self.values[0])],sharecode)
         elif self.mode == 1:
             await interaction.response.edit_message(view=SelectTitleView(self.genres[int(self.values[0])],await Get().get_titles(str(interaction.user.id)),self.classmodes))
         elif self.mode == 2:
@@ -34,18 +35,19 @@ class SelectTitle_1(discord.ui.Select):
     def __init__(self, titles: list,modes:int):
         self.modes = modes
         options = []
-        for num,titles in enumerate(titles):
-            options.append(discord.SelectOption(label=titles, value=str(num)))
-        super().__init__(placeholder="タイトルを選択してください", options=options, row=1, min_values=1, max_values=1)
+        for titles in titles:
+            options.append(discord.SelectOption(label=titles))
+        super().__init__(placeholder="タイトルを選択してください", options=options,min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
         await SelectTitleResponse(interaction,self.values[0],self.modes).select_response()
+
 class SelectTitle_2(discord.ui.Select):
     def __init__(self, titles: list,modes:int):
         self.modes = modes
         options = []
-        for num,titles in enumerate(titles):
-            options.append(discord.SelectOption(label=titles, value=str(num)))
-        super().__init__(placeholder="タイトルを選択してください", options=options, row=1, min_values=1, max_values=1)
+        for titles in titles:
+            options.append(discord.SelectOption(label=titles))
+        super().__init__(placeholder="タイトルを選択してください", options=options,min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
         await SelectTitleResponse(interaction,self.values[0],self.modes).select_response()
 
@@ -53,9 +55,9 @@ class SelectTitle_3(discord.ui.Select):
     def __init__(self, titles: list,modes:int):
         self.modes = modes
         options = []
-        for num,titles in enumerate(titles):
-            options.append(discord.SelectOption(label=titles, value=str(num)))
-        super().__init__(placeholder="タイトルを選択してください", options=options, row=1, min_values=1, max_values=1)
+        for titles in titles:
+            options.append(discord.SelectOption(label=titles))
+        super().__init__(placeholder="タイトルを選択してください", options=options,min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
         await SelectTitleResponse(interaction,self.values[0],self.modes).select_response()
         
@@ -63,9 +65,9 @@ class SelectTitle_4(discord.ui.Select):
     def __init__(self, titles: list,modes:int):
         self.modes = modes
         options = []
-        for num,titles in enumerate(titles):
-            options.append(discord.SelectOption(label=titles, value=str(num)))
-        super().__init__(placeholder="タイトルを選択してください", options=options, row=1, min_values=1, max_values=1)
+        for titles in titles:
+            options.append(discord.SelectOption(label=titles))
+        super().__init__(placeholder="タイトルを選択してください", options=options,min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
         await SelectTitleResponse(interaction,self.values[0],self.modes).select_response()
         
@@ -73,7 +75,6 @@ class SelectTitleView(discord.ui.View):
     def __init__(self,genres:list,titles:list,modes:int):
         super().__init__()
         self.modes = modes
-        self.add_item(SelectGenre(genres,1,self.modes))
         #25個ずつに分ける
         self.options_1 = []
         self.options_2 = []
@@ -89,14 +90,14 @@ class SelectTitleView(discord.ui.View):
                     if i >= titles_len:
                         break
                     self.options_list[j].append(titles[i])
-                    
-        self.add_item(SelectTitle_1(self.options_1,self.modes))
+        self.add_item(SelectGenre(genres,1,self.modes))
+        self.add_item(SelectTitle_1(self.options_list[0],self.modes))
         if titles_len > 25:
-            self.add_item(SelectTitle_2(self.options_2,self.modes))
+            self.add_item(SelectTitle_2(self.options_list[1],self.modes))
         if titles_len > 50:
-            self.add_item(SelectTitle_3(self.options_3,self.modes))
+            self.add_item(SelectTitle_3(self.options_list[2],self.modes))
         if titles_len > 75:
-            self.add_item(SelectTitle_4(self.options_4,self.modes))
+            self.add_item(SelectTitle_4(self.options_list[3],self.modes))
 
 class SelectTitleResponse:
     def __init__(self,intraction:discord.Interaction,title,mode):
@@ -113,15 +114,15 @@ class SelectTitleResponse:
             await self.intraction.response.edit_message(embed=embed,view=maker_add.MemorizationControlView(self.title,await self.genre.get_genres_name(str(self.intraction.user.id))))
         elif self.modes == 1:
             embed = discord.Embed(title="出題方式選択",color=0x00ff00)
-            sharecode = await Share().get_sharecode(str(self.intraction.user.id),self.title)
+            sharecode = await self.share.get_sharecode(self.title)
             await self.intraction.response.edit_message(embed=embed,view=maker_play.ChoicePlayMode(sharecode))
         elif self.modes == 2:
-            sharecode = await Share().get_sharecode(str(self.intraction.user.id),self.title)
+            sharecode = await self.share.get_sharecode(self.title)
             genrename = await self.genre.search_genre(str(self.intraction.user.id),sharecode)
             genre_sharecode = await Share().get_genre_sharecode(str(self.intraction.user.id),genrename)
             await self.intraction.response.edit_message(content=f"{self.title} この問題の共有コード:{sharecode}\nこの問題があるジャンルの共有コード:{genre_sharecode}")
         elif self.modes == 3:
-            sharecode = await self.share.get_sharecode(str(self.intraction.user.id),self.title)
+            sharecode = await self.share.get_sharecode(self.title)
             genrename = await self.genre.search_genre(str(self.intraction.user.id),sharecode)
             await self.genre.remove_genre(str(self.intraction.user.id),genrename)
             await self.delete.delete_title(str(self.intraction.user.id),self.title)

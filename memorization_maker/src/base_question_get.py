@@ -12,28 +12,24 @@ class Get:
         self.base_data:dict = await self.rw.load_base()
         #全てのタイトルのownerにuser_idが含まれているlistを返す
         lists = []
-        for title in self.base_data["memorization"].keys():
-            if num_id in self.base_data["memorization"][title]["onwer"]:
-                lists.append(title)
-                
+        for share in self.base_data["memorization"].keys():
+            if num_id in self.base_data["memorization"][share]["onwer"]:
+                lists.append(self.base_data["memorization"][share]["title"])                
         return lists
 
-    async def get_misson_select(self,user_id:str,title:str,select_len_number:int):
-        num_id = str(user_id)
+    async def get_misson_select(self,title:str,select_len_number:int):
         self.base_data:dict = await self.rw.load_base()
-        sharecode = await self.share.get_sharecode(num_id,title)
+        sharecode = await self.share.get_sharecode(title)
         return self.base_data["memorization"][sharecode]["questions"][select_len_number]
 
-    async def get_misson(self,user_id:str,title:str):
-        num_id = str(user_id)
+    async def get_misson(self,title:str):
         self.base_data:dict = await self.rw.load_base()
-        sharecode = await self.share.get_sharecode(num_id,title)
+        sharecode = await self.share.get_sharecode(title)
         return self.base_data["memorization"][sharecode]
     
-    async def check_answer(self,user_id:str,title:str,select_len_number:int,answer:str,text_question_number:int = None):
-        num_id = str(user_id)
+    async def check_answer(self,title:str,select_len_number:int,answer:str,text_question_number:int = None):
         self.base_data:dict = await self.rw.load_base()
-        sharecode = await self.share.get_sharecode(num_id,title)
+        sharecode = await self.share.get_sharecode(title)
         data = self.base_data["memorization"][sharecode]["questions"][select_len_number]
         mode = data["mode"]
         if mode == 0:
@@ -43,8 +39,7 @@ class Get:
         elif mode == 2:
             return answer == data["answer"][text_question_number]
         
-    async def len_misson(self,user_id:str,title:str):
-        num_id = str(user_id)
+    async def len_misson(self,title:str):
         self.base_data:dict = await self.rw.load_base()
-        sharecode = await self.share.get_sharecode(num_id,title)
+        sharecode = await self.share.get_sharecode(title)
         return len(self.base_data["memorization"][sharecode]["questions"])

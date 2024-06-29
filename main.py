@@ -38,6 +38,8 @@ class MyBot(commands.Bot):
 
 bot = MyBot(intents=discord.Intents.all(), prefix='m!')
 
+
+
 if __name__ == '__main__':
     with open("token.json", 'r', encoding='utf-8') as file:
         t = json.load(file)

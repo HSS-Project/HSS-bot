@@ -7,7 +7,7 @@ from memorization_maker.inc.pakege import Genre,Get
 
 class MemorizationCog(commands.Cog):
     def __init__(self,bot):
-        self.bot = bot
+        self.bot:discord.Client = bot
         self.genres = Genre()
         self.get = Get()
     memorization = app_commands.Group(name="memorization", description="暗記メーカ")
@@ -21,21 +21,21 @@ class MemorizationCog(commands.Cog):
         embed = discord.Embed(title="選択してください",description="")
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
         titles = await self.get.get_titles(str(interaction.user.id))
-        await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,0))
+        await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,0),ephemeral=True)
 
     @memorization.command(name="play", description="問題を解きます。")
     async def play(self, interaction:discord.Interaction):
         embed = discord.Embed(title="選択してください",description="")
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
         titles = await self.genres.genres_in_titles(str(interaction.user.id),"defult")
-        await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,1))
+        await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,1),ephemeral=True)
         
     @memorization.command(name="misson_sharecode", description="問題を共有します。")
     async def share(self, interaction:discord.Interaction):
         embed = discord.Embed(title="選択してください",description="")
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
         titles = await self.genres.genres_in_titles(str(interaction.user.id),"defult")
-        await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,2))
+        await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,2),ephemeral=True)
         
     @memorization.command(name="genre_sharecode", description="ジャンルを共有します。")
     async def share2(self, interaction:discord.Interaction):
@@ -43,7 +43,7 @@ class MemorizationCog(commands.Cog):
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
         view = discord.ui.View()
         view.add_item(select_title.SelectGenre(genre_list,2))
-        await interaction.response.send_message(embed=embed, view=select_title.SelectGenre(genre_list,2))
+        await interaction.response.send_message(embed=embed, view=select_title.SelectGenre(genre_list,2,0),ephemeral=True)
     
     @memorization.command(name="misson_set", description="共有コードから問題を追加します。")
     async def misson(self, interaction:discord.Interaction,sharecode:int,genre:str="defult"):
@@ -63,14 +63,14 @@ class MemorizationCog(commands.Cog):
     async def delete2(self, interaction:discord.Interaction):
         embed = discord.Embed(title="選択してください",description="")
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
-        await interaction.response.send_message(embed=embed, view=select_title.SelectGenre(genre_list,3))
+        await interaction.response.send_message(embed=embed, view=select_title.SelectGenre(genre_list,3,0),qpheemeral=True)
     
     @memorization.command(name="misson_delete", description="問題を削除します。")
     async def delete(self, interaction:discord.Interaction):
         embed = discord.Embed(title="選択してください",description="")
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
         titles = await self.get.get_titles(str(interaction.user.id))
-        await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,3))
+        await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,3),qpheemeral=True)
 
 async def setup(bot):
     await bot.add_cog(MemorizationCog(bot))

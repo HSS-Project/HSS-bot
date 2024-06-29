@@ -13,8 +13,7 @@ class Read_and_Write:
     async def write_data(self,filename,data):
         with open(filename, "w") as f:
             json.dump(data, f, indent=4)
-            
-    
+
     async def load_base(self) -> dict:
         data = await self.load_data(self.basefile)
         return data

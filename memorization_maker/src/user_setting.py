@@ -8,20 +8,6 @@ class User:
         self.share = share.Share()
         self.base_data:dict = {"memorization":{}}
         self.user_data = {}
-        # self.user_data:dict = {
-        #     "Userdata":{
-        #         "ID":{
-        #             "sharecode":{
-        #                 "title":"title",
-        #                 "randam":"bool",
-        #                 "questions_number_list":"int",
-        #                 "miss_number":"list",
-        #                 "try_number":"int",
-        #                 "score":"int"
-        #             }
-        #         }
-        #     }
-        # }
     
     async def add_user_data_init(self,user_id):
         num_id = str(user_id)

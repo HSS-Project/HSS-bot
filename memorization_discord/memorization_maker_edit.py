@@ -21,7 +21,7 @@ class EditModeSelect(discord.ui.Select):
         super().__init__(placeholder="編集モードを選択してください", options=options, row=1, min_values=1, max_values=1)
             
     async def callback(self, interaction: discord.Interaction):
-        datas = await Get().get_misson(str(interaction.user.id),self.title)
+        datas = await Get().get_misson(self.title)
         question = datas["questions"][self.select_number]["question"]
         if self.values[0] == "add" :
             await interaction.response.send_modal(EditmModal(self.title,self.select_number,0))
@@ -54,7 +54,7 @@ class EditSelectMenu(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         if self.chanege == 0:
             answer = int(self.values[0])
-            await Edit().edit_misson(str(interaction.user.id),self.title,self.question,answer,self.select_number)
+            await Edit().edit_misson(self.title,self.question,answer,self.select_number)
             await interaction.response.send_message("編集しました。", ephemeral=True)
         elif self.chanege == 1:
             select_num = int(self.values[0])
@@ -76,19 +76,19 @@ class EditmModal(discord.ui.Modal,title="編集"):
         self.add_item(self.input)
         
     async def on_submit(self, interaction: discord.Interaction):
-        datas = await Get().get_misson(str(interaction.user.id),self.title)
+        datas = await Get().get_misson(self.title)
         if self.mode == 0:
             question = str(self.input.value)
             answer = datas["questions"][self.select_number]["answer"]
-            await Edit().edit_misson(str(interaction.user.id),self.title,question,answer,self.select_number)
+            await Edit().edit_misson(self.title,question,answer,self.select_number)
         elif self.mode == 1:
             question = datas["questions"][self.select_number]["question"]
             answer = str(self.input.value)
-            await Edit().edit_misson(str(interaction.user.id),self.title,question,answer,self.select_number)
+            await Edit().edit_misson(self.title,question,answer,self.select_number)
         elif self.mode == 2:
-            await Edit().edit_misson_text(str(interaction.user.id),self.title,self.input.value)
+            await Edit().edit_misson_text(self.title,self.input.value)
         elif self.mode == 3:
             select = datas["questions"][self.select_number]["select"]
             select[self.edit_number] = self.input.value
-            await Edit().edit_misson_select(str(interaction.user.id),self.title,question,select,self.select_number)
+            await Edit().edit_misson_select(self.title,question,select,self.select_number)
         await interaction.response.send_message("編集しました。", ephemeral=True)

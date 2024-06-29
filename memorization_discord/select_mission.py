@@ -10,7 +10,7 @@ class SelectMission_1(discord.ui.Select):
         self.missions = missions
         for num,mission in enumerate(missions):
             options.append(discord.SelectOption(label=mission, value=str(num)))
-        super().__init__(placeholder="問題を選択してください", options=options, row=1, min_values=1, max_values=1)
+        super().__init__(placeholder="問題を選択してください", options=options,min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
         await SelectView(interaction,self.title,int(self.values[0]),self.mode).select_response()
             
@@ -22,7 +22,7 @@ class SelectMission_2(discord.ui.Select):
         self.missions = missions
         for num,mission in enumerate(missions):
             options.append(discord.SelectOption(label=mission, value=str(num)))
-        super().__init__(placeholder="問題を選択してください", options=options, row=1, min_values=1, max_values=1)
+        super().__init__(placeholder="問題を選択してください", options=options,min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
         await SelectView(interaction,self.title,int(self.values[0]),self.mode).select_response()
     
@@ -34,7 +34,7 @@ class SelectMission_3(discord.ui.Select):
         self.missions = missions
         for num,mission in enumerate(missions):
             options.append(discord.SelectOption(label=mission, value=str(num)))
-        super().__init__(placeholder="問題を選択してください", options=options, row=1, min_values=1, max_values=1)
+        super().__init__(placeholder="問題を選択してください", options=options,min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
         await SelectView(interaction,self.title,int(self.values[0]),self.mode).select_response()
     
@@ -46,7 +46,7 @@ class SelectMission_4(discord.ui.Select):
         self.missions = missions
         for num,mission in enumerate(missions):
             options.append(discord.SelectOption(label=mission, value=str(num)))
-        super().__init__(placeholder="問題を選択してください", options=options, row=1, min_values=1, max_values=1)
+        super().__init__(placeholder="問題を選択してください", options=options,min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
         await SelectView(interaction,self.title,int(self.values[0]),self.mode).select_response()
     
@@ -89,8 +89,8 @@ class SelectView:
         
     async def select_response(self):
         if self.mode == 0:
-            await Delete().delete_misson_select(str(self.interaction.user.id),self.title,self.selectnumber)
+            await Delete().delete_misson_select(self.title,self.selectnumber)
         if self.mode == 1:
-            datas = await Get().get_misson(str(self.interaction.user.id),self.title)
+            datas = await Get().get_misson(self.title)
             missonmode = datas["questions"][self.selectnumber]["mode"]
             await self.interaction.response.send_message("編集モードを選択してください", view=EditModeSelect(self.title,self.selectnumber,missonmode))

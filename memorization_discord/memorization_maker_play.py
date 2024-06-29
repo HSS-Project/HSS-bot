@@ -169,7 +169,7 @@ class MemorizationSelectAnswer(discord.ui.View):
 
     async def check_choice(self,num):
         select = self.question_list[self.counts]["select"]
-        title = await self.gets.get_misson(str(self.interaction.user.id),self.sharecode)["title"]
+        title = await self.gets.get_misson(self.sharecode)["title"]
         ch = await self.gets.check_answer(str(self.interaction.user.id),title,self.counts,select[num-1])
         embed = discord.Embed(title=f"{self.counts+1}問目",color=0x00ff00)
         embed.add_field(name="問題",value=self.question_list[self.counts]["question"],inline=False)
