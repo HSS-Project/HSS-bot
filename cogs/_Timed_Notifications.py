@@ -371,7 +371,6 @@ class Timed_Notifications(commands.Cog):
                 if timeline == []:
                     timeline = default_timeline
                 embed = discord.Embed(title=f"{school.get_data()['details']['name']} {data['grade']}年{data['class']}組", description=f"{weekday} 明日の日程です", color=0x00ff00)
-                print(timeline)
                 for i in range(len(timeline)):
                     if timeline[i]['place'] == "初期値":
                         place = "未設定"

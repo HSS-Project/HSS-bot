@@ -32,15 +32,16 @@ class MyBot(commands.Bot):
         print("-----------------------")
         for guild in self.guilds:
             print(guild.name)
-
         print(f"導入数 {(len(self.guilds))}")
         print("-----------------------")
         await self.tree.sync()
 
-bot = MyBot(intents=discord.Intents.all(), prefix='k!')
+bot = MyBot(intents=discord.Intents.all(), prefix='m!')
+
+
 
 if __name__ == '__main__':
     with open("token.json", 'r', encoding='utf-8') as file:
         t = json.load(file)
-        TOKEN = t["TOKEN_2"]
+        TOKEN = t["TOKEN"]
     bot.run(token=TOKEN)
