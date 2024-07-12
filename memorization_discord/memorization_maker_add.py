@@ -18,7 +18,7 @@ class TitleModal(discord.ui.Modal,title="タイトル追加"):
         if not title:return await interaction.response.send_message("タイトルが入力されていません",ephemeral=True)
         await genre.make_genre(str(interaction.user.id),"defult")
         sharecode = await share.make_sharecode()
-        ch = await adds.init_add(str(interaction.user.id),title,sharecode)
+        await adds.init_add(str(interaction.user.id),title,sharecode)
         await genre.add_genre(str(interaction.user.id),"defult",sharecode)
         genre_list = await genre.get_genres_name(str(interaction.user.id))
         embed = discord.Embed(title="問題追加", color=0x00ff00)
@@ -59,7 +59,6 @@ class TitleSetModal(discord.ui.Modal,title="問題"):
 
     async def on_submit(self, interaction: discord.Interaction):
         question = str(self.inputs[0])  # 最初の入力は問題です
-        print(question)
         embed = discord.Embed(title="問題", description=f"{question}", color=0x00ff00)
         await interaction.response.send_message(embed=embed,view=MemorizationAddChangeSelectMode(self.title,question),ephemeral=True)
 
@@ -188,13 +187,10 @@ class MemorizationAddTextModal(discord.ui.Modal, title="文章問題追加"):
         question = str(self.inputs[0].value)
         sharecode = await share.get_sharecode(self.title)
         genre_list = await self.genre.get_genres_name(str(interaction.user.id))
-        if not sharecode:
-            sharecode = await share.make_sharecode()
         ch = await add.add_misson_text(sharecode,question)
-        if ch:
-            return await interaction.response.edit_message(content="",view=MemorizationControlView(self.title,genre_list))
-        return await interaction.response.edit_message(content="追加に失敗しました。答えの最大個数は5つまでです。確認してください",view=MemorizationControlView(self.title,genre_list))
-
+        if ch is False:return await interaction.response.send_message("問題の追加に失敗しました",ephemeral=True)
+        return await interaction.response.edit_message(content="",view=MemorizationControlView(self.title,genre_list))
+    
 class MemorizationMakeGenre(discord.ui.Modal, title="ジャンル作成"):
     def __init__(self):
         self.genre_input = discord.ui.TextInput(label="ジャンル", style=discord.TextStyle.short)
@@ -272,17 +268,27 @@ class MemorizationControlView(discord.ui.View):
 
     @discord.ui.button(label="問題編集", style=discord.ButtonStyle.grey)
     async def edit(self, interaction: discord.Interaction, _:discord.ui.Button):
-        data = await self.share.get_sharedata(str(interaction.user.id),self.title)
+        sharecode = await self.share.get_sharecode(self.title)
+        data = await self.share.get_sharedata(sharecode)
+        missions_question:list = []
         missions = data["questions"]
+        print(missions)
+        for mission in missions:
+            missions_question.append(mission["question"])
+        print(missions_question)
         embed = discord.Embed(title="問題編集", color=0x00ff00)
-        await interaction.response.send_message(embed=embed,view=self.select_mission.SelectMissionView(self.title,missions,1))
+        await interaction.response.send_message(embed=embed,view=self.select_mission.SelectMissionView(self.title,missions_question,1))
 
     @discord.ui.button(label="問題削除", style=discord.ButtonStyle.grey)
     async def delete(self, interaction: discord.Interaction, _:discord.ui.Button):
-        data = await self.share.get_sharedata(str(interaction.user.id),self.title)        
+        sharecode = await self.share.get_sharecode(self.title)
+        data = await self.share.get_sharedata(sharecode)
+        missions_question:list = []
         missions = data["questions"]
+        for mission in missions:
+            missions_question.append(mission["question"])
         embed = discord.Embed(title="問題削除", color=0x00ff00)
-        await interaction.response.send_message(embed=embed,view=self.select_mission.SelectMissionView(self.title,missions,0))
+        await interaction.response.send_message(embed=embed,view=self.select_mission.SelectMissionView(self.title,missions_question,0))
 
     @discord.ui.button(label="ジャンル作成", style=discord.ButtonStyle.blurple)
     async def genre(self, interaction: discord.Interaction, _:discord.ui.Button):

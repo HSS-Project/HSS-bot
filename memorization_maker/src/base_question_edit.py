@@ -1,6 +1,7 @@
 import memorization_maker.src.Read_and_Write as Read_and_Write
 import memorization_maker.src.share as share
 import memorization_maker.src.base_question_add as base_question_add
+
 class Edit:
     def __init__(self):
         self.rw = Read_and_Write.Read_and_Write()
