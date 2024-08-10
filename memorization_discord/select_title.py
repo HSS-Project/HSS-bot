@@ -19,8 +19,10 @@ class SelectGenre(discord.ui.Select):
         if self.mode == 0:
             sharecode = await share.get_sharecode(self.title)
             await genre.move_genre(str(interaction.user.id),self.genres[int(self.values[0])],sharecode)
+            await interaction.response.send_message("移動しました。", ephemeral=True)
         elif self.mode == 1:
-            await interaction.response.edit_message(view=SelectTitleView(self.genres[int(self.values[0])],await Get().get_titles(str(interaction.user.id)),self.classmodes))
+            titles = await genre.genres_in_titles(str(interaction.user.id),self.genres[int(self.values[0])])
+            await interaction.response.edit_message(view=SelectTitleView(self.genres,titles,self.classmodes))
         elif self.mode == 2:
             sharecode = await Genre().get_genres_sharecode(str(interaction.user.id),self.genres[int(self.values[0])])
             await interaction.response.edit_message(content=f"{self.genres[int(self.values[0])]} このジャンルの共有コード:{sharecode}")
@@ -29,7 +31,7 @@ class SelectGenre(discord.ui.Select):
             if ch:
                 await interaction.response.edit_message(content="削除しました。")
             else:
-                await interaction.response.edit_message(content="削除に失敗しました。defultジャンルは削除できません。また、defultジャンルに100個以上の問題がある場合は削除できません。")
+                await interaction.response.edit_message(content="削除に失敗しました。defaultジャンルは削除できません。また、defaultジャンルに100個以上の問題がある場合は削除できません。")
 
 class SelectTitle_1(discord.ui.Select):
     def __init__(self, titles: list,modes:int):
@@ -75,6 +77,7 @@ class SelectTitleView(discord.ui.View):
     def __init__(self,genres:list,titles:list,modes:int):
         super().__init__()
         self.modes = modes
+        print(titles)
         #25個ずつに分ける
         self.options_1 = []
         self.options_2 = []

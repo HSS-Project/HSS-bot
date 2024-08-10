@@ -72,7 +72,7 @@ class EditmModal(discord.ui.Modal,title="編集"):
         self.select_number = select_number
         self.mode = mode
         self.edit_number = edit_number
-        self.input = discord.ui.TextInput(placeholder="入力してください", style=discord.TextStyle.long)
+        self.input = discord.ui.TextInput(label="入力してください", style=discord.TextStyle.long)
         self.add_item(self.input)
         
     async def on_submit(self, interaction: discord.Interaction):

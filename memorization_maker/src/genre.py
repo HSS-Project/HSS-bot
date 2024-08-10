@@ -8,13 +8,16 @@ class Genre:
         self.base_data:dict = {"memorization":{}}
         self.user_data:dict = {}
         
-    async def make_genre(self,user_id:str,genre_title):
+    async def make_genre(self,user_id:str,_genre_title):
         num_id = str(user_id)
+        genre_title = str(_genre_title)
         self.user_data:dict = await self.rw.load_user()
+        if "genre" not in self.user_data:
+            self.user_data["genre"] = {}
         def_number = await self.share.make_sharecode(1)
-        self.user_data["genre"].setdefault(num_id,{"defult":{"sharecodes":[],"share":def_number}})
+        self.user_data["genre"].setdefault(num_id,{"default":{"sharecodes":[],"share":def_number}})
         sharecode = await self.share.make_sharecode(1)
-        self.user_data["genre"][num_id].setdefault(genre_title,{genre_title:{"sharecodes":[],"share":sharecode}})
+        self.user_data["genre"][num_id].setdefault(genre_title,{"sharecodes":[],"share":sharecode})
         await self.rw.write_user(self.user_data)
     
     async def delete_genre(self,user_id:str,genre_title:str):
@@ -24,8 +27,8 @@ class Genre:
         if genre_title == "defult":return False
         #デフォルトに移動 もし100個以上ある場合はエラー
         for sharecode in self.user_data["genre"][num_id][genre_title]["sharecodes"]:
-            if len(self.user_data["genre"][num_id]["defult"]["sharecodes"]) >= 100:return False
-            self.user_data["genre"][num_id]["defult"]["sharecodes"].append(sharecode)
+            if len(self.user_data["genre"][num_id]["default"]["sharecodes"]) >= 100:return False
+            self.user_data["genre"][num_id]["default"]["sharecodes"].append(sharecode)
         del self.user_data["genre"][num_id][genre_title]
         await self.rw.write_user(self.user_data)
         
@@ -47,9 +50,17 @@ class Genre:
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
         if genre_title not in self.user_data["genre"][num_id].keys():return False
-        self.user_data["genre"][num_id][genre_title]["sharecodes"].remove(sharecode)
-        self.user_data["genre"][num_id]["defult"]["sharecodes"].append(sharecode)
+        _sharecode = int(sharecode)
+        before_genre = await self.search_genre(user_id,_sharecode)
+        if not before_genre:
+            print("before_genreが見つかりませんでした")
+            return False
+        self.user_data["genre"][num_id][before_genre]["sharecodes"].remove(_sharecode)
+        print("before_genreから削除しました")
+        print(self.user_data["genre"][num_id][genre_title])
+        self.user_data["genre"][num_id][genre_title]["sharecodes"].append(_sharecode)
         await self.rw.write_user(self.user_data)
+        return True
     
     async def search_genre(self,user_id:str,sharecode:int):
         num_id = str(user_id)
@@ -61,7 +72,7 @@ class Genre:
     
     async def get_genres_name(self,user_id:str) -> list:
         num_id = str(user_id)
-        self.user_data:dict = await self.rw.load_user()
+        self.user_data: dict = await self.rw.load_user()
         gnres_list = []
         for genre in self.user_data["genre"][num_id].keys():
             gnres_list.append(genre)
@@ -75,7 +86,6 @@ class Genre:
     
     async def get_genres_to_sharecode_list(self,sharecode:int):
         self.user_data:dict = await self.rw.load_user()
-        #すべてのユーザーからsharecodeに一致するものを検索
         for user_id in self.user_data.keys():
             for genre in self.user_data[user_id]["genre"].keys():
                 if sharecode in self.user_data[user_id]["genre"][genre]["sharecodes"]:
@@ -95,7 +105,8 @@ class Genre:
         sharecode = self.user_data["genre"][num_id][genre_title]["sharecodes"]
         titles = []
         for sharecode in sharecode:
-            title = await self.share.get_sharedata(sharecode)["title"]
+            datas = await self.share.get_sharedata(sharecode)
+            title = datas["title"]
             titles.append(title)
         return titles
     

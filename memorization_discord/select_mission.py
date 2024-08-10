@@ -81,4 +81,13 @@ class SelectView:
             datas = await Get().get_misson(self.title)
             missonmode = datas["questions"][self.selectnumber]["mode"]
             embed = discord.Embed(title="選択してください",description="")
+            embed.add_field(name="問題",value=f"```\n{datas['questions'][self.selectnumber]['question']}\n```",inline=False)
+            if missonmode == 0:
+                embed.add_field(name="回答",value=f"```\n{datas['questions'][self.selectnumber]['answer']}\n```",inline=False)
+            elif missonmode == 1:
+                select = datas["questions"][self.selectnumber]["select"]
+                select = "\n".join(select)
+                embed.add_field(name="選択肢",value=f"```\n{select}\n```",inline=False)
+            elif missonmode == 2:
+                embed.add_field(name="回答",value=f"```\n{datas['questions'][self.selectnumber]['answer']}\n```",inline=False)
             await self.interaction.response.edit_message(embed=embed, view=EditModeSelectView(self.title,self.selectnumber,missonmode))

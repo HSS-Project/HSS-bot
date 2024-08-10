@@ -35,8 +35,9 @@ class Share:
                 return sharecode
         return False
 
-    async def get_sharedata(self,sharecode:int):
+    async def get_sharedata(self,_sharecode:str):
         self.base_data:dict = await self.rw.load_base()
+        sharecode = str(_sharecode)
         return self.base_data["memorization"][sharecode]
     
     async def get_genre_sharecode(self,user_id:str,genre_title:str):

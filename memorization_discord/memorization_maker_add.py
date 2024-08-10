@@ -16,10 +16,10 @@ class TitleModal(discord.ui.Modal,title="タイトル追加"):
         adds = Add()
         title = str(self.title_input.value)
         if not title:return await interaction.response.send_message("タイトルが入力されていません",ephemeral=True)
-        await genre.make_genre(str(interaction.user.id),"defult")
+        await genre.make_genre(str(interaction.user.id),"default")
         sharecode = await share.make_sharecode()
         await adds.init_add(str(interaction.user.id),title,sharecode)
-        await genre.add_genre(str(interaction.user.id),"defult",sharecode)
+        await genre.add_genre(str(interaction.user.id),"default",sharecode)
         genre_list = await genre.get_genres_name(str(interaction.user.id))
         embed = discord.Embed(title="問題追加", color=0x00ff00)
         data_title = f"{title}_{sharecode}"
@@ -196,13 +196,13 @@ class MemorizationMakeGenre(discord.ui.Modal, title="ジャンル作成"):
         self.genre_input = discord.ui.TextInput(label="ジャンル", style=discord.TextStyle.short)
         super().__init__()
         self.add_item(self.genre_input)
-        
     async def on_submit(self, interaction: discord.Interaction):
-        genre = str(self.genre_input.value)
+        genre_title = str(self.genre_input.value)
         genre = Genre()
-        await genre.make_genre(str(interaction.user.id),genre)
+        genre_list = await genre.get_genres_name(str(interaction.user.id))
+        await genre.make_genre(str(interaction.user.id),genre_title)
         embed = discord.Embed(title="問題追加", color=0x00ff00)
-        await interaction.response.edit_message(embed=embed,view=MemorizationControlView(str(interaction.user.id),genre))
+        await interaction.response.edit_message(embed=embed,view=MemorizationControlView(str(interaction.user.id),genre_list))
 
 class OwnerAddModal(discord.ui.Modal, title="オーナー追加"):
     def __init__(self, title):
@@ -243,6 +243,37 @@ class OwnerDeleteSelect(discord.ui.Select):
         genre_list = await self.genre.get_genres_name(str(interaction.user.id))
         await interaction.response.edit_message(embed=embed,view=MemorizationControlView(self.title,genre_list))
         
+class MemorizationControlView_sub(discord.ui.View):
+    def __init__(self,title:str,genres:list):
+        super().__init__()
+        self.title = title
+        self.view = discord.ui.View()
+        self.share = Share()
+        self.select_mission = select_mission
+        self.select_title = select_title
+        self.genre_list = genres
+    
+    @discord.ui.button(label="ジャンル削除", style=discord.ButtonStyle.red)
+    async def genre_delete(self, interaction: discord.Interaction, _:discord.ui.Button):
+        pass
+    @discord.ui.button(label="オーナー追加", style=discord.ButtonStyle.green)
+    async def owner_add(self, interaction: discord.Interaction, _:discord.ui.Button):
+        await interaction.response.send_modal(OwnerAddModal(self.title))
+    
+    @discord.ui.button(label="オーナー削除", style=discord.ButtonStyle.red)
+    async def owner_delete(self, interaction: discord.Interaction, _:discord.ui.Button):
+        owner = OwnerManager()
+        data = await owner.get_owner(self.title)
+        usernames = []
+        for owner in data:
+            usernames.append(owner["username"])
+        await interaction.response.send_message(embed=discord.Embed(title="選択してください",description=""),view=OwnerDeleteSelect(interaction,self.title,data,usernames),ephemeral=True)
+    
+    @discord.ui.button(label="終了", style=discord.ButtonStyle.red)
+    async def close(self, interaction: discord.Interaction, _:discord.ui.Button):
+        sharecode = await self.share.get_sharecode(self.title)
+        await interaction.response.edit_message(content=f"終了\nこの問題の共有コード:{sharecode}",embed=None,view=None)
+    
 class MemorizationControlView(discord.ui.View):
     def __init__(self,title:str,genres:list):
         super().__init__()
@@ -272,12 +303,10 @@ class MemorizationControlView(discord.ui.View):
         data = await self.share.get_sharedata(sharecode)
         missions_question:list = []
         missions = data["questions"]
-        print(missions)
         for mission in missions:
             missions_question.append(mission["question"])
-        print(missions_question)
         embed = discord.Embed(title="問題編集", color=0x00ff00)
-        await interaction.response.send_message(embed=embed,view=self.select_mission.SelectMissionView(self.title,missions_question,1))
+        await interaction.response.send_message(embed=embed,view=self.select_mission.SelectMissionView(self.title,missions_question,1), ephemeral=True)
 
     @discord.ui.button(label="問題削除", style=discord.ButtonStyle.grey)
     async def delete(self, interaction: discord.Interaction, _:discord.ui.Button):
@@ -288,7 +317,7 @@ class MemorizationControlView(discord.ui.View):
         for mission in missions:
             missions_question.append(mission["question"])
         embed = discord.Embed(title="問題削除", color=0x00ff00)
-        await interaction.response.send_message(embed=embed,view=self.select_mission.SelectMissionView(self.title,missions_question,0))
+        await interaction.response.send_message(embed=embed,view=self.select_mission.SelectMissionView(self.title,missions_question,0), ephemeral=True)
 
     @discord.ui.button(label="ジャンル作成", style=discord.ButtonStyle.blurple)
     async def genre(self, interaction: discord.Interaction, _:discord.ui.Button):
@@ -298,3 +327,4 @@ class MemorizationControlView(discord.ui.View):
     async def close(self, interaction: discord.Interaction, _:discord.ui.Button):
         sharecode = await self.share.get_sharecode(self.title)
         await interaction.response.edit_message(content=f"終了\nこの問題の共有コード:{sharecode}",embed=None,view=None)
+
