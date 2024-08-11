@@ -19,6 +19,7 @@ class Genre:
         sharecode = await self.share.make_sharecode(1)
         self.user_data["genre"][num_id].setdefault(genre_title,{"sharecodes":[],"share":sharecode})
         await self.rw.write_user(self.user_data)
+        return True
     
     async def delete_genre(self,user_id:str,genre_title:str):
         num_id = str(user_id)
@@ -31,6 +32,7 @@ class Genre:
             self.user_data["genre"][num_id]["default"]["sharecodes"].append(sharecode)
         del self.user_data["genre"][num_id][genre_title]
         await self.rw.write_user(self.user_data)
+        return True
         
     async def add_genre(self,user_id:str,genre_title:str,sharecode:int):
         num_id = str(user_id)
@@ -38,6 +40,7 @@ class Genre:
         if genre_title not in self.user_data["genre"][num_id].keys():return False
         self.user_data["genre"][num_id][genre_title]["sharecodes"].append(sharecode)
         await self.rw.write_user(self.user_data)
+        return True
     
     async def remove_genre(self,user_id:str,genre_title:str,sharecode:int):
         num_id = str(user_id)
@@ -45,6 +48,7 @@ class Genre:
         if genre_title not in self.user_data["genre"][num_id].keys():return False
         self.user_data["genre"][num_id][genre_title]["sharecodes"].remove(sharecode)
         await self.rw.write_user(self.user_data)
+        return True
     
     async def move_genre(self,user_id:str,genre_title:str,sharecode:int):
         num_id = str(user_id)
@@ -52,12 +56,8 @@ class Genre:
         if genre_title not in self.user_data["genre"][num_id].keys():return False
         _sharecode = int(sharecode)
         before_genre = await self.search_genre(user_id,_sharecode)
-        if not before_genre:
-            print("before_genreが見つかりませんでした")
-            return False
+        if not before_genre:return False
         self.user_data["genre"][num_id][before_genre]["sharecodes"].remove(_sharecode)
-        print("before_genreから削除しました")
-        print(self.user_data["genre"][num_id][genre_title])
         self.user_data["genre"][num_id][genre_title]["sharecodes"].append(_sharecode)
         await self.rw.write_user(self.user_data)
         return True

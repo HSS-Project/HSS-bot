@@ -15,16 +15,16 @@ class Edit:
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["question"] = quetion
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["answer"] = answer
         await self.rw.write_base(self.base_data)
-        return False
+        return True
     
     async def edit_misson_select(self,title:str,quetion:str,answer:str,select:list,select_len_number:int):
         self.base_data:dict = await self.rw.load_base()
         sharecode = await self.share.get_sharecode(title)        
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["question"] = quetion
-        self.base_data["memorization"][sharecode]["questions"][select_len_number]["answer"] = select.index(answer)+1
+        self.base_data["memorization"][sharecode]["questions"][select_len_number]["answer"] = answer
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["select"] = select
         await self.rw.write_base(self.base_data)
-        return False
+        return True
     
     async def edit_misson_text(self,title:str,raw_text,select_len_number:int):
         self.base_data:dict = await self.rw.load_base()
@@ -33,4 +33,4 @@ class Edit:
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["question"] = text
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["answer"] = answers
         await self.rw.write_base(self.base_data)
-        return False
+        return True

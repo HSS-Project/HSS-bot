@@ -1,8 +1,7 @@
 import discord
-from memorization_maker.inc.pakege import Get,Genre,Share,Delete
-import memorization_discord.memorization_maker_add as maker_add
+from memorization_maker.inc.package import Genre,Share,Delete
 import memorization_discord.memorization_maker_play as maker_play
-
+from memorization_discord.memorization_control import MemorizationControlView
 class SelectGenre(discord.ui.Select):
     def __init__(self, genres: list, mode:int,classmodes,title=None):
         options = []
@@ -41,6 +40,8 @@ class SelectTitle_1(discord.ui.Select):
             options.append(discord.SelectOption(label=titles))
         super().__init__(placeholder="タイトルを選択してください", options=options,min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
+        if self.values[0] == "None":
+            return await interaction.response.edit_message(content="キャンセルしました。")
         await SelectTitleResponse(interaction,self.values[0],self.modes).select_response()
 
 class SelectTitle_2(discord.ui.Select):
@@ -94,6 +95,8 @@ class SelectTitleView(discord.ui.View):
                         break
                     self.options_list[j].append(titles[i])
         self.add_item(SelectGenre(genres,1,self.modes))
+        if titles_len == 0:
+            self.options_list[0].append("None")
         self.add_item(SelectTitle_1(self.options_list[0],self.modes))
         if titles_len > 25:
             self.add_item(SelectTitle_2(self.options_list[1],self.modes))
@@ -114,7 +117,7 @@ class SelectTitleResponse:
     async def select_response(self):
         if self.modes == 0:
             embed = discord.Embed(title="問題編集",color=0x00ff00)
-            await self.intraction.response.edit_message(embed=embed,view=maker_add.MemorizationControlView(self.title,await self.genre.get_genres_name(str(self.intraction.user.id))))
+            await self.intraction.response.edit_message(embed=embed,view=MemorizationControlView(self.title,await self.genre.get_genres_name(str(self.intraction.user.id))))
         elif self.modes == 1:
             embed = discord.Embed(title="出題方式選択",color=0x00ff00)
             sharecode = await self.share.get_sharecode(self.title)

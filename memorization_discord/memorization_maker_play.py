@@ -1,5 +1,5 @@
 import discord
-from memorization_maker.inc.pakege import Get,Share,User
+from memorization_maker.inc.package import Get,Share,User
 
 class ChoicePlayMode(discord.ui.View):
     def __init__(self, sharecode:int):
@@ -59,14 +59,14 @@ class MemorizationAnswer(discord.ui.View):
     @discord.ui.button(label="回答する", style=discord.ButtonStyle.primary)
     async def answer(self, button: discord.ui.Button, interaction: discord.Interaction):
         await interaction.response.send_modal(MemorizationAnswerModal(
-            self.sharecode,
-            self.playmode,
-            self.question_list,
-            self.score,
-            self.miss_list,
-            self.counts
+                    self.sharecode,
+                    self.playmode,
+                    self.question_list,
+                    self.score,
+                    self.miss_list,
+                    self.counts
+                )
             )
-                                              )
         
 class MemorizationAnswerModal(discord.ui.Modal,title="問題回答"):
     def __init__(self,sharecode:int,playmode:int,question_list:list,score:int,miss_list:list,counts):

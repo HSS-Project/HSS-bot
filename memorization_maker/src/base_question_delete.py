@@ -18,7 +18,7 @@ class Delete:
         await genre.remove_genre(user_id,genre_title,sharecode)
         del self.base_data["memorization"][sharecode]
         await self.rw.write_base(self.base_data)
-        return False
+        return True
     
     async def delete_misson_select(self,title:str,select_len_number:int):
         self.base_data:dict = await self.rw.load_base()
@@ -26,4 +26,4 @@ class Delete:
         question_list:list = self.base_data["memorization"][sharecode]["questions"]
         question_list.pop(select_len_number)
         await self.rw.write_base(self.base_data)
-        return False
+        return True

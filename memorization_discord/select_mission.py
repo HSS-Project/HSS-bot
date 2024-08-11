@@ -1,5 +1,5 @@
 import discord 
-from memorization_maker.inc.pakege import Get,Delete
+from memorization_maker.inc.package import Get,Delete
 from memorization_discord.memorization_maker_edit import EditModeSelectView
 
 class SelectMission_1(discord.ui.Select):
@@ -9,6 +9,8 @@ class SelectMission_1(discord.ui.Select):
         self.missions = missions
         super().__init__(placeholder="問題を選択してください", options=missions,min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
+        if str(self.values[0]) == "None":
+            return await interaction.response.edit_message(content="キャンセルしました。",embed=None, view=None)
         await SelectView(interaction,self.title,int(self.values[0]),self.mode).select_response()
             
 class SelectMission_2(discord.ui.Select):
@@ -59,6 +61,8 @@ class SelectMissionView(discord.ui.View):
                     if i >= missions_len:
                         break
                     self.options_list[j].append(discord.SelectOption(label=missions[i], value=str(i)))
+        if self.mode == 0:
+            self.options_list[0].append(discord.SelectOption(label="None", value="None"))
         self.add_item(SelectMission_1(self.title,self.options_list[0],self.mode))
         if missions_len > 25:
             self.add_item(SelectMission_2(self.title,self.options_list[1],self.mode))
@@ -75,8 +79,10 @@ class SelectView:
         self.mode = mode
         
     async def select_response(self):
+        
         if self.mode == 0:
             await Delete().delete_misson_select(self.title,self.selectnumber)
+            await self.interaction.response.edit_message(content="削除しました。",embed=None, view=None)
         if self.mode == 1:
             datas = await Get().get_misson(self.title)
             missonmode = datas["questions"][self.selectnumber]["mode"]
@@ -85,9 +91,10 @@ class SelectView:
             if missonmode == 0:
                 embed.add_field(name="回答",value=f"```\n{datas['questions'][self.selectnumber]['answer']}\n```",inline=False)
             elif missonmode == 1:
-                select = datas["questions"][self.selectnumber]["select"]
-                select = "\n".join(select)
-                embed.add_field(name="選択肢",value=f"```\n{select}\n```",inline=False)
+                selects = datas["questions"][self.selectnumber]["select"]
+                for num,select in enumerate(selects):
+                    embed.add_field(name=f"選択肢{num+1}",value=f"```\n{select}\n```",inline=False)
+                embed.add_field(name="回答",value=f"```\n{datas['questions'][self.selectnumber]['answer']}\n```",inline=False)
             elif missonmode == 2:
                 embed.add_field(name="回答",value=f"```\n{datas['questions'][self.selectnumber]['answer']}\n```",inline=False)
             await self.interaction.response.edit_message(embed=embed, view=EditModeSelectView(self.title,self.selectnumber,missonmode))
