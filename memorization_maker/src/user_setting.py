@@ -24,6 +24,7 @@ class User:
         #listを1 2 3 ・・・と番号を振る
         questions_number_list:list = [i for i in range(len(missondata["questions"]))]
         #listをシャッフル
+        random.shuffle(questions_number_list)
         self.user_data[num_id].setdefault(sharecode,{
             "title":missondata["title"],
             "questions_number_list":questions_number_list,
