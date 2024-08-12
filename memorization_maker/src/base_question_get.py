@@ -29,13 +29,17 @@ class Get:
         
     async def check_answer(self,title:str,select_len_number:int,answer:str,text_question_number:int = None):
         self.base_data:dict = await self.rw.load_base()
-        sharecode = await self.share.get_sharecode(title)
+        
+        _sharecode = await self.share.get_sharecode(title)
+        print(_sharecode)
+        sharecode = str(_sharecode)
+        print(self.base_data["memorization"][sharecode])
         data = self.base_data["memorization"][sharecode]["questions"][select_len_number]
         mode = data["mode"]
         if mode == 0:
             return data["answer"] == answer
         elif mode == 1:
-            return data[int(data["answer"])-1] == answer
+            return data["select"][int(data["answer"])] == answer
         elif mode == 2:
             return answer == data["answer"][text_question_number]
         

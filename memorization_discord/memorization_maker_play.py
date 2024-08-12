@@ -25,7 +25,7 @@ class ChoicePlayMode(discord.ui.View):
         await self.init_set(str(interaction.user.id))
         questions_user = await self.user.get_mission(str(interaction.user.id),self.sharecode)
         questions = await self.share.get_sharedata(self.sharecode)
-        question_number_list = questions_user["questions_number_list"]
+        question_number_list = questions_user["questions_numberMemorizationSelectAnswer_list"]
         question_list = []
         for num in question_number_list:
             question_list.append(questions["questions"][num])
@@ -43,8 +43,7 @@ class ChoicePlayMode(discord.ui.View):
         await MemorizationPlay(interaction,self.sharecode,2,question_number_list,0,[]).main_start()
 
 class MemorizationAnswer(discord.ui.View):
-    def __init__(self, interaction:discord.Interaction,sharecode:int,playmode:int,question_list:list,score:int,miss_list:list,counts:int=0):
-        self.interaction = interaction
+    def __init__(self,sharecode:int,playmode:int,question_list:list,score:int,miss_list:list,counts:int=0):
         self.sharecode = sharecode
         self.playmode = playmode
         self.question_list = question_list
@@ -89,10 +88,11 @@ class MemorizationAnswerModal(discord.ui.Modal,title="問題回答"):
     
     async def on_submit(self, interaction: discord.Interaction):
         datas = await self.share.get_sharedata(self.sharecode)
+        title = datas["title"]
         embed = discord.Embed(title=f"{self.counts+1}問目",color=0x00ff00)
         embed.add_field(name="問題",value=self.question_list[self.counts]["question"],inline=False)
         if self.question_list[self.counts]["mode"] == 0:
-            ch = await self.gets.check_answer(str(interaction.user.id),self.sharecode,self.counts,self.input.value)
+            ch = await self.gets.check_answer(title,self.counts,self.input.value)
             embed.add_field(name="回答",value=self.question_list[self.counts]["answer"],inline=False)
             embed.add_field(name="あなたの解答",value=self.input.value,inline=False)
             if ch:
@@ -104,35 +104,35 @@ class MemorizationAnswerModal(discord.ui.Modal,title="問題回答"):
             embed.add_field(name="結果",value=view_ch,inline=False)
         elif self.question_list[self.counts]["mode"] == 2:
             awnsers_ch = []
+            ch_an = 0
             for i,num in enumerate(self.inputs):
-                datas = await self.share.get_sharedata(self.sharecode)
-                title = datas["title"]
-                ch = await self.gets.check_answer(str(interaction.user.id),title,self.counts,str(i.value),num)
+                ch = await self.gets.check_answer(title,self.counts,str(num.value),i)
                 awnsers_ch.append(ch)
-                embed.add_field(name="回答",value=self.question_list[self.counts]["answer"][num],inline=False)
+                embed.add_field(name="回答",value=self.question_list[self.counts]["answer"][i],inline=False)
                 if ch:
                     view_ch = "正解"
                     self.score += 1
                 else:
                     view_ch = "不正解"
-                    self.miss_list.append(self.counts)
-                embed.add_field(name="あなたの解答",value=i.value,inline=False)
+                    ch_an = 1
+                    
+                embed.add_field(name="あなたの解答",value=num.value,inline=False)
                 embed.add_field(name="結果",value=view_ch,inline=False)
+            if ch_an:
+                self.miss_list.append(self.counts)
         await interaction.response.edit_message(embed=embed,
                                                 view=Contenu(
-                                                    interaction,
                                                     self.sharecode,
                                                     self.playmode,
                                                     self.question_list,
                                                     self.score,
                                                     self.miss_list,
-                                                    self.counts+1
+                                                    self.counts
                                                     )
                                                 )
         
 class Contenu(discord.ui.View):
-    def __init__(self, interaction:discord.Interaction,sharecode:int,playmode:int,question_list:list,score:int,miss_list:list,counts):
-        self.interaction = interaction
+    def __init__(self,sharecode:int,playmode:int,question_list:list,score:int,miss_list:list,counts):
         self.sharecode = sharecode
         self.playmode = playmode
         self.question_list = question_list
@@ -154,8 +154,7 @@ class Contenu(discord.ui.View):
             ).main_start()
 
 class MemorizationSelectAnswer(discord.ui.View):
-    def __init__(self, interaction:discord.Interaction,sharecode:int,playmode:int,question_list:list,score:int,miss_list:list,counts:int=0):
-        self.interaction = interaction
+    def __init__(self,sharecode:int,playmode:int,question_list:list,score:int,miss_list:list,counts:int=0):
         self.sharecode = sharecode
         self.playmode = playmode
         self.question_list = question_list
@@ -164,12 +163,14 @@ class MemorizationSelectAnswer(discord.ui.View):
         self.counts = counts
         self.user = User()
         self.gets = Get()
+        self.share = Share()
         super().__init__()
 
-    async def check_choice(self,num):
+    async def check_choice(self,num,interaction:discord.Interaction):
         select = self.question_list[self.counts]["select"]
-        title = await self.share.get_sharedata(self.sharecode)["title"]
-        ch = await self.gets.check_answer(str(self.interaction.user.id),title,self.counts,select[num-1])
+        data = await self.share.get_sharedata(self.sharecode)
+        title = data["title"]
+        ch = await self.gets.check_answer(title,self.counts,select[num])
         embed = discord.Embed(title=f"{self.counts+1}問目",color=0x00ff00)
         embed.add_field(name="問題",value=self.question_list[self.counts]["question"],inline=False)
         embed.add_field(name="回答",value=self.question_list[self.counts]["answer"],inline=False)
@@ -181,30 +182,29 @@ class MemorizationSelectAnswer(discord.ui.View):
             view_ch = "不正解"
             self.miss_list.append(self.counts)
         embed.add_field(name="結果",value=view_ch,inline=False)
-        await self.interaction.response.edit_message(embed=embed,
+        await interaction.response.edit_message(embed=embed,
                                                      view=Contenu(
-                                                         self.interaction,
                                                          self.sharecode,
                                                          self.playmode,
                                                          self.question_list,
                                                          self.score,
                                                          self.miss_list,
-                                                         self.counts+1
+                                                         self.counts
                                                          )
                                                      )
     
     @discord.ui.button(label="選択肢①", style=discord.ButtonStyle.green)
     async def choice1(self, interaction: discord.Interaction, _: discord.ui.Button):
-        await self.check_choice(1)
+        await self.check_choice(1,interaction)
     @discord.ui.button(label="選択肢②", style=discord.ButtonStyle.green)
     async def choice2(self, interaction: discord.Interaction, _: discord.ui.Button):
-        await self.check_choice(2)
+        await self.check_choice(2,interaction)
     @discord.ui.button(label="選択肢③", style=discord.ButtonStyle.green)
     async def choice3(self, interaction: discord.Interaction, _: discord.ui.Button):
-        await self.check_choice(3)
+        await self.check_choice(3,interaction)
     @discord.ui.button(label="選択肢④", style=discord.ButtonStyle.green)
     async def choice4(self, interaction: discord.Interaction, _: discord.ui.Button):
-        await self.check_choice(4)
+        await self.check_choice(4,interaction)
 
 class MemorizationPlay:
     def __init__(self, interaction:discord.Interaction,sharecode:int,playmode:int,question_list:list,score:int,miss_list:list,counts:int=0):
@@ -219,7 +219,11 @@ class MemorizationPlay:
         self.gets = Get()
     
     async def main_start(self):
-        if self.counts == len(self.question_list):
+        print("-----------------")
+        print(self.counts)
+        print(len(self.question_list))
+        print("-----------------")
+        if self.counts >= len(self.question_list):
             await self.user.user_data_miss(str(self.interaction.user.id),self.sharecode,self.miss_list)
             await self.user.user_data_score(str(self.interaction.user.id),self.sharecode,self.score)
             await self.user.user_data_shuffle(str(self.interaction.user.id),self.sharecode)
@@ -228,17 +232,18 @@ class MemorizationPlay:
             embed.add_field(name="間違った問題",value="",inline=False)
             if len(self.miss_list) > 0 and len(self.miss_list) < 20:
                 for miss_num in self.miss_list:
-                    embed.add_field(name=f"{miss_num+1}問目:{self.question_list[miss_num]['question']}",value=self.question_list[miss_num]["anwer"],inline=False)
+                    embed.add_field(name=f"{miss_num+1}問目:{self.question_list[miss_num]['question']}",value=self.question_list[miss_num]["answer"],inline=False)
                 return await self.interaction.response.edit_message(embed=embed,view=None)
-            elif len(self.miss_list) >= 20:
+            elif len(self.miss_list) > 20:
                 return await self.interaction.response.edit_message(embed=embed,view=MemorizationMissView(self.sharecode,self.miss_list))
+        if len(self.question_list) == 0:
+            return await self.interaction.response.edit_message(content="問題がありません",view=None,embed=None)
         embed = discord.Embed(title="問題",color=0x00ff00)
         question = self.question_list[self.counts]["question"]
         embed.add_field(name="問題",value=question,inline=False)
         if self.question_list[self.counts]["mode"] == 0 or self.question_list[self.counts]["mode"] == 2:
             await self.interaction.response.edit_message(embed=embed,
                                                          view=MemorizationAnswer(
-                                                             self.interaction,
                                                              self.sharecode,
                                                              self.playmode,
                                                              self.question_list,
@@ -253,7 +258,6 @@ class MemorizationPlay:
                 embed.add_field(name=f"選択肢{num+1}",value=selects,inline=False)
             await self.interaction.response.edit_message(embed=embed,
                                                          view=MemorizationSelectAnswer(
-                                                             self.interaction,
                                                              self.sharecode,
                                                              self.playmode,
                                                              self.question_list,
