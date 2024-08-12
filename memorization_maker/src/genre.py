@@ -37,7 +37,8 @@ class Genre:
     async def add_genre(self,user_id:str,genre_title:str,sharecode:int):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        if genre_title not in self.user_data["genre"][num_id].keys():return False
+        if genre_title not in self.user_data["genre"][num_id].keys():
+            await self.make_genre(user_id,genre_title)
         self.user_data["genre"][num_id][genre_title]["sharecodes"].append(sharecode)
         await self.rw.write_user(self.user_data)
         return True

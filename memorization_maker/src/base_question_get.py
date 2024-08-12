@@ -26,7 +26,7 @@ class Get:
         self.base_data:dict = await self.rw.load_base()
         sharecode = await self.share.get_sharecode(title)
         return self.base_data["memorization"][sharecode]
-    
+        
     async def check_answer(self,title:str,select_len_number:int,answer:str,text_question_number:int = None):
         self.base_data:dict = await self.rw.load_base()
         sharecode = await self.share.get_sharecode(title)

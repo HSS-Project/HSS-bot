@@ -78,7 +78,6 @@ class SelectTitleView(discord.ui.View):
     def __init__(self,genres:list,titles:list,modes:int):
         super().__init__()
         self.modes = modes
-        print(titles)
         #25個ずつに分ける
         self.options_1 = []
         self.options_2 = []

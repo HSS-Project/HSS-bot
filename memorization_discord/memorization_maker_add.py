@@ -216,35 +216,41 @@ class OwnerAddModal(discord.ui.Modal, title="オーナー追加"):
         self.add_item(self.owner_input)
     async def on_submit(self, interaction: discord.Interaction):
         owner = OwnerManager()
-        data = self.owner_input.value
+        data = int(self.owner_input.value) if self.owner_input.value.isdigit() else str(self.owner_input.value)
         #型判別 int or str
+        ownerid_list = await owner.owner_list(str(interaction.user.id),self.title)
+        guild = interaction.guild
         if isinstance(data,int):
+            try:
+                member = guild.get_member(data)
+            except:
+                return await interaction.response.send_message("存在しないユーザーIDです",ephemeral=True)
+            if data in ownerid_list:return await interaction.response.send_message("既にオーナーに追加されています",ephemeral=True)
             await owner.owner_add(str(interaction.user.id),self.title,str(data))
+            await self.genre.add_genre(str(data),self.title,"default")
         elif isinstance(data,str):
-            
-            await owner.owner_add(str(interaction.user.id),self.title,str(data))
-            
-        await owner.owner_add(str(interaction.user.id),self.title,str(self.owner_input.value))
-        from memorization_discord.memorization_control import MemorizationControlView
+            try:
+                member = discord.utils.find(lambda m: m.name == str(data), guild.members)
+                userid = str(member.id)
+            except:
+                return await interaction.response.send_message("存在しないユーザー名です",ephemeral=True)
+            if userid in ownerid_list:return await interaction.response.send_message("既にオーナーに追加されています",ephemeral=True)
+            await owner.owner_add(str(interaction.user.id),self.title,str(userid))
+            await self.genre.add_genre(str(userid),self.title,"default")
 
-        embed = discord.Embed(title="問題追加", color=0x00ff00)
-        genre_list = await self.genre.get_genres_name(str(interaction.user.id))
-        await interaction.response.edit_message(embed=embed,view=MemorizationControlView(self.title,genre_list))
+        await interaction.response.send_message(content=f"追加しました",ephemeral=True)
 
 class OwnerDeleteSelect(discord.ui.Select):
-    def __init__(self, intraction:discord.Interaction,title,owners:list,usernames:list):
+    def __init__(self, title, owner_id_list, owner_name):
+        options = [
+            discord.SelectOption(label=name, value=str(owner_id))
+            for owner_id, name in zip(owner_id_list, owner_name)
+        ]
+        super().__init__(placeholder="削除する管理者を選択してください", min_values=1, max_values=1, options=options)
         self.title = title
-        self.get = Get()
-        self.genre = Genre()
-        self.options = []
-        for owner in owners:
-            if owner != str(intraction.user.id):
-                self.options.append(discord.SelectOption(label=usernames,value=owner))
-        super().__init__(placeholder="オーナーを選択してください", options=self.options, row=1, min_values=1, max_values=1)
+
     async def callback(self, interaction: discord.Interaction):
         owner = OwnerManager()
         from memorization_discord.memorization_control import MemorizationControlView
         await owner.owmer_remove(str(interaction.user.id),self.title,self.values[0])
-        embed = discord.Embed(title="問題追加", color=0x00ff00)
-        genre_list = await self.genre.get_genres_name(str(interaction.user.id))
-        await interaction.response.edit_message(embed=embed,view=MemorizationControlView(self.title,genre_list))
+        await interaction.response.edit_message(content="削除しました",view=None)
