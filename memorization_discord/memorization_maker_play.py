@@ -26,7 +26,7 @@ async def make_answer(interaction: discord.Interaction,sharecode,question_list,c
         embed.add_field(name="あなたの解答",value=input,inline=False)
         embed.add_field(name="結果",value=view_ch,inline=False)
     elif question_list[counts]["mode"] == 2:
-        ch = 0
+        change = 0
         for i,num in enumerate(input):
             ch = await Get().check_answer(title,questions_number,num.value,i)
             if ch:
@@ -34,10 +34,10 @@ async def make_answer(interaction: discord.Interaction,sharecode,question_list,c
                 score += 1
             else:
                 view_ch = "不正解"
-                ch = 1
+                change = 1
             embed.add_field(name="あなたの解答",value=num.value,inline=False)
             embed.add_field(name="結果",value=view_ch,inline=False)
-        if ch:
+        if change:
             miss_list.append(questions_number)
     await interaction.response.edit_message(embed=embed,view=Contenu(sharecode,playmode,question_list,score,miss_list,counts))
 
@@ -74,7 +74,7 @@ class ChoicePlayMode(discord.ui.View):
             question_list.append(questions["questions"][num])
         if len(question_list) == 0:
             return await interaction.response.edit_message(content="ミス問題がありません",view=None,embed=None)
-        await MemorizationPlay(interaction,self.sharecode,2,question_number_list,0,[]).main_start()
+        await MemorizationPlay(interaction,self.sharecode,2,question_list,0,[]).main_start()
 
 class MemorizationAnswer(discord.ui.View):
     def __init__(self,sharecode:int,playmode:int,question_list:list,score:int,miss_list:list,counts:int=0):
@@ -198,7 +198,11 @@ class MemorizationPlay:
         if len(self.question_list) == 0:
             return await self.interaction.response.edit_message(content="問題がありません",view=None,embed=None)
         embed = discord.Embed(title="問題",color=0x00ff00)
-        question = self.question_list[self.counts]["question"]
+        try:
+            question = self.question_list[self.counts]["question"]
+        except Exception as e:
+            print(e)
+            return await self.interaction.response.edit_message(content="エラーのため処理を強制終了します",view=None,embed=None)
         embed.add_field(name="問題",value=question,inline=False)
         if self.question_list[self.counts]["mode"] == 0 or self.question_list[self.counts]["mode"] == 2:
             view=MemorizationAnswer(self.sharecode,self.playmode,self.question_list,self.score,self.miss_list,self.counts)            
