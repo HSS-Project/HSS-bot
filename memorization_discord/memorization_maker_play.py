@@ -174,7 +174,11 @@ class MemorizationPlay:
         self.gets = Get()
     
     async def main_start(self):
-        if self.counts == len(self.question_list):
+        print("1 -----------------")
+        print(self.counts)
+        print(len(self.question_list))
+        print("\n\n")
+        if int(self.counts) == len(self.question_list):
             await self.user.user_data_miss(str(self.interaction.user.id),self.sharecode,self.miss_list)
             await self.user.user_data_score(str(self.interaction.user.id),self.sharecode,self.score)
             await self.user.user_data_shuffle(str(self.interaction.user.id),self.sharecode)
@@ -198,11 +202,11 @@ class MemorizationPlay:
         if len(self.question_list) == 0:
             return await self.interaction.response.edit_message(content="問題がありません",view=None,embed=None)
         embed = discord.Embed(title="問題",color=0x00ff00)
-        try:
-            question = self.question_list[self.counts]["question"]
-        except Exception as e:
-            print(e)
-            return await self.interaction.response.edit_message(content="エラーのため処理を強制終了します",view=None,embed=None)
+        print("2 -----------------")
+        print(self.counts)
+        print(len(self.question_list))
+        print("\n\n-----------------\n")
+        question = self.question_list[self.counts]["question"]
         embed.add_field(name="問題",value=question,inline=False)
         if self.question_list[self.counts]["mode"] == 0 or self.question_list[self.counts]["mode"] == 2:
             view=MemorizationAnswer(self.sharecode,self.playmode,self.question_list,self.score,self.miss_list,self.counts)            

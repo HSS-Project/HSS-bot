@@ -112,6 +112,12 @@ class MemorizationAddSlect(discord.ui.Modal,title="選択肢追加"):
             self.add_item(input_item)
     async def on_submit(self, interaction: discord.Interaction):
         from memorization_discord.memorization_control import MemorizationControlView
+        #選択肢が同じものがあった場合はエラー
+        if self.mode == 0:
+            select_list = []
+            for input_item in self.inputs:
+                select_list.append(str(input_item.value))
+            if len(select_list) != len(set(select_list)):return await interaction.response.send_message("選択肢が重複しています",ephemeral=True)
         select_list = []
         for input_item in self.inputs:
             select_list.append(str(input_item.value))
@@ -188,10 +194,9 @@ class MemorizationAddTextModal(discord.ui.Modal, title="文章問題追加"):
         share = Share()
         question = str(self.inputs[0].value)
         sharecode = await share.get_sharecode(self.title)
-        genre_list = await self.genre.get_genres_name(str(interaction.user.id))
         ch = await add.add_misson_text(sharecode,question)
         if ch is False:return await interaction.response.send_message("問題の追加に失敗しました",ephemeral=True)
-        return await interaction.response.edit_message(content="",view=MemorizationControlView(self.title,genre_list))
+        await interaction.response.send_message("追加しました",ephemeral=True)
     
 class MemorizationMakeGenre(discord.ui.Modal, title="ジャンル作成"):
     def __init__(self):
@@ -211,6 +216,7 @@ class OwnerAddModal(discord.ui.Modal, title="オーナー追加"):
     def __init__(self, title):
         self.title = title
         self.genre = Genre()
+        self.share = Share()
         self.owner_input = discord.ui.TextInput(label="ユーザー名またはユーザーIDを入力してください", style=discord.TextStyle.short)
         super().__init__()
         self.add_item(self.owner_input)
@@ -225,19 +231,21 @@ class OwnerAddModal(discord.ui.Modal, title="オーナー追加"):
                 member = guild.get_member(data)
             except:
                 return await interaction.response.send_message("存在しないユーザーIDです",ephemeral=True)
-            if data in ownerid_list:return await interaction.response.send_message("既にオーナーに追加されています",ephemeral=True)
+            if str(data) in ownerid_list:return await interaction.response.send_message("既に追加されています",ephemeral=True)
             await owner.owner_add(str(interaction.user.id),self.title,str(data))
-            await self.genre.add_genre(str(data),self.title,"default")
+            #問題の共有コードを追加
+            sharecode = await self.share.get_sharecode(self.title)
+            await self.genre.add_genre(str(self.owner_input.value),"default",int(sharecode))
         elif isinstance(data,str):
             try:
                 member = discord.utils.find(lambda m: m.name == str(data), guild.members)
                 userid = str(member.id)
             except:
                 return await interaction.response.send_message("存在しないユーザー名です",ephemeral=True)
-            if userid in ownerid_list:return await interaction.response.send_message("既にオーナーに追加されています",ephemeral=True)
+            if userid in ownerid_list:return await interaction.response.send_message("既に追加されています",ephemeral=True)
             await owner.owner_add(str(interaction.user.id),self.title,str(userid))
-            await self.genre.add_genre(str(userid),self.title,"default")
-
+            sharecode = await self.share.get_sharecode(self.title)
+            await self.genre.add_genre(userid,"default",int(sharecode))
         await interaction.response.send_message(content=f"追加しました",ephemeral=True)
 
 class OwnerDeleteSelect(discord.ui.Select):
