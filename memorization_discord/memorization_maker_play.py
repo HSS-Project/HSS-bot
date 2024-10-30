@@ -202,10 +202,6 @@ class MemorizationPlay:
         if len(self.question_list) == 0:
             return await self.interaction.response.edit_message(content="問題がありません",view=None,embed=None)
         embed = discord.Embed(title="問題",color=0x00ff00)
-        print("2 -----------------")
-        print(self.counts)
-        print(len(self.question_list))
-        print("\n\n-----------------\n")
         question = self.question_list[self.counts]["question"]
         embed.add_field(name="問題",value=question,inline=False)
         if self.question_list[self.counts]["mode"] == 0 or self.question_list[self.counts]["mode"] == 2:

@@ -16,6 +16,8 @@ class Genre:
             self.user_data["genre"] = {}
         def_number = await self.share.make_sharecode(1)
         self.user_data["genre"].setdefault(num_id,{"default":{"sharecodes":[],"share":def_number}})
+        voca_number = await self.share.make_sharecode(1)
+        self.user_data["genre"][num_id].setdefault("vocabulary",{"sharecodes":[],"share":voca_number})
         sharecode = await self.share.make_sharecode(1)
         self.user_data["genre"][num_id].setdefault(genre_title,{"sharecodes":[],"share":sharecode})
         await self.rw.write_user(self.user_data)
@@ -25,7 +27,7 @@ class Genre:
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
         if genre_title not in self.user_data["genre"][num_id].keys():return False
-        if genre_title == "defult":return False
+        if genre_title == "defult":await self.make_genre(user_id,"default")
         #デフォルトに移動 もし100個以上ある場合はエラー
         for sharecode in self.user_data["genre"][num_id][genre_title]["sharecodes"]:
             if len(self.user_data["genre"][num_id]["default"]["sharecodes"]) >= 100:return False
@@ -37,8 +39,7 @@ class Genre:
     async def add_genre(self,user_id:str,genre_title:str,sharecode:int):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        if num_id not in self.user_data.keys():
-            await self.make_genre(user_id,"default")
+        if num_id not in self.user_data.keys():await self.make_genre(user_id,"default")
         self.user_data["genre"][num_id][genre_title]["sharecodes"].append(sharecode)
         await self.rw.write_user(self.user_data)
         return True

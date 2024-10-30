@@ -27,6 +27,15 @@ class Share:
                             if sharecode == sharecodes:
                                 continue
                 return sharecode
+        elif modes == 2:
+            while True:
+                sharecode = random.randint(10000000,99999999)
+                for numid in self.user_data["vocabularies"].keys():
+                    for genre in self.user_data["vocabularies"][numid].keys():
+                        for sharecodes in self.user_data["vocabularies"][numid][genre]["sharecodes"]:
+                            if sharecode == sharecodes:
+                                continue
+                return sharecode
         
     async def get_sharecode(self,title:str):
         self.base_data:dict = await self.rw.load_base()

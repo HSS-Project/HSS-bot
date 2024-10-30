@@ -78,7 +78,7 @@ class Add:
         self.base_data["memorization"][sharecode]["questions"].append({"question":text,"answer":answers, "mode":2})
         await self.rw.write_base(self.base_data)
         
-    async def add_misson_in_Excel(self,_sharecode,text:str,excelfile:openpyxl.Workbook):
+    async def add_misson_in_Excel(self,_sharecode,excelfile:openpyxl.Workbook):
         self.base_data:dict = await self.rw.load_base()
         sharecode = str(_sharecode)
         sheet = excelfile.active
@@ -112,7 +112,7 @@ class Add:
                         answer_num = select.index(answer) + 1
                     self.base_data["memorization"][sharecode]["questions"].append({"question":question,"answer":answer_num,"mode":1,"select":select})
             elif row[0] and int(row[2]) == 2:
-                text, answers = await self.replace_parentheses(text)
+                text, answers = await self.replace_parentheses(row[0])
                 if text is False or answers is False:return False
                 self.base_data["memorization"][sharecode]["questions"].append({"question":text,"answer":answers, "mode":2})
             

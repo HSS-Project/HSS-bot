@@ -3,7 +3,7 @@ from discord import app_commands
 import discord
 import memorization_discord.memorization_maker_add as maker_add
 import memorization_discord.select_title as select_title
-from memorization_maker.inc.package import Genre,Get
+from memorization_maker.inc.package import Genre,Get,Share,Add
 
 class MemorizationCog(commands.Cog):
     def __init__(self,bot):
@@ -15,7 +15,15 @@ class MemorizationCog(commands.Cog):
     @memorization.command(name="add", description="問題を追加します。")
     async def add(self, interaction:discord.Interaction):
         await interaction.response.send_modal(maker_add.TitleModal())
-        
+    
+    @memorization.command(name="add_excel", description="エクセルファイルから問題を追加します。")
+    async def add_excel(self, interaction:discord.Interaction,excel:discord.File):
+        await interaction.response.send_message("エクセルファイルを読み込んでいます。", ephemeral=True)
+        _sharecode = await Share().make_sharecode(str(interaction.user.id))
+        await Add().add_misson_in_Excel(_sharecode,excel)
+        await Genre().add_genre(str(interaction.user.id),"default",_sharecode)
+        await interaction.response.send_message("追加しました。", ephemeral=True)
+    
     @memorization.command(name="edit", description="問題を編集します。")
     async def edit(self, interaction:discord.Interaction):
         embed = discord.Embed(title="選択してください",description="")
