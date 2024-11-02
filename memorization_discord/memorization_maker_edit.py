@@ -99,4 +99,3 @@ class EditmModal(discord.ui.Modal,title="編集"):
             answer = datas["questions"][self.select_number]["answer"]
             await Edit().edit_misson_select(self.title,question,answer,select,self.select_number)
         await interaction.response.edit_message(content="編集しました。",embed=None, view=None)
-        

@@ -15,8 +15,7 @@ class Share:
             while True:
                 sharecode = random.randint(100000,999999)
                 for sharecodes in self.base_data["memorization"].keys():
-                    if sharecode == sharecodes:
-                        continue
+                    if sharecode == sharecodes:continue
                 return sharecode
         elif modes == 1:
             while True:
@@ -24,17 +23,7 @@ class Share:
                 for numid in self.user_data["genre"].keys():
                     for genre in self.user_data["genre"][numid].keys():
                         for sharecodes in self.user_data["genre"][numid][genre]["sharecodes"]:
-                            if sharecode == sharecodes:
-                                continue
-                return sharecode
-        elif modes == 2:
-            while True:
-                sharecode = random.randint(10000000,99999999)
-                for numid in self.user_data["vocabularies"].keys():
-                    for genre in self.user_data["vocabularies"][numid].keys():
-                        for sharecodes in self.user_data["vocabularies"][numid][genre]["sharecodes"]:
-                            if sharecode == sharecodes:
-                                continue
+                            if sharecode == sharecodes:continue
                 return sharecode
         
     async def get_sharecode(self,title:str):

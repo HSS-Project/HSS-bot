@@ -25,6 +25,10 @@ async def make_answer(interaction: discord.Interaction,sharecode,question_list,c
             miss_list.append(questions_number)
         embed.add_field(name="あなたの解答",value=input,inline=False)
         embed.add_field(name="結果",value=view_ch,inline=False)
+        if question_list[counts]["mode"] == 0:
+            embed.add_field(name="正解",value=datas["questions"][questions_number]["answer"],inline=False)
+        elif question_list[counts]["mode"] == 1:
+            embed.add_field(name="正解",value=datas["questions"][questions_number]["select"][datas["questions"][questions_number]["answer"]],inline=False)
     elif question_list[counts]["mode"] == 2:
         change = 0
         for i,num in enumerate(input):
@@ -37,6 +41,7 @@ async def make_answer(interaction: discord.Interaction,sharecode,question_list,c
                 change = 1
             embed.add_field(name="あなたの解答",value=num.value,inline=False)
             embed.add_field(name="結果",value=view_ch,inline=False)
+            embed.add_field(name="正解",value=datas["questions"][questions_number]["answer"][i],inline=False)
         if change:
             miss_list.append(questions_number)
     await interaction.response.edit_message(embed=embed,view=Contenu(sharecode,playmode,question_list,score,miss_list,counts))
@@ -150,16 +155,16 @@ class MemorizationSelectAnswer(discord.ui.View):
     
     @discord.ui.button(label="選択肢①", style=discord.ButtonStyle.green)
     async def choice1(self, interaction: discord.Interaction, _: discord.ui.Button):
-        await make_answer(interaction,self.sharecode,self.question_list,self.counts,self.question_list[self.counts]["select"][1],self.playmode,self.score,self.miss_list)
+        await make_answer(interaction,self.sharecode,self.question_list,self.counts,self.question_list[self.counts]["select"][0],self.playmode,self.score,self.miss_list)
     @discord.ui.button(label="選択肢②", style=discord.ButtonStyle.green)
     async def choice2(self, interaction: discord.Interaction, _: discord.ui.Button):
-        await make_answer(interaction,self.sharecode,self.question_list,self.counts,self.question_list[self.counts]["select"][2],self.playmode,self.score,self.miss_list)
+        await make_answer(interaction,self.sharecode,self.question_list,self.counts,self.question_list[self.counts]["select"][1],self.playmode,self.score,self.miss_list)
     @discord.ui.button(label="選択肢③", style=discord.ButtonStyle.green)
     async def choice3(self, interaction: discord.Interaction, _: discord.ui.Button):
-        await make_answer(interaction,self.sharecode,self.question_list,self.counts,self.question_list[self.counts]["select"][3],self.playmode,self.score,self.miss_list)
+        await make_answer(interaction,self.sharecode,self.question_list,self.counts,self.question_list[self.counts]["select"][2],self.playmode,self.score,self.miss_list)
     @discord.ui.button(label="選択肢④", style=discord.ButtonStyle.green)
     async def choice4(self, interaction: discord.Interaction, _: discord.ui.Button):
-        await make_answer(interaction,self.sharecode,self.question_list,self.counts,self.question_list[self.counts]["select"][4],self.playmode,self.score,self.miss_list)
+        await make_answer(interaction,self.sharecode,self.question_list,self.counts,self.question_list[self.counts]["select"][3],self.playmode,self.score,self.miss_list)
 
 class MemorizationPlay:
     def __init__(self, interaction:discord.Interaction,sharecode:int,playmode:int,question_list:list,score:int,miss_list:list,counts:int=0):
@@ -174,10 +179,6 @@ class MemorizationPlay:
         self.gets = Get()
     
     async def main_start(self):
-        print("1 -----------------")
-        print(self.counts)
-        print(len(self.question_list))
-        print("\n\n")
         if int(self.counts) == len(self.question_list):
             await self.user.user_data_miss(str(self.interaction.user.id),self.sharecode,self.miss_list)
             await self.user.user_data_score(str(self.interaction.user.id),self.sharecode,self.score)

@@ -70,8 +70,6 @@ class MemorizationAddChangeSelectMode(discord.ui.View):
         
     @discord.ui.button(label="選択肢を追加", style=discord.ButtonStyle.green)
     async def add(self, interaction: discord.Interaction, _: discord.ui.Button):
-        print(self.title)
-        print(self.question)
         await interaction.response.send_modal(MemorizationAddSlect(self.title,self.question,0))
 
     @discord.ui.button(label="選択肢自動追加", style=discord.ButtonStyle.red)
@@ -189,7 +187,6 @@ class MemorizationAddTextModal(discord.ui.Modal, title="文章問題追加"):
             self.add_item(input_item)
         
     async def on_submit(self, interaction: discord.Interaction):
-        from memorization_discord.memorization_control import MemorizationControlView
         add = Add()
         share = Share()
         question = str(self.inputs[0].value)
@@ -259,6 +256,5 @@ class OwnerDeleteSelect(discord.ui.Select):
 
     async def callback(self, interaction: discord.Interaction):
         owner = OwnerManager()
-        from memorization_discord.memorization_control import MemorizationControlView
         await owner.owmer_remove(str(interaction.user.id),self.title,self.values[0])
         await interaction.response.edit_message(content="削除しました",view=None)

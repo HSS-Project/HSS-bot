@@ -3,13 +3,14 @@ from discord import app_commands
 import discord
 import memorization_discord.memorization_maker_add as maker_add
 import memorization_discord.select_title as select_title
-from memorization_maker.inc.package import Genre,Get,Share,Add
+from memorization_maker.inc.package import Genre,Get,Share,Add,Vocabulary
 
 class MemorizationCog(commands.Cog):
     def __init__(self,bot):
         self.bot:discord.Client = bot
         self.genres = Genre()
         self.get = Get()
+        
     memorization = app_commands.Group(name="memorization", description="暗記メーカ")
 
     @memorization.command(name="add", description="問題を追加します。")
@@ -17,13 +18,21 @@ class MemorizationCog(commands.Cog):
         await interaction.response.send_modal(maker_add.TitleModal())
     
     @memorization.command(name="add_excel", description="エクセルファイルから問題を追加します。")
-    async def add_excel(self, interaction:discord.Interaction,excel:discord.File):
+    async def add_excel(self, interaction:discord.Interaction,excel:discord.Attachment):
         await interaction.response.send_message("エクセルファイルを読み込んでいます。", ephemeral=True)
         _sharecode = await Share().make_sharecode(str(interaction.user.id))
         await Add().add_misson_in_Excel(_sharecode,excel)
         await Genre().add_genre(str(interaction.user.id),"default",_sharecode)
         await interaction.response.send_message("追加しました。", ephemeral=True)
     
+    @memorization.command(name="add_vocabulary", description="単語帳を追加します。")
+    async def add_vocabulary(self, interaction:discord.Interaction,title:str,start_number:int,end_number:int):
+        self.vocabulary = Vocabulary()
+        if end_number - start_number > 100:
+            return await interaction.response.send_message("100問までです。", ephemeral=True)
+        shrecode = await self.vocabulary.make_vocabulary(str(interaction.user.id),title,start_number,end_number)
+        await interaction.response.send_message(f"追加しました。共有コードは{shrecode}です。", ephemeral=True)
+
     @memorization.command(name="edit", description="問題を編集します。")
     async def edit(self, interaction:discord.Interaction):
         embed = discord.Embed(title="選択してください",description="")
