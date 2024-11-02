@@ -29,13 +29,13 @@ class bot_(commands.Cog):
     @app_commands.command(name="register", description="学校へのアクセス権を追加します。")
     async def register(self, interaction:discord.Interaction):
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="アクセスする",style=discord.ButtonStyle.url, url="https://hss.aknet.tech/application/6424788515065693184"))
+        view.add_item(discord.ui.Button(label="アクセスする",style=discord.ButtonStyle.url, url="https://hss.akikaki.net/application/6424788515065693184"))
         await interaction.response.send_message(embed=discord.Embed(title="登録", description="下のボタンから、Botを学校に追加してください。"), view=view, ephemeral=True)
 
     @app_commands.command(name="dashboard",description="ダッシュボードにアクセスします。")
     async def dashboard(self, interaction: discord.Interaction):
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="アクセスする",style=discord.ButtonStyle.url, url="https://hss.aknet.tech/dashboard"))
+        view.add_item(discord.ui.Button(label="アクセスする",style=discord.ButtonStyle.url, url="https://hss.akikaki.net/dashboard"))
         await interaction.response.send_message(embed=discord.Embed(title="ダッシュボード！", description=""), view=view, ephemeral=True)
         
     @app_commands.command(name="help", description="ヘルプを表示します。")

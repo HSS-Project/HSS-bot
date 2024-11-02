@@ -341,7 +341,6 @@ class Timed_Notifications(commands.Cog):
         view = discord.ui.View()
         view.add_item(SchoolSelect(interaction.user.id, 0))
         await interaction.response.send_message("学校を選択してください", view=view,ephemeral=True)
-
     @app_commands.command()
     async def time_notifications_remove(self,interection:discord.Interaction):
         """指定した時間にwebhookを使用して明日の日程を送信する機能の削除です"""
@@ -371,14 +370,14 @@ class Timed_Notifications(commands.Cog):
                 if timeline == []:
                     timeline = default_timeline
                 embed = discord.Embed(title=f"{school.get_data()['details']['name']} {data['grade']}年{data['class']}組", description=f"{weekday} 明日の日程です", color=0x00ff00)
-                for i in range(len(timeline)):
+                for i,v in enumerate(timeline):
                     if timeline[i]['place'] == "初期値":
                         place = "未設定"
                     else:
                         place = timeline[i]['place']
                     embed.add_field(name=f"{i+1}時間目:{timeline[i]['name']}",value=place,inline=False)
                 embed.add_field(name="〜〜宿題〜〜",value="",inline=False)
-                for i in enumerate(homework):
+                for i,v in enumerate(homework):
                     embed.add_field(name=f"ーーー{homework[i]['name']}ーーーー",value="",inline=False)
                     embed.add_field(name="時間かかるか",value="はい" if homework[i]['istooBig'] == True else "いいえ",inline=False)
                     embed.add_field(name="ページ",value=f"{homework[i]['page']['start']}〜{homework[i]['page']['end']}",inline=False)
