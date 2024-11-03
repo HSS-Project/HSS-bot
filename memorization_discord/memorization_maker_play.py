@@ -177,33 +177,40 @@ class MemorizationPlay:
         self.counts = counts
         self.user = User()
         self.gets = Get()
-    
+        
+    async def finish(self):
+        await self.user.user_data_miss(str(self.interaction.user.id),self.sharecode,self.miss_list)
+        await self.user.user_data_score(str(self.interaction.user.id),self.sharecode,self.score)
+        await self.user.user_data_shuffle(str(self.interaction.user.id),self.sharecode)
+        embed = discord.Embed(title="終了",color=0x00ff00)
+        embed.add_field(name="スコア",value=f"{self.score}/{len(self.question_list)}",inline=False)
+        embed.add_field(name="間違った問題",value="",inline=False)
+        if len(self.miss_list) > 0 and len(self.miss_list) < 20:
+            for miss_num in self.miss_list:
+                if self.question_list[miss_num]["mode"] == 0:
+                    embed.add_field(name=f"{miss_num+1}問目:{self.question_list[miss_num]['question']}",value=self.question_list[miss_num]["answer"],inline=False)
+                elif self.question_list[miss_num]["mode"] == 1:
+                    embed.add_field(name=f"{miss_num+1}問目:{self.question_list[miss_num]['question']}",value=self.question_list[miss_num]["select"][self.question_list[miss_num]["answer"]],inline=False)
+                elif self.question_list[miss_num]["mode"] == 2:
+                    answer = ""
+                    for i,ans in enumerate(self.question_list[miss_num]["answer"]):
+                        answer += f"{i+1}番目の解答:{ans}\n"
+                        embed.add_field(name=f"{miss_num+1}問目:{self.question_list[miss_num]['question']}",value=answer,inline=False)
+            return await self.interaction.response.edit_message(embed=embed,view=None)
+        elif len(self.miss_list) > 20:
+            return await self.interaction.response.edit_message(embed=embed,view=MemorizationMissView(self.sharecode,self.miss_list))
+        else:
+            return await self.interaction.response.edit_message(embed=embed,view=None)
+  
     async def main_start(self):
         if int(self.counts) == len(self.question_list):
-            await self.user.user_data_miss(str(self.interaction.user.id),self.sharecode,self.miss_list)
-            await self.user.user_data_score(str(self.interaction.user.id),self.sharecode,self.score)
-            await self.user.user_data_shuffle(str(self.interaction.user.id),self.sharecode)
-            embed = discord.Embed(title="終了",color=0x00ff00)
-            embed.add_field(name="スコア",value=f"{self.score}/{len(self.question_list)}",inline=False)
-            embed.add_field(name="間違った問題",value="",inline=False)
-            if len(self.miss_list) > 0 and len(self.miss_list) < 20:
-                for miss_num in self.miss_list:
-                    if self.question_list[miss_num]["mode"] == 0:
-                        embed.add_field(name=f"{miss_num+1}問目:{self.question_list[miss_num]['question']}",value=self.question_list[miss_num]["answer"],inline=False)
-                    elif self.question_list[miss_num]["mode"] == 1:
-                        embed.add_field(name=f"{miss_num+1}問目:{self.question_list[miss_num]['question']}",value=self.question_list[miss_num]["select"][self.question_list[miss_num]["answer"]],inline=False)
-                    elif self.question_list[miss_num]["mode"] == 2:
-                        answer = ""
-                        for i,ans in enumerate(self.question_list[miss_num]["answer"]):
-                            answer += f"{i+1}番目の解答:{ans}\n"
-                            embed.add_field(name=f"{miss_num+1}問目:{self.question_list[miss_num]['question']}",value=answer,inline=False)
-                return await self.interaction.response.edit_message(embed=embed,view=None)
-            elif len(self.miss_list) > 20:
-                return await self.interaction.response.edit_message(embed=embed,view=MemorizationMissView(self.sharecode,self.miss_list))
-        if len(self.question_list) == 0:
-            return await self.interaction.response.edit_message(content="問題がありません",view=None,embed=None)
+            return await self.finish()
         embed = discord.Embed(title="問題",color=0x00ff00)
-        question = self.question_list[self.counts]["question"]
+        try:
+            question = self.question_list[self.counts]["question"]
+        except IndexError:
+            print(self.counts)
+            return await self.finish()
         embed.add_field(name="問題",value=question,inline=False)
         if self.question_list[self.counts]["mode"] == 0 or self.question_list[self.counts]["mode"] == 2:
             view=MemorizationAnswer(self.sharecode,self.playmode,self.question_list,self.score,self.miss_list,self.counts)            
@@ -233,12 +240,12 @@ class MemorizationMissView(discord.ui.View):
         for num,miss_num in enumerate(self.miss_list[self.page]):
             datas = await self.share.get_sharedata(self.sharecode)
             if datas["questions"][miss_num]["mode"] == 0:
-                embed.add_field(name=f"{num+1}問目",value=f"問題:{datas['questions'][miss_num]['question']}\n解答:{datas['questions'][miss_num]['answer']}",inline=False)
+                embed.add_field(name=f"{miss_num+1}問目",value=f"問題:{datas['questions'][miss_num]['question']}\n解答:{datas['questions'][miss_num]['answer']}",inline=False)
             elif datas["questions"][miss_num]["mode"] == 1:
                 question = datas["questions"][miss_num]["question"]
                 anwer = datas['questions'][miss_num]['select'][datas['questions'][miss_num]['answer']]
                 select = datas['questions'][miss_num]['select']
-                embed.add_field(name=f"{num+1}問目",value=f"問題:{question}\n解答:{anwer}\n選択肢:{select}",inline=False)
+                embed.add_field(name=f"{miss_num+1}問目",value=f"問題:{question}\n解答:{anwer}\n選択肢:{select}",inline=False)
             elif datas["questions"][miss_num]["mode"] == 2:
                 answer = ""
                 for i,ans in enumerate(datas["questions"][miss_num]["answer"]):

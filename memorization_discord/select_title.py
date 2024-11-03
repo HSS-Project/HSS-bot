@@ -128,7 +128,7 @@ class SelectTitleResponse:
         elif self.modes == 2:
             sharecode = await self.share.get_sharecode(self.title)
             genrename = await self.genre.search_genre(str(self.intraction.user.id),sharecode)
-            genre_sharecode = await Share().get_genre_sharecode(str(self.intraction.user.id),genrename)
+            genre_sharecode = await self.share.get_genre_sharecode(str(self.intraction.user.id),genrename)
             await self.intraction.response.edit_message(content=f"{self.title} この問題の共有コード:{sharecode}\nこの問題があるジャンルの共有コード:{genre_sharecode}")
         elif self.modes == 3:
             sharecode = await self.share.get_sharecode(self.title)

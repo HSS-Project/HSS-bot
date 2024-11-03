@@ -59,18 +59,19 @@ class MemorizationCog(commands.Cog):
         embed = discord.Embed(title="選択してください",description="")
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
         view = discord.ui.View()
-        view.add_item(select_title.SelectGenre(genre_list,2))
-        await interaction.response.send_message(embed=embed, view=select_title.SelectGenre(genre_list,2,0),ephemeral=True)
+        view.add_item(select_title.SelectGenre(genre_list,2,2))
+        await interaction.response.send_message(embed=embed, view=view,ephemeral=True)
     
     @memorization.command(name="misson_set", description="共有コードから問題を追加します。")
     async def misson(self, interaction:discord.Interaction,sharecode:int,genre:str="default"):
-        genre_tile = await self.genres.get_genres_name(str(interaction.user.id))
-        if not genre_tile in genre_tile:return await interaction.response.send_message("ジャンルが存在しません。", ephemeral=True)
-        await self.genres.add_genre(str(interaction.user.id),genre,sharecode)
-        await interaction.response.send_message("追加しました。", ephemeral=True)
+        await self.genres.make_genre(str(interaction.user.id),genre)
+        ch = await self.genres.add_genre(str(interaction.user.id),genre,sharecode)
+        if ch:await interaction.response.send_message("追加しました。", ephemeral=True)
+        else:await interaction.response.send_message("追加に失敗しました。", ephemeral=True)
     
     @memorization.command(name="genre_set", description="共有コードからジャンルを追加します。")
     async def genre(self, interaction:discord.Interaction,sharecode:int):
+        await self.genres.make_genre(str(interaction.user.id),"default")
         await self.genres.share_genere_set(str(interaction.user.id),sharecode)
         if await self.genres.len_genre(str(interaction.user.id)) >= 25:
             return await interaction.response.send_message("ジャンルは25個までです。どれか削除してください", ephemeral=True)

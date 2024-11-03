@@ -26,7 +26,7 @@ class Genre:
     async def delete_genre(self,user_id:str,genre_title:str):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        if genre_title not in self.user_data["genre"][num_id].keys():return False
+        if genre_title not in self.user_data["genre"][num_id].keys():await self.make_genre(user_id,"default")
         if genre_title == "defult":await self.make_genre(user_id,"default")
         #デフォルトに移動 もし100個以上ある場合はエラー
         for sharecode in self.user_data["genre"][num_id][genre_title]["sharecodes"]:
@@ -40,6 +40,14 @@ class Genre:
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
         if num_id not in self.user_data.keys():await self.make_genre(user_id,"default")
+        if genre_title not in self.user_data["genre"][num_id].keys():await self.make_genre(user_id,genre_title)
+        if sharecode in self.user_data["genre"][num_id][genre_title]["sharecodes"]:return False
+        genre_title_list = await self.get_genres_name(user_id)
+        if len(genre_title_list) >= 100:return False
+        for genre in genre_title_list:
+            sharecode_list = await self.get_genres_list_sharecodes(user_id,genre)
+            if sharecode in sharecode_list:return False
+        if len(str(sharecode)) != 6:return False
         self.user_data["genre"][num_id][genre_title]["sharecodes"].append(sharecode)
         await self.rw.write_user(self.user_data)
         return True
@@ -47,7 +55,7 @@ class Genre:
     async def remove_genre(self,user_id:str,genre_title:str,sharecode:int):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        if genre_title not in self.user_data["genre"][num_id].keys():return False
+        if genre_title not in self.user_data["genre"][num_id].keys():await self.make_genre(user_id,"default")
         self.user_data["genre"][num_id][genre_title]["sharecodes"].remove(sharecode)
         await self.rw.write_user(self.user_data)
         return True
@@ -55,7 +63,7 @@ class Genre:
     async def move_genre(self,user_id:str,genre_title:str,sharecode:int):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        if genre_title not in self.user_data["genre"][num_id].keys():return False
+        if genre_title not in self.user_data["genre"][num_id].keys():await self.make_genre(user_id,"default")
         _sharecode = int(sharecode)
         before_genre = await self.search_genre(user_id,_sharecode)
         if not before_genre:return False
@@ -67,14 +75,19 @@ class Genre:
     async def search_genre(self,user_id:str,sharecode:int):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
+        if num_id not in self.user_data.keys():
+            await self.make_genre(user_id,"default")
+            await self.rw.write_user(self.user_data)
         for genre in self.user_data["genre"][num_id].keys():
-            if sharecode in self.user_data["genre"][num_id][genre]["sharecodes"]:
-                return genre
+            for sharecode in self.user_data["genre"][num_id][genre]["sharecodes"]:
+                if sharecode == sharecode:
+                    return genre
         return False
     
     async def get_genres_name(self,user_id:str) -> list:
         num_id = str(user_id)
         self.user_data: dict = await self.rw.load_user()
+        if num_id not in self.user_data.keys():await self.make_genre(user_id,"default")
         gnres_list = []
         for genre in self.user_data["genre"][num_id].keys():
             gnres_list.append(genre)
@@ -83,27 +96,28 @@ class Genre:
     async def get_genres_list_sharecodes(self,user_id:str,genre_title:str):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        if genre_title not in self.user_data["genre"][num_id].keys():return False
+        if genre_title not in self.user_data["genre"][num_id].keys():await self.make_genre(user_id,"default")
         return self.user_data["genre"][num_id][genre_title]["sharecodes"]
     
     async def get_genres_to_sharecode_list(self,sharecode:int):
         self.user_data:dict = await self.rw.load_user()
-        for user_id in self.user_data.keys():
+        genre_user_data:dict = self.user_data["genre"]
+        for user_id in genre_user_data.keys():
             for genre in self.user_data[user_id]["genre"].keys():
-                if sharecode in self.user_data[user_id]["genre"][genre]["sharecodes"]:
+                if sharecode in self.user_data[user_id]["genre"][genre]["share"]:
                     return genre
         return False
     
     async def get_genres_sharecode(self,user_id:str,genre_title:str):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        if genre_title not in self.user_data["genre"][num_id].keys():return False
+        if genre_title not in self.user_data["genre"][num_id].keys():await self.make_genre(user_id,"default")
         return self.user_data["genre"][num_id][genre_title]["share"]
     
     async def genres_in_titles(self,user_id:str,genre_title:str):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        if genre_title not in self.user_data["genre"][num_id].keys():return False
+        if genre_title not in self.user_data["genre"][num_id].keys():await self.make_genre(user_id,"default")
         sharecode = self.user_data["genre"][num_id][genre_title]["sharecodes"]
         titles = []
         for sharecode in sharecode:
@@ -112,13 +126,22 @@ class Genre:
             titles.append(title)
         return titles
     
+    async def get_genres_title_sharecode(self,genre_sharecode:int):
+        self.user_data:dict = await self.rw.load_user()
+        genre_user_data:dict = self.user_data["genre"]
+        for num_id in genre_user_data.keys():
+            for genrename in self.user_data["genre"][num_id].keys():
+                if genre_sharecode == self.user_data["genre"][num_id][genrename]["share"]:
+                    return genrename
+        return False
+    
     async def share_genere_set(self,user_id:str,sharecode:int):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
-        #sharecodeからgenrutitleを取得
-        genre_title = await self.search_genre(user_id,sharecode)
-        if not genre_title:return False
+        genre_title = await self.get_genres_title_sharecode(sharecode)
+        print(genre_title)
         self.user_data["genre"][num_id][genre_title] = await self.get_genres_to_sharecode_list(sharecode)
+        await self.rw.write_user(self.user_data)
         return True
     
     async def len_genre(self,user_id:str):
