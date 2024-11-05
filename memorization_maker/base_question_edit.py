@@ -8,7 +8,7 @@ class Edit:
         self.share = share.Share()
         self.textre = base_question_add.Add()
         self.base_data:dict = {"memorization":{}}
-        
+  
     async def edit_misson(self,title:str,quetion:str,answer:str,select_len_number:int):
         self.base_data:dict = await self.rw.load_base()
         sharecode = await self.share.get_sharecode(title)
@@ -19,7 +19,7 @@ class Edit:
     
     async def edit_misson_select(self,title:str,quetion:str,answer:str,select:list,select_len_number:int):
         self.base_data:dict = await self.rw.load_base()
-        sharecode = await self.share.get_sharecode(title)        
+        sharecode = await self.share.get_sharecode(title)       
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["question"] = quetion
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["answer"] = answer
         self.base_data["memorization"][sharecode]["questions"][select_len_number]["select"] = select

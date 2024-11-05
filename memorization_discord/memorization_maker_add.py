@@ -71,7 +71,7 @@ class MemorizationAddChangeSelectMode(discord.ui.View):
         self.get = Get()
         self.title = title
         self.question = question
-        
+
     @discord.ui.button(label="選択肢を追加", style=discord.ButtonStyle.green)
     async def add(self, interaction: discord.Interaction, _: discord.ui.Button):
         await interaction.response.send_modal(MemorizationAddSlect(self.title,self.question,0))

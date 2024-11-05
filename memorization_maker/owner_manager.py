@@ -6,7 +6,7 @@ class OwnerManager:
         self.rw = Read_and_Write.Read_and_Write()
         self.share = share.Share()
         self.base_data:dict = {"memorization":{}}
-        
+
     async def owner_check(self, user_id:str,title:str):
         num_id = str(user_id)
         self.base_data:dict = await self.rw.load_base()

@@ -7,7 +7,7 @@ class Delete:
         self.rw = Read_and_Write.Read_and_Write()
         self.share = Share()
         self.base_data:dict = {"memorization":{}}
-        
+
     
     async def delete_title(self,_id:str,title:str):
         user_id = str(_id)

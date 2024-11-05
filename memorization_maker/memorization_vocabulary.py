@@ -15,16 +15,16 @@ class Vocabulary:
         num_id = str(user_id)
         sharecode = await self.share.make_sharecode()
         make_title = f"{title}_{start_number}-{end_unmber}"
-        await self.make_add.init_add(str(user_id),make_title,sharecode)        
+        await self.make_add.init_add(str(user_id),make_title,sharecode)       
         await self.genre.make_genre(num_id,"vocabulary")
         await self.genre.add_genre(num_id,"vocabulary",sharecode)
         list_data = await self.get_question_list_from_excel(start_number,end_unmber)
         for data in list_data:await self.make_add.add_misson_select(sharecode,data["question"],data["answer"],data["select"])
         return sharecode
-    
+
     async def get_question_list_from_excel(self,start_number, end_number):
         wb = openpyxl.load_workbook(self.xlsx_file_path)
-        sheet = wb.active  
+        sheet = wb.active
         question_list = []
         if sheet.max_row < end_number:return
         for row in range(start_number + 2, end_number + 3):

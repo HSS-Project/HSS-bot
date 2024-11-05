@@ -4,7 +4,7 @@ import memorization_discord.select_title as select_title
 from memorization_maker.share import Share
 from memorization_maker.owner_manager import OwnerManager
 from memorization_discord.memorization_maker_add import MemorizationAddModal,MemorizationAddTextModal,TitleSetModal,MemorizationMakeGenre,OwnerAddModal,OwnerDeleteSelect
-        
+
 class MemorizationControlView(discord.ui.View):
     def __init__(self,title:str,genres:list):
         super().__init__()

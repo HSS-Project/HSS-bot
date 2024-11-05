@@ -4,12 +4,11 @@ class Read_and_Write:
     def __init__(self):
         self.basefile = "memorization_base_v2.json"
         self.userfile = "memorization_user_v2.json"
-        
 
     async def load_data(self,filename):
         with open(filename, "r") as f:
             return json.load(f)
-        
+
     async def write_data(self,filename,data):
         with open(filename, "w") as f:
             json.dump(data, f, indent=4)

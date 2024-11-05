@@ -44,7 +44,7 @@ class Add:
         sharecode = str(_sharecode)
         self.base_data["memorization"][sharecode]["questions"].append({"question":quetion,"answer":answer,"mode":0})
         await self.rw.write_base(self.base_data)
-        
+
     async def add_misson_select(self,_sharecode,quetion:str,answer,select:list):
         self.base_data:dict = await self.rw.load_base()
         sharecode = str(_sharecode)
@@ -102,7 +102,7 @@ class Add:
                         random_answer_index = random.sample(range(3,num_rows_max), 3)
                         for _ in range(4):
                             while True:
-                                random_select = random.randint(1, num_rows_max + 1) 
+                                random_select = random.randint(1, num_rows_max + 1)
                                 cell = sheet.cell(row=random_select, column=2)
                                 if cell.value not in select and cell.value is not None:
                                     if not cell.value  == answer:

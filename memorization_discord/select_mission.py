@@ -1,4 +1,4 @@
-import discord 
+import discord
 from memorization_maker.base_question_get import Get
 from memorization_maker.base_question_delete import Delete
 from memorization_discord.memorization_maker_edit import EditModeSelectView

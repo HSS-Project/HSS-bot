@@ -20,7 +20,7 @@ class EditModeSelect(discord.ui.Select):
                 discord.SelectOption(label="問題編集", value="text"),
             ]
         super().__init__(placeholder="編集モードを選択してください", options=options, row=1, min_values=1, max_values=1)
-            
+ 
     async def callback(self, interaction: discord.Interaction):
         datas = await Get().get_misson(self.title)
         question = datas["questions"][self.select_number]["question"]

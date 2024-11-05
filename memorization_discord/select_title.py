@@ -67,7 +67,7 @@ class SelectTitle_3(discord.ui.Select):
         super().__init__(placeholder="タイトルを選択してください", options=options,min_values=1, max_values=1)
     async def callback(self, interaction: discord.Interaction):
         await SelectTitleResponse(interaction,self.values[0],self.modes).select_response()
-        
+
 class SelectTitle_4(discord.ui.Select):
     def __init__(self, titles: list,modes:int):
         self.modes = modes
@@ -124,7 +124,7 @@ class SelectTitleResponse:
             await self.intraction.response.edit_message(embed=embed,view=MemorizationControlView(self.title,await self.genre.get_genres_name(str(self.intraction.user.id))))
         elif self.modes == 1:
             embed = discord.Embed(title="出題方式選択",color=0x00ff00)
-            sharecode = await self.share.get_sharecode(self.title)        
+            sharecode = await self.share.get_sharecode(self.title)
             await self.user.add_user_data_init(str(self.intraction.user.id))
             await self.user.add_user_data(str(self.intraction.user.id),sharecode)
             await self.user.user_data_try(str(self.intraction.user.id),sharecode)

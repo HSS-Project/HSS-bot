@@ -8,7 +8,7 @@ class User:
         self.share = share.Share()
         self.base_data:dict = {"memorization":{}}
         self.user_data:dict = {"Userdata":{}}
-    
+
     async def add_user_data_init(self,user_id):
         num_id = str(user_id)
         self.user_data = await self.rw.load_user()

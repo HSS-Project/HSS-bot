@@ -7,7 +7,7 @@ class Genre:
         self.share = share.Share()
         self.base_data:dict = {"memorization":{}}
         self.user_data:dict = {}
-        
+
     async def make_genre(self,user_id:str,_genre_title):
         num_id = str(user_id)
         genre_title = str(_genre_title)
@@ -128,7 +128,7 @@ class Genre:
         make_name = f"{name}_share_{sharecode}_{number}"
         await self.make_genre(num_id,make_name)
         for sharecode in genre_title["sharecodes"]:
-            await self.add_genre(num_id,make_name,sharecode)        
+            await self.add_genre(num_id,make_name,sharecode)      
         return True
     
     async def len_genre(self,user_id:str):

@@ -60,12 +60,12 @@ class ChoicePlayMode(discord.ui.View):
         questions = await self.share.get_sharedata(self.sharecode)
         question_list = questions["questions"]
         await MemorizationPlay(interaction,self.sharecode,0,question_list,0,[]).main_start()
-        
+
     @discord.ui.button(label="ランダム出題", style=discord.ButtonStyle.primary)
     async def choice_random(self, interaction: discord.Interaction, _:discord.ui.Button):
         questions_user = await self.user.get_mission(str(interaction.user.id),self.sharecode)
         questions = await self.share.get_sharedata(self.sharecode)
-        question_number_list = questions_user["questions_number_list"]        
+        question_number_list = questions_user["questions_number_list"]    
         question_list = []
         for num in question_number_list:
             question_list.append(questions["questions"][num])
@@ -222,7 +222,7 @@ class MemorizationPlay:
                 embed.add_field(name=f"選択肢{num+1}",value=selects,inline=False)
             view=MemorizationSelectAnswer(self.sharecode,self.playmode,self.question_list,self.score,self.miss_list,self.counts)
         await self.interaction.response.edit_message(embed=embed,view=view)
-            
+
 class MemorizationMissView(discord.ui.View):
     def __init__(self,sharecode:list,miss_number_list:list,page:int = 0):
         self.sharecode = sharecode

@@ -6,7 +6,7 @@ class Get:
         self.rw = Read_and_Write.Read_and_Write()
         self.share = share.Share()
         self.base_data:dict = {"memorization":{}}
-       
+
     async def get_titles(self,user_id:str):
         num_id = str(user_id)
         self.base_data:dict = await self.rw.load_base()
@@ -14,7 +14,7 @@ class Get:
         lists = []
         for share in self.base_data["memorization"].keys():
             if num_id in self.base_data["memorization"][share]["onwer"]:
-                lists.append(self.base_data["memorization"][share]["title"])                
+                lists.append(self.base_data["memorization"][share]["title"])  
         return lists
 
     async def get_misson_select(self,title:str,select_len_number:int):
