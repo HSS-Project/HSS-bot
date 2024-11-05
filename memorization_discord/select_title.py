@@ -27,7 +27,7 @@ class SelectGenre(discord.ui.Select):
             titles = await genre.genres_in_titles(str(interaction.user.id),self.genres[int(self.values[0])])
             await interaction.response.edit_message(view=SelectTitleView(self.genres,titles,self.classmodes))
         elif self.mode == 2:
-            sharecode = await Genre().get_genres_sharecode(str(interaction.user.id),self.genres[int(self.values[0])])
+            sharecode = await Genre().get_genres_sharecode_title(str(interaction.user.id),self.genres[int(self.values[0])])
             await interaction.response.edit_message(content=f"{self.genres[int(self.values[0])]} このジャンルの共有コード:{sharecode}")
         elif self.mode == 3:
             ch = await Genre().delete_genre(str(interaction.user.id),self.genres[int(self.values[0])])

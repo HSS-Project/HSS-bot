@@ -119,6 +119,15 @@ class Genre:
                     return self.user_data["genre"][num_id][genrename],num_id,genrename
         return False,False,False
     
+    async def get_genres_sharecode_title(self,userid:str,genre_title:str):
+        self.user_data:dict = await self.rw.load_user()
+        num_id = str(userid)
+        genre_title = str(genre_title)
+        for genrename in self.user_data["genre"][num_id].keys():
+            if genre_title == genrename:
+                return self.user_data["genre"][num_id][genrename]["share"]
+        return False
+    
     async def share_genere_set(self,user_id:str,sharecode:int):
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
