@@ -1,5 +1,9 @@
 import discord
-from memorization_maker.inc.package import Add, Get, OwnerManager, Share, Genre
+from memorization_maker.genre import Genre
+from memorization_maker.share import Share
+from memorization_maker.base_question_add import Add
+from memorization_maker.base_question_get import Get
+from memorization_maker.owner_manager import OwnerManager
 import random
 
 class TitleModal(discord.ui.Modal,title="タイトル追加"):

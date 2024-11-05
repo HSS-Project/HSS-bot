@@ -1,5 +1,7 @@
 import discord
-from memorization_maker.inc.package import Share,User,Get
+from memorization_maker.base_question_get import Get
+from memorization_maker.share import Share
+from memorization_maker.user_setting import User
 
 async def make_answer(interaction: discord.Interaction,sharecode,question_list,counts,input,playmode,score,miss_list:list):
     datas = await Share().get_sharedata(sharecode)

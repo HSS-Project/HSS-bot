@@ -1,6 +1,6 @@
-import memorization_maker.src.Read_and_Write as Read_and_Write
-from memorization_maker.src.share import Share
-from memorization_maker.src.genre import Genre
+import memorization_maker.Read_and_Write as Read_and_Write
+from memorization_maker.share import Share
+from memorization_maker.genre import Genre
 
 class Delete:
     def __init__(self):

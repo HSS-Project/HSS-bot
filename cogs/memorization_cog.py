@@ -3,7 +3,11 @@ from discord import app_commands
 import discord
 import memorization_discord.memorization_maker_add as maker_add
 import memorization_discord.select_title as select_title
-from memorization_maker.inc.package import Genre,Get,Share,Add,Vocabulary
+from memorization_maker.genre import Genre
+from memorization_maker.base_question_add import Add
+from memorization_maker.base_question_get import Get
+from memorization_maker.memorization_vocabulary import Vocabulary
+from memorization_maker.share import Share
 
 class MemorizationCog(commands.Cog):
     def __init__(self,bot):

@@ -1,4 +1,4 @@
-import memorization_maker.src.Read_and_Write as Read_and_Write
+import memorization_maker.Read_and_Write as Read_and_Write
 import re
 from typing import TypedDict
 from typing_extensions import NotRequired

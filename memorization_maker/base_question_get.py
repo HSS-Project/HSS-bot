@@ -1,5 +1,5 @@
-import memorization_maker.src.Read_and_Write as Read_and_Write
-import memorization_maker.src.share as share
+import memorization_maker.Read_and_Write as Read_and_Write
+import memorization_maker.share as share
 
 class Get:
     def __init__(self):

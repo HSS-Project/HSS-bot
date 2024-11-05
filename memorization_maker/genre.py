@@ -1,5 +1,5 @@
-import memorization_maker.src.Read_and_Write as Read_and_Write
-import memorization_maker.src.share as share
+import memorization_maker.Read_and_Write as Read_and_Write
+import memorization_maker.share as share
 
 class Genre:
     def __init__(self):
@@ -98,12 +98,6 @@ class Genre:
         self.user_data:dict = await self.rw.load_user()
         if genre_title not in self.user_data["genre"][num_id].keys():await self.make_genre(user_id,"default")
         return self.user_data["genre"][num_id][genre_title]["sharecodes"]
-    
-    async def get_genres_sharecode(self,user_id:str,genre_title:str):
-        num_id = str(user_id)
-        self.user_data:dict = await self.rw.load_user()
-        if genre_title not in self.user_data["genre"][num_id].keys():await self.make_genre(user_id,"default")
-        return self.user_data["genre"][num_id][genre_title]["share"]
     
     async def genres_in_titles(self,user_id:str,genre_title:str):
         num_id = str(user_id)

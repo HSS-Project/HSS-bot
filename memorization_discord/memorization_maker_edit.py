@@ -1,5 +1,6 @@
 import discord
-from memorization_maker.inc.package import Edit,Get
+from memorization_maker.base_question_edit import Edit
+from memorization_maker.base_question_get import Get
 
 class EditModeSelect(discord.ui.Select):
     def __init__(self, title,select_number,mode):
@@ -91,7 +92,7 @@ class EditmModal(discord.ui.Modal,title="編集"):
             answer = str(self.input.value)
             await Edit().edit_misson(self.title,question,answer,self.select_number)
         elif self.mode == 2:
-            await Edit().edit_misson_text(self.title,self.input.value)
+            await Edit().edit_misson_text(self.title,self.input.value,self.select_number)
         elif self.mode == 3:
             question = datas["questions"][self.select_number]["question"]
             select = datas["questions"][self.select_number]["select"]

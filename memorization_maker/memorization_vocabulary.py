@@ -1,6 +1,6 @@
-import memorization_maker.src.share as share
-import memorization_maker.src.genre as genre
-import memorization_maker.src.base_question_add as maker_add
+import memorization_maker.share as share
+import memorization_maker.genre as genre
+import memorization_maker.base_question_add as maker_add
 import openpyxl
 import random
 

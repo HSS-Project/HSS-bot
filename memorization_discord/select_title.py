@@ -1,5 +1,9 @@
 import discord
-from memorization_maker.inc.package import Genre,Share,Delete,User
+# from memorization_maker.inc.package import Genre,Share,Delete,User
+from memorization_maker.genre import Genre
+from memorization_maker.share import Share
+from memorization_maker.base_question_delete import Delete
+from memorization_maker.user_setting import User
 import memorization_discord.memorization_maker_play as maker_play
 from memorization_discord.memorization_control import MemorizationControlView
 class SelectGenre(discord.ui.Select):
@@ -133,6 +137,6 @@ class SelectTitleResponse:
         elif self.modes == 3:
             sharecode = await self.share.get_sharecode(self.title)
             genrename = await self.genre.search_genre(str(self.intraction.user.id),sharecode)
-            await self.genre.remove_genre(str(self.intraction.user.id),genrename)
+            await self.genre.remove_genre(str(self.intraction.user.id),genrename,sharecode)
             await self.delete.delete_title(str(self.intraction.user.id),self.title)
             await self.intraction.response.edit_message(content="削除しました。")
