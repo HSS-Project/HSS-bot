@@ -30,11 +30,10 @@ class MemorizationCog(commands.Cog):
         await interaction.response.send_message("追加しました。", ephemeral=True)
     
     @memorization.command(name="add_vocabulary", description="単語帳を追加します。")
-    async def add_vocabulary(self, interaction:discord.Interaction,title:str,start_number:int,end_number:int):
+    async def add_vocabulary(self, interaction: discord.Interaction, title: str, start_number: int, end_number: int, mode:int = 0):
         self.vocabulary = Vocabulary()
-        if end_number - start_number > 100:
-            return await interaction.response.send_message("100問までです。", ephemeral=True)
-        shrecode = await self.vocabulary.make_vocabulary(str(interaction.user.id),title,start_number,end_number)
+        if end_number - start_number > 100:return await interaction.response.send_message("100問までです。", ephemeral=True)
+        shrecode = await self.vocabulary.make_vocabulary(str(interaction.user.id), title, start_number, end_number, mode)
         await interaction.response.send_message(f"追加しました。共有コードは{shrecode}です。", ephemeral=True)
 
     @memorization.command(name="edit", description="問題を編集します。")
