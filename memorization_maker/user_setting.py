@@ -1,7 +1,7 @@
 import random
 import memorization_maker.Read_and_Write as Read_and_Write
 import memorization_maker.share as share
-#これ全部ミスってるかも
+
 class User:
     def __init__(self):
         self.rw = Read_and_Write.Read_and_Write()
