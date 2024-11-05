@@ -72,10 +72,11 @@ class MemorizationCog(commands.Cog):
     @memorization.command(name="genre_set", description="共有コードからジャンルを追加します。")
     async def genre(self, interaction:discord.Interaction,sharecode:int):
         await self.genres.make_genre(str(interaction.user.id),"default")
-        await self.genres.share_genere_set(str(interaction.user.id),sharecode)
-        if await self.genres.len_genre(str(interaction.user.id)) >= 25:
-            return await interaction.response.send_message("ジャンルは25個までです。どれか削除してください", ephemeral=True)
-        await interaction.response.send_message("追加しました。", ephemeral=True)
+        if await self.genres.len_genre(str(interaction.user.id)) >= 25:return await interaction.response.send_message("ジャンルは25個までです。どれか削除してください", ephemeral=True)
+        ch = await self.genres.share_genere_set(str(interaction.user.id),sharecode)
+        if ch:await interaction.response.send_message("追加しました。", ephemeral=True)
+        else:await interaction.response.send_message("追加に失敗しました。", ephemeral=True)
+
     
     @memorization.command(name="genre_delete", description="ジャンルを削除します。")
     async def delete2(self, interaction:discord.Interaction):
