@@ -56,6 +56,7 @@ class Genre:
         num_id = str(user_id)
         self.user_data:dict = await self.rw.load_user()
         if genre_title not in self.user_data["genre"][num_id].keys():await self.make_genre(user_id,"default")
+        if sharecode not in self.user_data["genre"][num_id][genre_title]["sharecodes"]:return False
         self.user_data["genre"][num_id][genre_title]["sharecodes"].remove(sharecode)
         await self.rw.write_user(self.user_data)
         return True
