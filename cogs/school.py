@@ -5,9 +5,7 @@ from discord import app_commands
 
 from HSS import NewSchool as School
 from HSS import User
-import requests
 import json
-import os
 
 with open("token.json", 'r', encoding='utf-8') as file:
     t = json.load(file)
