@@ -12,7 +12,9 @@ from memorization_maker.share import Share
 class MemorizationCog(commands.Cog):
     def __init__(self,bot):
         self.bot:discord.Client = bot
+        self.adds = Add()
         self.genres = Genre()
+        self.shares = Share()
         self.get = Get()
 
     memorization = app_commands.Group(name="memorization", description="暗記メーカ")
@@ -22,11 +24,11 @@ class MemorizationCog(commands.Cog):
         await interaction.response.send_modal(maker_add.TitleModal())
     
     @memorization.command(name="add_excel", description="エクセルファイルから問題を追加します。")
-    async def add_excel(self, interaction:discord.Interaction,excel:discord.Attachment):
-        await interaction.response.send_message("エクセルファイルを読み込んでいます。", ephemeral=True)
-        _sharecode = await Share().make_sharecode(str(interaction.user.id))
-        await Add().add_misson_in_Excel(_sharecode,excel)
-        await Genre().add_genre(str(interaction.user.id),"default",_sharecode)
+    async def add_excel(self, interaction:discord.Interaction,excel:discord.Attachment,title:str):
+        _sharecode = await self.shares.make_sharecode()
+        await self.adds.init_add(str(interaction.user.id),title,_sharecode)
+        await self.adds.add_misson_in_Excel(_sharecode,excel)
+        await self.genres.add_genre(str(interaction.user.id),"default",_sharecode)
         await interaction.response.send_message("追加しました。", ephemeral=True)
     
     @memorization.command(name="add_vocabulary", description="単語帳を追加します。")
@@ -80,7 +82,6 @@ class MemorizationCog(commands.Cog):
         if ch:await interaction.response.send_message("追加しました。", ephemeral=True)
         else:await interaction.response.send_message("追加に失敗しました。", ephemeral=True)
 
-    
     @memorization.command(name="genre_delete", description="ジャンルを削除します。")
     async def delete2(self, interaction:discord.Interaction):
         embed = discord.Embed(title="選択してください",description="")
@@ -93,6 +94,7 @@ class MemorizationCog(commands.Cog):
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
         titles = await self.get.get_titles(str(interaction.user.id))
         await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,3),qpheemeral=True)
+
 
 async def setup(bot):
     await bot.add_cog(MemorizationCog(bot))

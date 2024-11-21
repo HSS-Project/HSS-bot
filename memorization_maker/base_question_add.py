@@ -5,6 +5,7 @@ from typing_extensions import NotRequired
 from typing import Union
 import openpyxl
 import random
+from io import BytesIO
 
 class QuestionData(TypedDict):
     question: str
@@ -78,12 +79,15 @@ class Add:
         self.base_data["memorization"][sharecode]["questions"].append({"question":text,"answer":answers, "mode":2})
         await self.rw.write_base(self.base_data)
         
-    async def add_misson_in_Excel(self,_sharecode,excelfile:openpyxl.Workbook):
+    async def add_misson_in_Excel(self,_sharecode,excelfile):
         self.base_data:dict = await self.rw.load_base()
+        excel_bytes = await excelfile.read()
+        excel_file = BytesIO(excel_bytes)  
+        workbook = openpyxl.load_workbook(excel_file)
+        sheet = workbook.active
         sharecode = str(_sharecode)
-        sheet = excelfile.active
         row_count = sum(1 for _ in sheet.iter_rows(min_col=1,values_only=True))
-        if row_count > 4:return False
+        if not row_count > 4:return False
         for row in sheet.iter_rows(min_row=1, values_only=True):
             if row[0] or row[1] or row[2]:
                 mode = int(row[2])
@@ -91,15 +95,15 @@ class Add:
                 question = row[0]
                 answer = row[1]
                 if mode == 0:
-                    self.base_data["memorization"][sharecode]["questions"].append({"question":question,"answer":answer,"mode":0})
+                    await self.add_misson(sharecode,question,answer)
                 elif mode == 1:
                     select = []
-                    if row[3] or row[4] or row[5] or row[6]:
+                    if len(row) == 6:
                         select = [row[3],row[4],row[5],row[6]]
-                        answer_num = select.index(answer) + 1
+                        answer_num = select.index(answer)
                     else:
                         num_rows_max = sheet.max_row
-                        random_answer_index = random.sample(range(3,num_rows_max), 3)
+                        random_answer_index = random.randint(0,3)
                         for _ in range(4):
                             while True:
                                 random_select = random.randint(1, num_rows_max + 1)
@@ -109,12 +113,11 @@ class Add:
                                         select.append(cell.value)
                                         break
                         select[random_answer_index] = answer
-                        answer_num = select.index(answer) + 1
-                    self.base_data["memorization"][sharecode]["questions"].append({"question":question,"answer":answer_num,"mode":1,"select":select})
+                        answer_num = select.index(answer)
+                    await self.add_misson_select(sharecode,question,answer_num,select)
             elif row[0] and int(row[2]) == 2:
-                text, answers = await self.replace_parentheses(row[0])
-                if text is False or answers is False:return False
-                self.base_data["memorization"][sharecode]["questions"].append({"question":text,"answer":answers, "mode":2})
-            
+                await self.add_misson_text(sharecode,row[0])
+            else:
+                print("error")
         await self.rw.write_base(self.base_data)
         return True
