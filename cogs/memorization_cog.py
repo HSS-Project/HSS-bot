@@ -32,6 +32,7 @@ class MemorizationCog(commands.Cog):
         await interaction.response.send_message("追加しました。", ephemeral=True)
     
     @memorization.command(name="add_vocabulary", description="単語帳を追加します。")
+    @commands.has_permissions(administrator=True)
     async def add_vocabulary(self, interaction: discord.Interaction, title: str, start_number: int, end_number: int, mode:int = 0):
         self.vocabulary = Vocabulary()
         if end_number - start_number > 100:return await interaction.response.send_message("100問までです。", ephemeral=True)
