@@ -6,6 +6,7 @@ from memorization_maker.base_question_delete import Delete
 from memorization_maker.user_setting import User
 import memorization_discord.memorization_maker_play as maker_play
 from memorization_discord.memorization_control import MemorizationControlView
+from memorization_maker.owner_manager import OwnerManager
 class SelectGenre(discord.ui.Select):
     def __init__(self, genres: list, mode:int,classmodes,title=None):
         options = []
@@ -32,7 +33,7 @@ class SelectGenre(discord.ui.Select):
         elif self.mode == 3:
             ch = await Genre().delete_genre(str(interaction.user.id),self.genres[int(self.values[0])])
             if ch:
-                await interaction.response.edit_message(content="削除しました。")
+                await interaction.response.edit_message(content="削除しました。",view=SelectTitleView(genres=self.genres,titles=self.title,modes=3))
             else:
                 await interaction.response.edit_message(content="削除に失敗しました。defaultジャンルは削除できません。また、defaultジャンルに100個以上の問題がある場合は削除できません。")
 
@@ -117,8 +118,11 @@ class SelectTitleResponse:
         self.share = Share()
         self.delete = Delete()
         self.user = User()
-
+        self.ower = OwnerManager()
+        
     async def select_response(self):
+        if self.title == "None":
+            return await self.intraction.response.edit_message(content="キャンセルしました。")
         if self.modes == 0:
             embed = discord.Embed(title="問題編集",color=0x00ff00)
             await self.intraction.response.edit_message(embed=embed,view=MemorizationControlView(self.title,await self.genre.get_genres_name(str(self.intraction.user.id))))
@@ -138,5 +142,10 @@ class SelectTitleResponse:
             sharecode = await self.share.get_sharecode(self.title)
             genrename = await self.genre.search_genre(str(self.intraction.user.id),sharecode)
             await self.genre.remove_genre(str(self.intraction.user.id),genrename,sharecode)
-            await self.delete.delete_title(str(self.intraction.user.id),self.title)
-            await self.intraction.response.edit_message(content="削除しました。")
+            await self.intraction.response.edit_message(content="削除しました。",view=None,embed=embed)
+        elif self.modes == 4:
+            sharecode = await self.share.get_sharecode(self.title)
+            if not await self.ower.owner_check(str(self.intraction.user.id),sharecode):return await self.intraction.response.edit_message(content="403 権限不足です",view=None,embed=None)
+            ch = await self.delete.all_delete_title(str(self.intraction.user.id),self.title)
+            if ch:await self.intraction.response.edit_message(content="削除しました。",view=None,embed=None)
+            else:await self.intraction.response.edit_message(content="削除に失敗しました。",view=None,embed=None)

@@ -31,14 +31,6 @@ class MemorizationCog(commands.Cog):
         await self.genres.add_genre(str(interaction.user.id),"default",_sharecode)
         await interaction.response.send_message("追加しました。", ephemeral=True)
     
-    @memorization.command(name="add_vocabulary", description="単語帳を追加します。")
-    @commands.has_permissions(administrator=True)
-    async def add_vocabulary(self, interaction: discord.Interaction, title: str, start_number: int, end_number: int, mode:int = 0):
-        self.vocabulary = Vocabulary()
-        if end_number - start_number > 100:return await interaction.response.send_message("100問までです。", ephemeral=True)
-        shrecode = await self.vocabulary.make_vocabulary(str(interaction.user.id), title, start_number, end_number, mode)
-        await interaction.response.send_message(f"追加しました。共有コードは{shrecode}です。", ephemeral=True)
-
     @memorization.command(name="edit", description="問題を編集します。")
     async def edit(self, interaction:discord.Interaction):
         embed = discord.Embed(title="選択してください",description="")
@@ -89,12 +81,29 @@ class MemorizationCog(commands.Cog):
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
         await interaction.response.send_message(embed=embed, view=select_title.SelectGenre(genre_list,3,0),ephemeral=True)
     
-    @memorization.command(name="misson_delete", description="問題を削除します。")
+    @memorization.command(name="all_misson_delete",description="問題を完全削除します")
+    async def all_delete(self,interaction:discord.Interaction):
+        embed = discord.Embed(title="選択してください",description="")
+        genre_list = await self.genres.get_genres_name(str(interaction.user.id))
+        titles = await self.genres.genres_in_titles(str(interaction.user.id),"default")
+        await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,4),ephemeral=True)
+        
+    @memorization.command(name="misson_delete", description="個人の問題リストから問題を削除します。")
     async def delete(self, interaction:discord.Interaction):
         embed = discord.Embed(title="選択してください",description="")
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
-        titles = await self.get.get_titles(str(interaction.user.id))
+        titles = await self.genres.genres_in_titles(str(interaction.user.id),"default")
         await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,3),ephemeral=True)
+
+    @commands.command(name="add_vo", description="問題を追加します。")
+    async def add_vocabulary(self, ctx, title: str, start_number: int, end_number: int, mode:int = 0):
+        if ctx.author.id == 705264675138568192:
+            self.vocabulary = Vocabulary()
+            if end_number - start_number > 100:return await ctx.send("100問までです。")
+            await self.vocabulary.make_vocabulary(str(ctx.author.id), title, start_number, end_number, mode)
+            await ctx.send(f"追加しました")
+        else:
+            await ctx.send("403 Forbidden")
 
 async def setup(bot):
     await bot.add_cog(MemorizationCog(bot))
