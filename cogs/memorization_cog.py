@@ -89,11 +89,15 @@ class MemorizationCog(commands.Cog):
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
         await interaction.response.send_message(embed=embed, view=select_title.SelectGenre(genre_list,3,0),ephemeral=True)
     
-    @memorization.command(name="misson_delete", description="問題を削除します。")
+    @memorization.command(name="all_misson_delete",description="問題を完全削除します")
+    async def all_delete(self,interaction):
+        pass
+    
+    @memorization.command(name="misson_delete", description="個人の問題リストから問題を削除します。")
     async def delete(self, interaction:discord.Interaction):
         embed = discord.Embed(title="選択してください",description="")
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
-        titles = await self.get.get_titles(str(interaction.user.id))
+        titles = await self.genres.genres_in_titles(str(interaction.user.id),"default")
         await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,3),ephemeral=True)
 
 async def setup(bot):

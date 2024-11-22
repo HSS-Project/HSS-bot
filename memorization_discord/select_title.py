@@ -32,7 +32,7 @@ class SelectGenre(discord.ui.Select):
         elif self.mode == 3:
             ch = await Genre().delete_genre(str(interaction.user.id),self.genres[int(self.values[0])])
             if ch:
-                await interaction.response.edit_message(content="削除しました。")
+                await interaction.response.edit_message(content="削除しました。",view=SelectTitleView(genres=self.genres,titles=self.title,modes=3))
             else:
                 await interaction.response.edit_message(content="削除に失敗しました。defaultジャンルは削除できません。また、defaultジャンルに100個以上の問題がある場合は削除できません。")
 
@@ -138,5 +138,4 @@ class SelectTitleResponse:
             sharecode = await self.share.get_sharecode(self.title)
             genrename = await self.genre.search_genre(str(self.intraction.user.id),sharecode)
             await self.genre.remove_genre(str(self.intraction.user.id),genrename,sharecode)
-            await self.delete.delete_title(str(self.intraction.user.id),self.title)
-            await self.intraction.response.edit_message(content="削除しました。")
+            await self.intraction.response.edit_message(content="削除しました。",view=None,embed=embed)
