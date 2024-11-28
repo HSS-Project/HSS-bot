@@ -10,7 +10,7 @@ class OwnerManager:
     async def owner_check(self, user_id:str,title:str):
         num_id = str(user_id)
         self.base_data:dict = await self.rw.load_base()
-        sharecode = await self.share.get_sharecode(title)  
+        sharecode = await self.share.get_sharecode(title)
         if num_id in self.base_data["memorization"][sharecode]["onwer"]:
             return True
         else:

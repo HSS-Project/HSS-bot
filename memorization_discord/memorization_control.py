@@ -37,7 +37,7 @@ class MemorizationControlView(discord.ui.View):
         missions_question:list = []
         missions = data["questions"]
         for mission in missions:
-            missions_question.append(mission["question"])
+            missions_question.append(mission["question"][:90])
         embed = discord.Embed(title="問題編集", color=0x00ff00)
         await interaction.response.send_message(embed=embed,view=self.select_mission.SelectMissionView(self.title,missions_question,1), ephemeral=True)
 
@@ -48,7 +48,7 @@ class MemorizationControlView(discord.ui.View):
         missions_question:list = []
         missions = data["questions"]
         for mission in missions:
-            missions_question.append(mission["question"])
+            missions_question.append(mission["question"][:90])
         embed = discord.Embed(title="問題削除", color=0x00ff00)
         await interaction.response.send_message(embed=embed,view=self.select_mission.SelectMissionView(self.title,missions_question,0), ephemeral=True)
 

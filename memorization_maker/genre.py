@@ -79,8 +79,8 @@ class Genre:
             await self.make_genre(user_id,"default")
             await self.rw.write_user(self.user_data)
         for genre in self.user_data["genre"][num_id].keys():
-            for sharecode in self.user_data["genre"][num_id][genre]["sharecodes"]:
-                if sharecode == sharecode:
+            for __sharecode in self.user_data["genre"][num_id][genre]["sharecodes"]:
+                if sharecode == __sharecode:
                     return genre
         return False
     

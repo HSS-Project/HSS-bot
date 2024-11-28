@@ -62,8 +62,8 @@ class SelectMissionView(discord.ui.View):
                     if i >= missions_len:
                         break
                     self.options_list[j].append(discord.SelectOption(label=missions[i], value=str(i)))
-        if self.mode == 0:
-            self.options_list[0].append(discord.SelectOption(label="None", value="None"))
+        if len(self.options_list[0]) == 0:
+            self.options_list[0].append(discord.SelectOption(label="None",value="None"))
         self.add_item(SelectMission_1(self.title,self.options_list[0],self.mode))
         if missions_len > 25:
             self.add_item(SelectMission_2(self.title,self.options_list[1],self.mode))
