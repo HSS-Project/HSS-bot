@@ -145,7 +145,7 @@ class SelectTitleResponse:
             await self.intraction.response.edit_message(content="削除しました。",view=None,embed=embed)
         elif self.modes == 4:
             sharecode = await self.share.get_sharecode(self.title)
-            if not await self.ower.owner_check(str(self.intraction.user.id),sharecode):return await self.intraction.response.edit_message(content="403 権限不足です",view=None,embed=None)
+            if not await self.ower.owner_check(str(self.intraction.user.id),self.title):return await self.intraction.response.edit_message(content="403 権限不足です",view=None,embed=None)
             ch = await self.delete.all_delete_title(str(self.intraction.user.id),self.title)
             if ch:await self.intraction.response.edit_message(content="削除しました。",view=None,embed=None)
             else:await self.intraction.response.edit_message(content="削除に失敗しました。",view=None,embed=None)

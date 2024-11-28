@@ -161,9 +161,7 @@ class MemorizationAddChoiceAnswer(discord.ui.View):
         from memorization_discord.memorization_control import MemorizationControlView
         sharecode = await self.share.get_sharecode(self.title)
         await self.add.add_misson_select(sharecode,self.question,anwernumber,self.select)
-        embed = discord.Embed(title="問題追加", color=0x00ff00)
-        genre_list = await self.genre.get_genres_name(str(interaction.user.id))
-        await interaction.response.edit_message(embed=embed,view=MemorizationControlView(self.title,genre_list))
+        await interaction.response.edit_message(content="追加しました",embed=None,view=None)
 
     @discord.ui.button(label="選択肢①", style=discord.ButtonStyle.green)
     async def choice1(self, interaction: discord.Interaction, _: discord.ui.Button):

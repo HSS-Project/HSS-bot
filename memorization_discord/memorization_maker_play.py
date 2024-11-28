@@ -185,9 +185,10 @@ class MemorizationPlay:
         await self.user.user_data_score(str(self.interaction.user.id),self.sharecode,self.score)
         await self.user.user_data_shuffle(str(self.interaction.user.id),self.sharecode)
         embed = discord.Embed(title="終了",color=0x00ff00)
-        embed.add_field(name="スコア",value=f"{self.score}/{len(self.question_list)}",inline=False)
-        embed.add_field(name="間違った問題",value="",inline=False)
+        if len(self.miss_list) == 0:return await self.interaction.response.edit_message(embed=embed,view=None)
         if len(self.miss_list) > 0 and len(self.miss_list) < 20:
+            embed.add_field(name="スコア",value=f"{self.score}/{len(self.question_list)}",inline=False)
+            embed.add_field(name="間違った問題",value="",inline=False)
             for miss_num in self.miss_list:
                 if self.question_list[miss_num]["mode"] == 0:
                     embed.add_field(name=f"{miss_num+1}問目:{self.question_list[miss_num]['question']}",value=self.question_list[miss_num]["answer"],inline=False)
@@ -199,11 +200,8 @@ class MemorizationPlay:
                         answer += f"{i+1}番目の解答:{ans}\n"
                         embed.add_field(name=f"{miss_num+1}問目:{self.question_list[miss_num]['question']}",value=answer,inline=False)
             return await self.interaction.response.edit_message(embed=embed,view=None)
-        elif len(self.miss_list) > 20:
-            return await self.interaction.response.edit_message(embed=embed,view=MemorizationMissView(self.sharecode,self.miss_list))
-        else:
-            return await self.interaction.response.edit_message(embed=embed,view=None)
-  
+        return await self.interaction.response.edit_message(embed=embed,view=MemorizationMissView(self.sharecode,self.miss_list))
+              
     async def main_start(self):
         if int(self.counts) == len(self.question_list):
             return await self.finish()
