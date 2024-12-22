@@ -2,29 +2,24 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-
 from HSS import NewSchool as School
 from HSS import User
 import json
+
 
 with open("token.json", 'r', encoding='utf-8') as file:
     t = json.load(file)
     token = t["HSSAPI_TOKEN"]
     
-class gettimelineselect(discord.ui.View):
-    def __init__(self, school_id,grade:int, _class:int, date):
+class GetTimeLineSelect(discord.ui.View):
+    def __init__(self, school_id, grade: int, _class: int, date):
         super().__init__(timeout=None)
         self.school_id = school_id
-        self.grade:int = int(grade)
-        self._class:int = int(_class)
+        self.grade: int = int(grade)
+        self._class: int = int(_class)
         self.date = date
         self.school = School(token=token, schoolid=self.school_id)
-        try:
-            self.class_index = self.school.search_class(int(grade), int(_class))
-        except Exception as e:
-            print(e)
-            self.add_item(discord.ui.Button(style=discord.ButtonStyle.red, label="エラーが発生しました"))
-            return
+        self.class_index = self.school.search_class(int(grade), int(_class))
 
     async def make_embed(self, grade:int, _class:int, res,modes:int):
         day_of_week = {
@@ -54,7 +49,7 @@ class gettimelineselect(discord.ui.View):
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class SchoolSelect(discord.ui.Select):
-    def __init__(self,mode:int,id:int):
+    def __init__(self, mode: int, id: int):
         self.mode = mode
         options = []
         user = User(token=token)
@@ -150,7 +145,7 @@ class DayOfWeekSelect(discord.ui.Select):
     async def callback(self, interaction:discord.Interaction):
         search_class_index = self.school.search_class(int(self.grade),int(self._class))
         if self.mode == 0:            
-            await interaction.response.edit_message(content="どちらの時間割を取得しますか", view=gettimelineselect(self.schoolid, self.grade, self._class, self.values[0]))
+            await interaction.response.edit_message(content="どちらの時間割を取得しますか", view=GetTimeLineSelect(self.schoolid, self.grade, self._class, self.values[0]))
         elif self.mode == 1:        
             gettimeline = self.school.get_timeline(search_class_index, self.values[0])
             timelineindex = self.school.default_timelineindex(search_class_index)
@@ -172,6 +167,7 @@ class DayOfWeekSelect(discord.ui.Select):
             except TypeError as e:
                 await interaction.response.edit_message(content="エラー\n内容はないようです")
 
+
 class EditSendSelect(discord.ui.Select):
     def __init__(self, schoolid:int, grade:int, _class:int, date:str):
         self.schoolid = schoolid
@@ -180,7 +176,7 @@ class EditSendSelect(discord.ui.Select):
         self.date = date
         self.school = School(token=token, schoolid=self.schoolid)
         options = []
-        number:int = self.school.search_class(self.grade, self._class)
+        number = self.school.search_class(self.grade, self._class)
         defulttimelineindex = self.school.default_timelineindex(number)
         for i in range(defulttimelineindex):
             i = str(i+1)
@@ -300,7 +296,7 @@ class HomeworkView(discord.ui.View):
     async def edit_homework(self, interaction:discord.Interaction, button:discord.ui.Button):
         self.view.add_item(SelectHomeWork(self.schoolid, self.grade, self._class, 0))
         await interaction.response.edit_message(content="編集する宿題を選択してください", view=self.view)
-    
+
 class HomeworkAddModal(discord.ui.Modal):
     def __init__(self, schoolid:int,grade:int,_class:int,modechange:int,homwork=None):
         self.school = School(token=token, schoolid=schoolid)
@@ -356,6 +352,7 @@ class HomeworkAddModal(discord.ui.Modal):
                 )
         await interaction.response.send_message("宿題を追加しました", ephemeral=True)
 
+
 class SelectHomeWork(discord.ui.Select):
     def __init__(self,schoolid:int,grade:int,_class:int,modes:int):
         self.school = School(token=token, schoolid=schoolid)
@@ -387,6 +384,7 @@ class SelectHomeWork(discord.ui.Select):
                 index=self.values[0]
                 )
             await interaction.response.edit_message(content="削除しました")
+
 
 class CommandsCog(commands.Cog):
     def __init__(self, bot):
@@ -452,7 +450,7 @@ class CommandsCog(commands.Cog):
         else:
             view.add_item(SchoolSelect(2, interaction.user.id))
             await interaction.response.send_message("学校を選択してください", view=view, ephemeral=True)
-        
+
     @school.command(name="get_homework", description="school/get_homework")
     async def get_homework(self, interaction:discord.Interaction):
         """宿題を取得します。"""
@@ -480,6 +478,7 @@ class CommandsCog(commands.Cog):
         else:
             view.add_item(SchoolSelect(4, interaction.user.id))
             await interaction.response.send_message("学校を選択してください", view=view, ephemeral=True)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(CommandsCog(bot))

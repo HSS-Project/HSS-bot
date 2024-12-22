@@ -193,8 +193,7 @@ class Timed_NotificationsAdd:
     Timed Notifications Add
     """
     def __init__(self):
-        self.data:dict = {}
-        self.load()
+        self.data: dict = {}
 
     def load(self):
         """
@@ -388,5 +387,6 @@ class Timed_Notifications(commands.Cog):
                         await webhook.send(embed=embed)
                 except Exception as e:
                     print("送信失敗",data,e)
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Timed_Notifications(bot))
