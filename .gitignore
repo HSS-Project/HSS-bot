@@ -1,3 +1,6 @@
 *.json
 __pycache__
+*.gv
+*.xlsx
+DataBase4500.xlsx
 hss_test.py

@@ -10,8 +10,22 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 class MyBot(commands.Bot):
     def __init__(self, prefix: str, intents: discord.Intents):
         super().__init__(command_prefix=prefix, intents=intents)
+        self.on_ready_status = False
     
     async def on_ready(self):
+        if not self.on_ready_status:self.on_ready_status = True
+        else:
+            for file in os.listdir("./cogs"):
+                if file.endswith('.py') and not file.startswith('_'):#_で始まるファイルは読み込まない
+                    try:
+                        await self.reload_extension(f'cogs.{file[:-3]}')
+                        print(f"Loaded cogs: cogs.{file[:-3]}")
+                    except Exception as e:
+                        print(f"cogs.{file[:-3]} failed to load", e)
+                        traceback.print_exc()
+            await self.reload_extension("jishaku")
+            return
+        
         await self.change_presence(activity=discord.Game(name="/help"))
         for file in os.listdir("./cogs"):
             if file.endswith('.py') and not file.startswith('_'):#_で始まるファイルは読み込まない
@@ -32,12 +46,11 @@ class MyBot(commands.Bot):
         print("-----------------------")
         for guild in self.guilds:
             print(guild.name)
-
         print(f"導入数 {(len(self.guilds))}")
         print("-----------------------")
         await self.tree.sync()
 
-bot = MyBot(intents=discord.Intents.all(), prefix='k!')
+bot = MyBot(intents=discord.Intents.all(), prefix='m!')
 
 if __name__ == '__main__':
     with open("token.json", 'r', encoding='utf-8') as file:
