@@ -79,7 +79,9 @@ class MemorizationCog(commands.Cog):
     async def delete2(self, interaction:discord.Interaction):
         embed = discord.Embed(title="選択してください",description="")
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
-        await interaction.response.send_message(embed=embed, view=select_title.SelectGenre(genre_list,3,0),ephemeral=True)
+        view = discord.ui.View()
+        view.add_item(select_title.SelectGenre(genre_list,3,0))
+        await interaction.response.send_message(embed=embed, view=view,ephemeral=True)
     
     @memorization.command(name="all_misson_delete",description="問題を完全削除します")
     async def all_delete(self,interaction:discord.Interaction):
