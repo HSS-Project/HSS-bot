@@ -54,7 +54,7 @@ class MemorizationControlView(discord.ui.View):
 
     @discord.ui.button(label="ジャンル作成", style=discord.ButtonStyle.blurple)
     async def genre(self, interaction: discord.Interaction, _:discord.ui.Button):
-        await interaction.response.send_modal(MemorizationMakeGenre())
+        await interaction.response.send_modal(MemorizationMakeGenre(self.title))
 
     @discord.ui.button(label="ジャンル削除", style=discord.ButtonStyle.blurple)
     async def genre_delete(self, interaction: discord.Interaction, _:discord.ui.Button):

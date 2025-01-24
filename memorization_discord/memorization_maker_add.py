@@ -198,7 +198,8 @@ class MemorizationAddTextModal(discord.ui.Modal, title="文章問題追加"):
         await interaction.response.send_message("追加しました",ephemeral=True)
     
 class MemorizationMakeGenre(discord.ui.Modal, title="ジャンル作成"):
-    def __init__(self):
+    def __init__(self, title):
+        self.title = title
         self.genre_input = discord.ui.TextInput(label="ジャンル", style=discord.TextStyle.short)
         super().__init__()
         self.add_item(self.genre_input)
@@ -209,7 +210,7 @@ class MemorizationMakeGenre(discord.ui.Modal, title="ジャンル作成"):
         await genre.make_genre(str(interaction.user.id),genre_title)
         genre_list = await genre.get_genres_name(str(interaction.user.id))
         embed = discord.Embed(title="問題追加", color=0x00ff00)
-        await interaction.response.edit_message(embed=embed,view=MemorizationControlView(str(interaction.user.id),genre_list))
+        await interaction.response.edit_message(embed=embed,view=MemorizationControlView(self.title,genre_list))
 
 class OwnerAddModal(discord.ui.Modal, title="オーナー追加"):
     def __init__(self, title):
