@@ -193,18 +193,25 @@ class MemorizationPlay:
             embed.add_field(name="間違った問題",value="",inline=False)
             for miss_num in self.miss_list:
                 try:
-                    if questions[miss_num]["mode"] == 0:
-                        embed.add_field(name=f"{miss_num+1}問目:{questions[miss_num]['question']}",value=questions[miss_num]["answer"],inline=False)
-                    elif questions[miss_num]["mode"] == 1:
-                        embed.add_field(name=f"{miss_num+1}問目:{questions[miss_num]['question']}",value=questions[miss_num]["select"][questions[miss_num]["answer"]],inline=False)
-                    elif questions[miss_num]["mode"] == 2:
+                    if questions["questions"][miss_num]["mode"] == 0:
+                        embed.add_field(name=f"{miss_num+1}問目:{questions["questions"][miss_num]['question']}",value=questions["questions"][miss_num]["answer"],inline=False)
+                    elif questions["questions"][miss_num]["mode"] == 1:
+                        embed.add_field(name=f"{miss_num+1}問目:{questions["questions"][miss_num]['question']}",value=questions["questions"][miss_num]["select"][questions["questions"][miss_num]["answer"]],inline=False)
+                    elif questions["questions"][miss_num]["mode"] == 2:
                         answer = ""
-                        for i,ans in enumerate(questions[miss_num]["answer"]):
+                        for i,ans in enumerate(questions["questions"][miss_num]["answer"]):
                             answer += f"{i+1}番目の解答:{ans}\n"
-                            embed.add_field(name=f"{miss_num+1}問目:{questions[miss_num]['question']}",value=answer,inline=False)
+                            embed.add_field(name=f"{miss_num+1}問目:{questions["questions"][miss_num]['question']}",value=answer,inline=False)
                 except IndexError:
                     msg = f"問題の取得に失敗しました。{miss_num}の問題が存在しません。\n```miss: {self.miss_list}\nlen_ques: {len(self.question_list)}\nlen_miss{len(self.miss_list)}```"
                     return await self.interaction.response.edit_message(content=msg,embed=None,view=None)
+                except KeyError:
+                    msg = f"問題の取得に失敗しました。{miss_num}の問題が存在しません。\n```miss: {self.miss_list}\nlen_ques: {len(self.question_list)}\nlen_miss{len(self.miss_list)}```"
+                    return await self.interaction.response.edit_message(content=msg,embed=None,view=None)
+                except Exception as e:
+                    msg = f"問題の取得に失敗しました。\n```{e}```"
+                    return await self.interaction.response.edit_message(content=msg,embed=None,view=None)
+            
             return await self.interaction.response.edit_message(embed=embed,view=None)
         return await self.interaction.response.edit_message(embed=embed,view=MemorizationMissView(self.sharecode,self.miss_list))
               
