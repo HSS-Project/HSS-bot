@@ -28,9 +28,9 @@ async def make_answer(interaction: discord.Interaction,sharecode,question_list,c
         embed.add_field(name="あなたの解答",value=input,inline=False)
         embed.add_field(name="結果",value=view_ch,inline=False)
         if question_list[counts]["mode"] == 0:
-            embed.add_field(name="正解",value=datas["questions"][questions_number]["answer"],inline=False)
+            embed.add_field(name="正解",value=datas['questions'][questions_number]["answer"],inline=False)
         elif question_list[counts]["mode"] == 1:
-            embed.add_field(name="正解",value=datas["questions"][questions_number]["select"][datas["questions"][questions_number]["answer"]],inline=False)
+            embed.add_field(name="正解",value=datas['questions'][questions_number]["select"][datas['questions'][questions_number]["answer"]],inline=False)
     elif question_list[counts]["mode"] == 2:
         change = 0
         for i,num in enumerate(input):
@@ -43,7 +43,7 @@ async def make_answer(interaction: discord.Interaction,sharecode,question_list,c
                 change = 1
             embed.add_field(name="あなたの解答",value=num.value,inline=False)
             embed.add_field(name="結果",value=view_ch,inline=False)
-            embed.add_field(name="正解",value=datas["questions"][questions_number]["answer"][i],inline=False)
+            embed.add_field(name="正解",value=datas['questions'][questions_number]["answer"][i],inline=False)
         if change:
             miss_list.append(questions_number)
     await interaction.response.edit_message(embed=embed,view=Contenu(sharecode,playmode,question_list,score,miss_list,counts))
@@ -58,7 +58,7 @@ class ChoicePlayMode(discord.ui.View):
     @discord.ui.button(label="順番出題", style=discord.ButtonStyle.primary)
     async def choice_order(self, interaction: discord.Interaction, _:discord.ui.Button):
         questions = await self.share.get_sharedata(self.sharecode)
-        question_list = questions["questions"]
+        question_list = questions['questions']
         await MemorizationPlay(interaction,self.sharecode,0,question_list,0,[]).main_start()
 
     @discord.ui.button(label="ランダム出題", style=discord.ButtonStyle.primary)
@@ -68,7 +68,7 @@ class ChoicePlayMode(discord.ui.View):
         question_number_list = questions_user["questions_number_list"]    
         question_list = []
         for num in question_number_list:
-            question_list.append(questions["questions"][num])
+            question_list.append(questions['questions'][num])
         await MemorizationPlay(interaction,self.sharecode,1,question_list,0,[]).main_start()
     
     @discord.ui.button(label="前回のミス問題出題", style=discord.ButtonStyle.primary)
@@ -78,7 +78,7 @@ class ChoicePlayMode(discord.ui.View):
         questions = await self.share.get_sharedata(self.sharecode)
         question_number_list = questions_user["miss_numbers"]
         for num in question_number_list:
-            question_list.append(questions["questions"][num])
+            question_list.append(questions['questions'][num])
         if len(question_list) == 0:
             return await interaction.response.edit_message(content="ミス問題がありません",view=None,embed=None)
         await MemorizationPlay(interaction,self.sharecode,2,question_list,0,[]).main_start()
@@ -193,15 +193,15 @@ class MemorizationPlay:
             embed.add_field(name="間違った問題",value="",inline=False)
             for miss_num in self.miss_list:
                 try:
-                    if questions["questions"][miss_num]["mode"] == 0:
-                        embed.add_field(name=f"{miss_num+1}問目:{questions["questions"][miss_num]['question']}",value=questions["questions"][miss_num]["answer"],inline=False)
-                    elif questions["questions"][miss_num]["mode"] == 1:
-                        embed.add_field(name=f"{miss_num+1}問目:{questions["questions"][miss_num]['question']}",value=questions["questions"][miss_num]["select"][questions["questions"][miss_num]["answer"]],inline=False)
-                    elif questions["questions"][miss_num]["mode"] == 2:
+                    if questions['questions'][miss_num]["mode"] == 0:
+                        embed.add_field(name=f"{miss_num+1}問目:{questions['questions'][miss_num]['question']}",value=questions['questions'][miss_num]["answer"],inline=False)
+                    elif questions['questions'][miss_num]["mode"] == 1:
+                        embed.add_field(name=f"{miss_num+1}問目:{questions['questions'][miss_num]['question']}",value=questions['questions'][miss_num]["select"][questions['questions'][miss_num]["answer"]],inline=False)
+                    elif questions['questions'][miss_num]["mode"] == 2:
                         answer = ""
-                        for i,ans in enumerate(questions["questions"][miss_num]["answer"]):
+                        for i,ans in enumerate(questions['questions'][miss_num]["answer"]):
                             answer += f"{i+1}番目の解答:{ans}\n"
-                            embed.add_field(name=f"{miss_num+1}問目:{questions["questions"][miss_num]['question']}",value=answer,inline=False)
+                            embed.add_field(name=f"{miss_num+1}問目:{questions['questions'][miss_num]['question']}",value=answer,inline=False)
                 except IndexError:
                     msg = f"問題の取得に失敗しました。{miss_num}の問題が存在しません。\n```miss: {self.miss_list}\nlen_ques: {len(self.question_list)}\nlen_miss{len(self.miss_list)}```"
                     return await self.interaction.response.edit_message(content=msg,embed=None,view=None)
@@ -252,16 +252,16 @@ class MemorizationMissView(discord.ui.View):
         embed = discord.Embed(title=f"間違った問題 : {self.page+1}ページ目",color=0x00ff00)
         for num,miss_num in enumerate(self.miss_list[self.page]):
             datas = await self.share.get_sharedata(self.sharecode)
-            if datas["questions"][miss_num]["mode"] == 0:
+            if datas['questions'][miss_num]["mode"] == 0:
                 embed.add_field(name=f"{miss_num+1}問目",value=f"問題:{datas['questions'][miss_num]['question']}\n解答:{datas['questions'][miss_num]['answer']}",inline=False)
-            elif datas["questions"][miss_num]["mode"] == 1:
-                question = datas["questions"][miss_num]["question"]
+            elif datas['questions'][miss_num]["mode"] == 1:
+                question = datas['questions'][miss_num]["question"]
                 anwer = datas['questions'][miss_num]['select'][datas['questions'][miss_num]['answer']]
                 select = datas['questions'][miss_num]['select']
                 embed.add_field(name=f"{miss_num+1}問目",value=f"問題:{question}\n解答:{anwer}\n選択肢:{select}",inline=False)
-            elif datas["questions"][miss_num]["mode"] == 2:
+            elif datas['questions'][miss_num]["mode"] == 2:
                 answer = ""
-                for i,ans in enumerate(datas["questions"][miss_num]["answer"]):
+                for i,ans in enumerate(datas['questions'][miss_num]["answer"]):
                     answer += f"{i+1}番目の解答:{ans}\n"
                 embed.add_field(name=f"{num+1}問目",value=f"問題:{datas['questions'][miss_num]['question']}\n{answer}",inline=False)
         return embed
