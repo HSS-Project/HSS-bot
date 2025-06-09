@@ -11,12 +11,12 @@ async def make_answer(interaction: discord.Interaction,sharecode,question_list,c
     questions_number = counts
     ch = 0
     view_ch = ""
-    # if playmode > 0:
-        # questions_user = await User().get_mission(str(interaction.user.id),sharecode)
-    # if playmode == 1:
-    #     # questions_number = questions_user["questions_number_list"][counts]
-    # elif playmode == 2:
-    #     # questions_number = questions_user["miss_numbers"][counts]
+    if playmode > 0:
+        questions_user = await User().get_mission(str(interaction.user.id),sharecode)
+    if playmode == 1:
+        questions_number = questions_user["questions_number_list"][counts]
+    elif playmode == 2:
+        questions_number = questions_user["miss_numbers"][counts]
     if question_list[counts]["mode"] <= 1:
         ch = await Get().check_answer(title,questions_number,input)
         if ch:
