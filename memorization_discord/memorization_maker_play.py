@@ -11,12 +11,12 @@ async def make_answer(interaction: discord.Interaction,sharecode,question_list,c
     questions_number = counts
     ch = 0
     view_ch = ""
-    if playmode > 0:
-        questions_user = await User().get_mission(str(interaction.user.id),sharecode)
-    if playmode == 1:
-        questions_number = questions_user["questions_number_list"][counts]
-    elif playmode == 2:
-        questions_number = questions_user["miss_numbers"][counts]
+    # if playmode > 0:
+        # questions_user = await User().get_mission(str(interaction.user.id),sharecode)
+    # if playmode == 1:
+    #     # questions_number = questions_user["questions_number_list"][counts]
+    # elif playmode == 2:
+    #     # questions_number = questions_user["miss_numbers"][counts]
     if question_list[counts]["mode"] <= 1:
         ch = await Get().check_answer(title,questions_number,input)
         if ch:
@@ -201,7 +201,7 @@ class MemorizationPlay:
                             answer += f"{i+1}番目の解答:{ans}\n"
                             embed.add_field(name=f"{miss_num+1}問目:{self.question_list[miss_num]['question']}",value=answer,inline=False)
                 except IndexError:
-                    msg = f"問題の取得に失敗しました。{miss_num+1}問目の問題が存在しません。\n```miss: {self.miss_list}\nlen_ques: {len(self.question_list)}\nlen_miss{(self.miss_list)}```"
+                    msg = f"問題の取得に失敗しました。{miss_num+1}問目の問題が存在しません。\n```miss: {self.miss_list}\nquestion_list: {self.question_list}\nlen_ques: {len(self.question_list)}\nlen_miss{len(self.miss_list)}```"
                     return await self.interaction.response.edit_message(content=msg,embed=None,view=None)
             return await self.interaction.response.edit_message(embed=embed,view=None)
         return await self.interaction.response.edit_message(embed=embed,view=MemorizationMissView(self.sharecode,self.miss_list))
