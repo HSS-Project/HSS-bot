@@ -44,8 +44,8 @@ class MyBot(commands.Bot):
         print(discord.version_info)
         print(sys.version)
         print("-----------------------")
-        for guild in self.guilds:
-            print(guild.name)
+        # for guild in self.guilds:
+        #     print(guild.name)
         print(f"導入数 {(len(self.guilds))}")
         print("-----------------------")
         await self.tree.sync()
