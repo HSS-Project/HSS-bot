@@ -237,6 +237,7 @@ class OwnerAddModal(discord.ui.Modal, title="オーナー追加"):
             sharecode = await self.share.get_sharecode(self.title)
             await self.genre.add_genre(str(self.owner_input.value),"default",int(sharecode))
         elif isinstance(data,str):
+            userid = str(0)
             try:
                 member = discord.utils.find(lambda m: m.name == str(data), guild.members)
                 userid = str(member.id)
