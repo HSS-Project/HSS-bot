@@ -17,7 +17,7 @@ class TitleModal(discord.ui.Modal,title="タイトル追加"):
         share = Share()
         adds = Add()
         title = str(self.title_input.value)
-        if not title:return await interaction.response.send_message("タイトルが入力されていません",ephemeral=True)
+        if not title:return await interaction.response.send_message(content="タイトルが入力されていません",ephemeral=True)
         await genre.make_genre(str(interaction.user.id),"default")
         sharecode = await share.make_sharecode()
         await adds.init_add(str(interaction.user.id),title,sharecode)
@@ -79,12 +79,12 @@ class MemorizationAddChangeSelectMode(discord.ui.View):
     @discord.ui.button(label="選択肢自動追加", style=discord.ButtonStyle.red)
     async def auto_add(self, interaction: discord.Interaction, _: discord.ui.Button):
         data = await self.get.get_misson(self.title)
-        if data is False:return await interaction.response.send_message("問題がないためこの機能は使えません",ephemeral=True)
+        if data is False:return await interaction.response.send_message(content="問題がないためこの機能は使えません",ephemeral=True)
         question_select_list_number = []
         for i, question in enumerate(data["questions"]):
             if question["mode"] == 1:
                 question_select_list_number.append(i)
-        if not question_select_list_number:return await interaction.response.send_message("選択肢の問題がありません",ephemeral=True)
+        if not question_select_list_number:return await interaction.response.send_message(content="選択肢の問題がありません",ephemeral=True)
         await interaction.response.send_modal(MemorizationAddSlect(self.title,self.question,1,question_select_list_number))
         
 class MemorizationAddSlect(discord.ui.Modal,title="選択肢追加"):
@@ -119,7 +119,7 @@ class MemorizationAddSlect(discord.ui.Modal,title="選択肢追加"):
             select_list = []
             for input_item in self.inputs:
                 select_list.append(str(input_item.value))
-            if len(select_list) != len(set(select_list)):return await interaction.response.send_message("選択肢が重複しています",ephemeral=True)
+            if len(select_list) != len(set(select_list)):return await interaction.response.send_message(content="選択肢が重複しています",ephemeral=True)
         select_list = []
         for input_item in self.inputs:
             select_list.append(str(input_item.value))
@@ -194,7 +194,7 @@ class MemorizationAddTextModal(discord.ui.Modal, title="文章問題追加"):
         question = str(self.inputs[0].value)
         sharecode = await share.get_sharecode(self.title)
         ch = await add.add_misson_text(sharecode,question)
-        if ch is False:return await interaction.response.send_message("問題の追加に失敗しました",ephemeral=True)
+        if ch is False:return await interaction.response.send_message(content="問題の追加に失敗しました",ephemeral=True)
         await interaction.response.send_message("追加しました",ephemeral=True)
     
 class MemorizationMakeGenre(discord.ui.Modal, title="ジャンル作成"):
@@ -230,8 +230,8 @@ class OwnerAddModal(discord.ui.Modal, title="オーナー追加"):
             try:
                 member = guild.get_member(data)
             except:
-                return await interaction.response.send_message("存在しないユーザーIDです",ephemeral=True)
-            if str(data) in ownerid_list:return await interaction.response.send_message("既に追加されています",ephemeral=True)
+                return await interaction.response.send_message(content="存在しないユーザーIDです",ephemeral=True)
+            if str(data) in ownerid_list:return await interaction.response.send_message(content="既に追加されています",ephemeral=True)
             await owner.owner_add(str(interaction.user.id),self.title,str(data))
             #問題の共有コードを追加
             sharecode = await self.share.get_sharecode(self.title)
@@ -241,8 +241,8 @@ class OwnerAddModal(discord.ui.Modal, title="オーナー追加"):
                 member = discord.utils.find(lambda m: m.name == str(data), guild.members)
                 userid = str(member.id)
             except:
-                return await interaction.response.send_message("存在しないユーザー名です",ephemeral=True)
-            if userid in ownerid_list:return await interaction.response.send_message("既に追加されています",ephemeral=True)
+                return await interaction.response.send_message(content="存在しないユーザー名です",ephemeral=True)
+            if userid in ownerid_list:return await interaction.response.send_message(content="既に追加されています",ephemeral=True)
             await owner.owner_add(str(interaction.user.id),self.title,str(userid))
             sharecode = await self.share.get_sharecode(self.title)
             await self.genre.add_genre(userid,"default",int(sharecode))
