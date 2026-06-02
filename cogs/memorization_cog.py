@@ -1,6 +1,9 @@
 from discord.ext import commands
 from discord import app_commands
 import discord
+import json
+import importlib.util
+import random
 import memorization_discord.memorization_maker_add as maker_add
 import memorization_discord.select_title as select_title
 from memorization_maker.genre import Genre
@@ -10,12 +13,23 @@ from memorization_maker.memorization_vocabulary import Vocabulary
 from memorization_maker.share import Share
 
 class MemorizationCog(commands.Cog):
+    OWNER_ID = 705264675138568192
+
     def __init__(self,bot):
         self.bot:discord.Client = bot
         self.adds = Add()
         self.genres = Genre()
         self.shares = Share()
         self.get = Get()
+
+    def _load_gemini_api_key(self):
+        try:
+            with open("token.json", "r", encoding="utf-8") as file:
+                token_data = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return None
+
+        return token_data.get("GEMINI_API_KEY") or token_data.get("GEMINI_KEY") or token_data.get("GENAI_API_KEY")
 
     memorization = app_commands.Group(name="memorization", description="暗記メーカ")
 
@@ -26,10 +40,61 @@ class MemorizationCog(commands.Cog):
     @memorization.command(name="add_excel", description="エクセルファイルから問題を追加します。")
     async def add_excel(self, interaction:discord.Interaction,excel:discord.Attachment,title:str):
         _sharecode = await self.shares.make_sharecode()
+        if _sharecode is None:
+            return await interaction.response.send_message("共有コードの生成に失敗しました。", ephemeral=True)
         await self.adds.init_add(str(interaction.user.id),title,_sharecode)
         await self.adds.add_misson_in_Excel(_sharecode,excel)
         await self.genres.add_genre(str(interaction.user.id),"default",_sharecode)
         await interaction.response.send_message("追加しました。", ephemeral=True)
+
+    @commands.command(name="add_pdf", description="PDFファイルから問題を追加します。タイトルの後に任意でAIへの指令を追加できます。")
+    async def add_pdf(self, ctx, title: str, *ai_instruction: str):
+        if ctx.author.id != self.OWNER_ID:
+            return await ctx.send("403 Forbidden")
+
+        pdf_attachment = next((attachment for attachment in ctx.message.attachments if attachment.filename.lower().endswith(".pdf")), None)
+        if pdf_attachment is None:
+            return await ctx.send("PDFファイルを添付してください。")
+
+        api_key = self._load_gemini_api_key()
+        if not api_key:
+            return await ctx.send("token.json に GEMINI_API_KEY を追加してください。")
+
+        # 必要なランタイム依存をチェック
+        if importlib.util.find_spec("google.genai") is None or importlib.util.find_spec("pypdf") is None:
+            return await ctx.send("依存ライブラリが不足しています。まずリポジトリのルートで次を実行してください:\n```\npip install -r requirements.txt\n```")
+        desired_count = None
+        ai_instruction_text = None
+        if ai_instruction:
+            first = ai_instruction[0]
+            try:
+                desired_count = int(first)
+                rest = ai_instruction[1:]
+            except Exception:
+                rest = ai_instruction
+            ai_instruction_text = " ".join(rest).strip() if rest else None
+
+        # 問題数: 指定がなければ 40〜60 の範囲でランダムに決定、指定があれば最大100で上限
+        if desired_count is None:
+            max_q = random.randint(40, 60)
+        else:
+            max_q = max(1, min(desired_count, 100))
+        async with ctx.typing():
+            questions = await self.adds.generate_questions_from_pdf(pdf_attachment, api_key, max_questions=max_q, force_mode=1, ai_instruction=ai_instruction_text)
+        if not questions:
+            return await ctx.send("PDFから問題を生成できませんでした。")
+
+        _sharecode = await self.shares.make_sharecode()
+        if _sharecode is None:
+            return await ctx.send("共有コードの生成に失敗しました。")
+        if not await self.adds.init_add(str(ctx.author.id), title, _sharecode):
+            return await ctx.send("タイトルの作成に失敗しました。")
+
+        if not await self.adds.add_generated_questions(_sharecode, questions):
+            return await ctx.send("問題の保存に失敗しました。")
+
+        await self.genres.add_genre(str(ctx.author.id), "default", _sharecode)
+        await ctx.send(f"追加しました。{len(questions)}問を生成しました。")
     
     @memorization.command(name="edit", description="問題を編集します。")
     async def edit(self, interaction:discord.Interaction):
@@ -99,7 +164,7 @@ class MemorizationCog(commands.Cog):
 
     @commands.command(name="add_vo", description="問題を追加します。")
     async def add_vocabulary(self, ctx, title: str, start_number: int, end_number: int, mode:int = 0):
-        if ctx.author.id == 705264675138568192:
+        if ctx.author.id == self.OWNER_ID:
             self.vocabulary = Vocabulary()
             if end_number - start_number > 100:return await ctx.send("100問までです。")
             await self.vocabulary.make_vocabulary(str(ctx.author.id), title, start_number, end_number, mode)
