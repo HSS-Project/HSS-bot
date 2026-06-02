@@ -1,3 +1,7 @@
 discord.py>=2.3.2
 typing_extensions>=4.0
 hss.py>=1.1.1
+pypdf>=5.0.0
+google-genai>=1.0.0
+jishaku
+openpyxl

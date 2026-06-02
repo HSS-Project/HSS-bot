@@ -14,4 +14,14 @@ HSS APIのpythonラッパー`hss.py`の見本用bot。
         "memorization": {}
     }
     ```
-4. `py main.py`などのコマンドで実行すればok
+4. `token.json` に Gemini API キーを追加する。
+    ```json
+    {"TOKEN_2": "...(Bot TOKEN)", "GEMINI_API_KEY": "...(Gemini API Key)"}
+    ```
+5. `py main.py`などのコマンドで実行すればok
+
+## 暗記メモリ作成
+
+- `m!add_pdf <title>` を使うと、添付したPDFから Gemini API で問題を自動生成できます。
+- このコマンドはユーザーID `705264675138568192` のみ実行できます。
+- PDFはコマンド送信時にメッセージへ添付してください。
