@@ -271,44 +271,62 @@ class Add:
         await self.rw.write_base(self.base_data)
         
     async def add_misson_in_Excel(self,_sharecode,excelfile):
-        self.base_data:dict = await self.rw.load_base()
         excel_bytes = await excelfile.read()
         excel_file = BytesIO(excel_bytes)  
         workbook = openpyxl.load_workbook(excel_file)
         sheet = workbook.active
         sharecode = str(_sharecode)
-        row_count = sum(1 for _ in sheet.iter_rows(min_col=1,values_only=True))
-        if not row_count > 4:return False
-        for row in sheet.iter_rows(min_row=1, values_only=True):
-            if row[0] or row[1] or row[2]:
-                mode = int(row[2])
-                if not isinstance(mode, int):return False
-                question = row[0]
-                answer = row[1]
-                if mode == 0:
-                    await self.add_misson(sharecode,question,answer)
-                elif mode == 1:
-                    select = []
-                    if len(row) == 6:
-                        select = [row[3],row[4],row[5],row[6]]
-                        answer_num = select.index(answer)
+        
+        # 実データのある行のみをフィルタリング
+        rows = [row for row in sheet.iter_rows(values_only=True) if row and any(cell is not None for cell in row)]
+        # 最低限必要な実データ行数をチェック (ヘッダー行が含まれる場合があるため、実データ行数が5行以上であることを要求)
+        if len(rows) < 5:
+            return False
+            
+        for row in rows:
+            if len(row) < 3:
+                continue
+            
+            question = row[0]
+            answer = row[1]
+            mode_val = row[2]
+            
+            if question is None or mode_val is None:
+                continue
+                
+            try:
+                mode = int(mode_val)
+            except (TypeError, ValueError):
+                # ヘッダー行や無効なモード値の場合はスキップ
+                continue
+                
+            if mode == 0:
+                if answer is None:
+                    continue
+                await self.add_misson(sharecode, str(question), str(answer))
+            elif mode == 1:
+                if answer is None:
+                    continue
+                
+                # 選択肢がファイル内に定義されている場合 (4つの選択肢列がすべて存在し、値がある場合)
+                if len(row) >= 7 and all(row[i] is not None for i in range(3, 7)):
+                    select = [str(row[3]), str(row[4]), str(row[5]), str(row[6])]
+                    try:
+                        answer_num = select.index(str(answer))
+                    except ValueError:
+                        continue
+                else:
+                    # 他の行の答え列からランダムに重複しない選択肢を取得
+                    random_answer_index = random.randint(0, 3)
+                    choices_pool = list(set(str(r[1]) for r in rows if len(r) >= 2 and r[1] is not None and str(r[1]) != str(answer)))
+                    if len(choices_pool) < 3:
+                        select = [str(answer)] + ["選択肢1", "選択肢2", "選択肢3"]
                     else:
-                        num_rows_max = sheet.max_row
-                        random_answer_index = random.randint(0,3)
-                        for _ in range(4):
-                            while True:
-                                random_select = random.randint(1, num_rows_max + 1)
-                                cell = sheet.cell(row=random_select, column=2)
-                                if cell.value not in select and cell.value is not None:
-                                    if not cell.value  == answer:
-                                        select.append(cell.value)
-                                        break
-                        select[random_answer_index] = answer
-                        answer_num = select.index(answer)
-                    await self.add_misson_select(sharecode,question,answer_num,select)
-            elif row[0] and int(row[2]) == 2:
-                await self.add_misson_text(sharecode,row[0])
-            else:
-                print("error")
-        await self.rw.write_base(self.base_data)
+                        select = random.sample(choices_pool, 3)
+                        select.insert(random_answer_index, str(answer))
+                    answer_num = select.index(str(answer))
+                await self.add_misson_select(sharecode, str(question), answer_num, select)
+            elif mode == 2:
+                await self.add_misson_text(sharecode, str(question))
+                
         return True

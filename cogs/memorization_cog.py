@@ -39,11 +39,40 @@ class MemorizationCog(commands.Cog):
     
     @memorization.command(name="add_excel", description="エクセルファイルから問題を追加します。")
     async def add_excel(self, interaction:discord.Interaction,excel:discord.Attachment,title:str):
+        # 拡張子のバリデーション
+        if not (excel.filename.lower().endswith(".xlsx") or excel.filename.lower().endswith(".xlsm")):
+            return await interaction.response.send_message(
+                "エクセルファイル (.xlsx または .xlsm) を添付してください。.xls などの旧形式やその他のファイル形式には対応していません。", 
+                ephemeral=True
+            )
+
         _sharecode = await self.shares.make_sharecode()
         if _sharecode is None:
             return await interaction.response.send_message("共有コードの生成に失敗しました。", ephemeral=True)
-        await self.adds.init_add(str(interaction.user.id),title,_sharecode)
-        await self.adds.add_misson_in_Excel(_sharecode,excel)
+        
+        if not await self.adds.init_add(str(interaction.user.id), title, _sharecode):
+            return await interaction.response.send_message("タイトルの初期化に失敗しました。", ephemeral=True)
+        
+        try:
+            success = await self.adds.add_misson_in_Excel(_sharecode, excel)
+            if not success:
+                raise ValueError("エクセルファイルの解析に失敗しました。問題が足りないか、シートのフォーマットが正しくない可能性があります。(※問題は最低5件以上必要です)")
+        except Exception as e:
+            # ロールバック処理: 作成された共有コードをデータベースから削除する
+            base_data = await self.adds.rw.load_base()
+            if _sharecode in base_data.get("memorization", {}):
+                del base_data["memorization"][_sharecode]
+                await self.adds.rw.write_base(base_data)
+            
+            # エラー内容に応じた分かりやすいメッセージ
+            error_name = type(e).__name__
+            if error_name == "BadZipFile":
+                error_msg = "エクセルファイルの読み込み中にエラーが発生しました: ファイルが破損しているか、対応していない形式（例: 旧式の.xlsファイルなど）の可能性があります。.xlsx 形式であることを確認してください。"
+            else:
+                error_msg = f"エクセルファイルの処理中にエラーが発生しました: {e}"
+            
+            return await interaction.response.send_message(error_msg, ephemeral=True)
+            
         await self.genres.add_genre(str(interaction.user.id),"default",_sharecode)
         await interaction.response.send_message("追加しました。", ephemeral=True)
 

@@ -198,4 +198,4 @@ class SelectTitleResponse:
             if messages_to_send:
                 await self.intraction.response.edit_message(content=messages_to_send[0], view=None, embed=None)
                 for msg in messages_to_send[1:]:
-                    await self.intraction.followup.send(content=msg, ephemeral=True)
+                    await self.intraction.followup.send(content=msg)
