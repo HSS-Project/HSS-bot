@@ -109,6 +109,13 @@ class MemorizationCog(commands.Cog):
         genre_list = await self.genres.get_genres_name(str(interaction.user.id))
         titles = await self.genres.genres_in_titles(str(interaction.user.id),"default")
         await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,1),ephemeral=True)
+
+    @memorization.command(name="sheet", description="問題の暗記シートを生成します。")
+    async def sheet(self, interaction:discord.Interaction):
+        embed = discord.Embed(title="選択してください",description="")
+        genre_list = await self.genres.get_genres_name(str(interaction.user.id))
+        titles = await self.genres.genres_in_titles(str(interaction.user.id),"default")
+        await interaction.response.send_message(embed=embed, view=select_title.SelectTitleView(genre_list,titles,5))
         
     @memorization.command(name="misson_sharecode", description="問題を共有します。")
     async def share(self, interaction:discord.Interaction):
