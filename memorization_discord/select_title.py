@@ -124,6 +124,8 @@ class SelectTitleResponse:
         if self.title == "None":
             return await self.intraction.response.edit_message(content="キャンセルしました。")
         if self.modes == 0:
+            if not await self.ower.owner_check(str(self.intraction.user.id),self.title):
+                return await self.intraction.response.edit_message(content="403 権限不足です",view=None,embed=None)
             embed = discord.Embed(title="問題編集",color=0x00ff00)
             await self.intraction.response.edit_message(embed=embed,view=MemorizationControlView(self.title,await self.genre.get_genres_name(str(self.intraction.user.id))))
         elif self.modes == 1:
@@ -149,3 +151,51 @@ class SelectTitleResponse:
             ch = await self.delete.all_delete_title(str(self.intraction.user.id),self.title)
             if ch:await self.intraction.response.edit_message(content="削除しました。",view=None,embed=None)
             else:await self.intraction.response.edit_message(content="削除に失敗しました。",view=None,embed=None)
+        elif self.modes == 5:
+            sharecode = await self.share.get_sharecode(self.title)
+            datas = await self.share.get_sharedata(sharecode)
+            questions = datas.get("questions", [])
+            if not questions:
+                return await self.intraction.response.edit_message(content="問題が見つかりませんでした。", view=None, embed=None)
+
+            lines = [f"**【暗記シート】{self.title}**\n"]
+            for idx, q in enumerate(questions):
+                q_text = q.get("question", "")
+                mode = q.get("mode", 0)
+                q_val = q_text
+
+                if mode == 1:
+                    try:
+                        ans_idx = int(q.get("answer", 0))
+                        ans_val = q.get("select", [])[ans_idx]
+                    except (ValueError, IndexError):
+                        ans_val = str(q.get("answer", ""))
+                elif mode == 2:
+                    ans_list = q.get("answer", [])
+                    if isinstance(ans_list, list):
+                        ans_val = ", ".join(ans_list)
+                    else:
+                        ans_val = str(ans_list)
+                else:
+                    ans_val = q.get("answer", "")
+
+                lines.append(f"**問{idx+1}**\n問題: {q_val}\n答え: ||{ans_val}||\n")
+
+            messages_to_send = []
+            current_message = ""
+            for line in lines:
+                if len(current_message) + len(line) + 1 > 2000:
+                    messages_to_send.append(current_message)
+                    current_message = line
+                else:
+                    if current_message:
+                        current_message += "\n" + line
+                    else:
+                        current_message = line
+            if current_message:
+                messages_to_send.append(current_message)
+
+            if messages_to_send:
+                await self.intraction.response.edit_message(content=messages_to_send[0], view=None, embed=None)
+                for msg in messages_to_send[1:]:
+                    await self.intraction.followup.send(content=msg, ephemeral=True)
