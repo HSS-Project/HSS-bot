@@ -208,5 +208,32 @@ class MemorizationCog(commands.Cog):
         else:
             await ctx.send("403 Forbidden")
 
+    @commands.command(name="gemini", description="Geminiに質問します。")
+    async def ask_gemini(self, ctx, *, prompt: str):
+        if ctx.author.id != self.OWNER_ID:
+            return await ctx.send("403 Forbidden")
+
+        api_key = self._load_gemini_api_key()
+        if not api_key:
+            return await ctx.send("GEMINI_API_KEY を追加してください。")
+        from google import genai
+        
+        async with ctx.typing():
+            try:
+                client = genai.Client(api_key=api_key)
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt
+                )
+                
+                text = response.text
+                if len(text) > 2000:
+                    for i in range(0, len(text), 2000):
+                        await ctx.send(text[i:i+2000])
+                else:
+                    await ctx.send(text)
+            except Exception as e:
+                await ctx.send(f"エラーが発生しました: {e}")
+
 async def setup(bot):
     await bot.add_cog(MemorizationCog(bot))
